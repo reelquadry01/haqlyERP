@@ -1,0 +1,57 @@
+# Author: Quadri Atharu
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.backends._legacy:_Backend"
+
+[project]
+name = "naija_finance_accounting_intelligence_engine"
+version = "1.0.0"
+authors = [
+    {name = "Quadri Atharu", email = "reelquadry01@users.noreply.github.com"},
+]
+description = "Nigerian Finance & Accounting Intelligence Engine for HAQLY ERP"
+readme = "README.md"
+requires-python = ">=3.11"
+license = {text = "MIT"}
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Financial and Insurance Industry",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business :: Financial :: Accounting",
+]
+dependencies = [
+    "fastapi>=0.104.0",
+    "uvicorn[standard]>=0.24.0",
+    "pydantic>=2.0",
+    "pydantic-settings>=2.0",
+    "sqlalchemy[asyncio]>=2.0",
+    "psycopg2-binary>=2.9.9",
+    "openpyxl>=3.1.2",
+    "reportlab>=4.0.7",
+    "pdfkit>=1.0.0",
+    "numpy>=1.26.0",
+    "pandas>=2.1.0",
+    "httpx>=0.25.0",
+    "python-jose[cryptography]>=3.3.0",
+    "passlib[bcrypt]>=1.7.4",
+    "python-multipart>=0.0.6",
+    "aiofiles>=23.2.1",
+    "jinja2>=3.1.2",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest>=7.4.0",
+    "pytest-asyncio>=0.21.0",
+    "httpx>=0.25.0",
+    "ruff>=0.1.0",
+]
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["naija_finance_accounting_intelligence_engine*"]
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"

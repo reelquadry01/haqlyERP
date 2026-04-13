@@ -1,0 +1,19 @@
+# Author: Quadri Atharu
+# naija_finance_accounting_intelligence_engine v1.0.0
+fastapi==0.109.2
+uvicorn[standard]==0.27.1
+pydantic==2.6.1
+pydantic-settings==2.1.0
+sqlalchemy[asyncio]==2.0.27
+psycopg2-binary==2.9.9
+openpyxl==3.1.2
+reportlab==4.1.0
+pdfkit==1.0.0
+numpy==1.26.4
+pandas==2.2.0
+httpx==0.27.0
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+python-multipart==0.0.9
+aiofiles==23.2.1
+jinja2==3.1.3
