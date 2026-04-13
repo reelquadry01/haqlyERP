@@ -1,0 +1,94 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicegui/nicegui/refs/heads/main/tauri/tooling/cli/schema.json",
+  "productName": "HAQLY ERP",
+  "version": "0.1.0",
+  "identifier": "com.haqly.erp",
+  "build": {
+    "beforeDevCommand": "npm run dev",
+    "devUrl": "http://localhost:3001",
+    "beforeBuildCommand": "npm run build",
+    "frontendDist": "../src-web/out"
+  },
+  "app": {
+    "title": "HAQLY ERP",
+    "windows": [
+      {
+        "label": "main",
+        "title": "HAQLY ERP — Nigerian Accounting Desktop",
+        "width": 1280,
+        "height": 800,
+        "minWidth": 960,
+        "minHeight": 600,
+        "resizable": true,
+        "fullscreen": false,
+        "center": true,
+        "decorations": true,
+        "transparent": false,
+        "visible": true
+      }
+    ],
+    "security": {
+      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: https://data: blob:; font-src 'self' data:; connect-src 'self' http://localhost:8100 http://localhost:8200 http://localhost:11434 https://imsin.nbr.gov.bd; frame-src 'none'; object-src 'none'"
+    },
+    "trayIcon": {
+      "iconPath": "icons/icon.png",
+      "iconAsTemplate": true,
+      "tooltip": "HAQLY ERP"
+    }
+  },
+  "bundle": {
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.icns",
+      "icons/icon.ico"
+    ],
+    "identifier": "com.haqly.erp",
+    "publisher": "HAQLY",
+    "category": "Finance",
+    "shortDescription": "Nigerian Accounting & ERP Desktop Application",
+    "longDescription": "HAQLY ERP is a comprehensive accounting and enterprise resource planning desktop application built for Nigerian businesses, featuring OCR document processing, e-Invoice NBR compliance, and AI-powered financial analysis.",
+    "windows": {
+      "certificateThumbprint": null,
+      "digestAlgorithm": "sha256",
+      "timestampUrl": ""
+    },
+    "fileAssociations": [
+      {
+        "ext": ["pdf"],
+        "name": "PDF Document",
+        "description": "Portable Document Format",
+        "role": "Viewer"
+      },
+      {
+        "ext": ["csv"],
+        "name": "CSV File",
+        "description": "Comma-Separated Values",
+        "role": "Viewer"
+      },
+      {
+        "ext": ["xlsx"],
+        "name": "Excel Spreadsheet",
+        "description": "Microsoft Excel Open XML Spreadsheet",
+        "role": "Viewer"
+      }
+    ],
+    "externalBin": ["binaries/haqly-backend", "binaries/haqly-ai-engine"],
+    "resources": [
+      "resources/migrations/*",
+      "resources/models/*"
+    ]
+  },
+  "plugins": {
+    "shell": {
+      "open": true
+    },
+    "updater": {
+      "pubkey": "",
+      "endpoints": ["https://releases.haqly.com/erp/desktop/{{target}}/{{arch}}/{{current_version}}"]
+    }
+  }
+}
