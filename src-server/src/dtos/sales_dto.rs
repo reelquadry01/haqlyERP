@@ -82,3 +82,35 @@ pub struct CreateProformaRequest {
     #[validate(length(min = 1, message = "proforma must have at least 1 line item"))]
     pub items: Vec<InvoiceItemDto>,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+pub struct CreateCreditNoteRequest {
+    pub company_id: Uuid,
+    pub branch_id: Option<Uuid>,
+    pub invoice_id: Uuid,
+    pub reason: String,
+    pub currency_code: Option<String>,
+    #[validate(length(min = 1, message = "credit note must have at least 1 line item"))]
+    pub lines: Vec<CreditNoteLineDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct CreditNoteLineDto {
+    pub product_id: Option<Uuid>,
+    pub description: String,
+    pub quantity: BigDecimal,
+    pub unit_price: BigDecimal,
+    pub discount_percent: Option<BigDecimal>,
+    pub tax_rate: Option<BigDecimal>,
+    pub cost_center_id: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RecordPaymentRequest {
+    pub invoice_id: Uuid,
+    pub amount: BigDecimal,
+    pub payment_method: String,
+    pub reference: Option<String>,
+    pub receipt_date: Option<String>,
+    pub bank_account_id: Option<Uuid>,
+}

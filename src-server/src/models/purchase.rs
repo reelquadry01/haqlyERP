@@ -5,6 +5,22 @@ use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
 use uuid::Uuid;
 
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::Type, PartialEq)]
+#[sqlx(type_name = "bill_type", rename_all = "snake_case")]
+pub enum BillType {
+    Standard,
+    DebitNote,
+}
+
+impl std::fmt::Display for BillType {
+    fn fmt(&self, f: &mut std::fmt::Formatter<'_>) -> std::fmt::Result {
+        match self {
+            BillType::Standard => write!(f, "standard"),
+            BillType::DebitNote => write!(f, "debit_note"),
+        }
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct Supplier {
     pub id: Uuid,
@@ -59,6 +75,8 @@ pub struct PurchaseBill {
     pub amount_paid: BigDecimal,
     pub currency_code: String,
     pub status: String,
+    pub bill_type: BillType,
+    pub linked_bill_id: Option<Uuid>,
     pub narration: Option<String>,
     pub journal_header_id: Option<Uuid>,
     pub created_by: Uuid,

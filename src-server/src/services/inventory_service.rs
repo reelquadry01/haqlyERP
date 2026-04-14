@@ -1,6 +1,7 @@
 // Author: Quadri Atharu
 use anyhow::{anyhow, Result};
 use bigdecimal::BigDecimal;
+use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -11,6 +12,50 @@ use crate::models::inventory::{
 #[derive(Clone)]
 pub struct InventoryService {
     pub pool: PgPool,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct StockValuationRow {
+    pub product_id: Uuid,
+    pub product_code: String,
+    pub product_name: String,
+    pub warehouse_id: Uuid,
+    pub warehouse_name: String,
+    pub quantity_on_hand: BigDecimal,
+    pub average_cost: BigDecimal,
+    pub total_value: BigDecimal,
+    pub last_cost: Option<BigDecimal>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct StockValuationSummary {
+    pub items: Vec<StockValuationRow>,
+    pub grand_total_value: BigDecimal,
+    pub total_products: i64,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct LowStockAlert {
+    pub product_id: Uuid,
+    pub product_code: String,
+    pub product_name: String,
+    pub quantity_on_hand: BigDecimal,
+    pub reorder_level: BigDecimal,
+    pub reorder_quantity: Option<BigDecimal>,
+    pub deficit: BigDecimal,
+    pub warehouse_name: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
+pub struct StockAdjustmentAudit {
+    pub id: Uuid,
+    pub product_id: Uuid,
+    pub adjustment_type: String,
+    pub quantity: BigDecimal,
+    pub reason: String,
+    pub warehouse_id: Uuid,
+    pub created_by: Uuid,
+    pub created_at: chrono::NaiveDateTime,
 }
 
 impl InventoryService {
@@ -163,6 +208,134 @@ impl InventoryService {
         .fetch_all(&self.pool)
         .await?;
         Ok(levels)
+    }
+
+    pub async fn get_stock_valuation(&self, company_id: Uuid) -> Result<StockValuationSummary> {
+        let items = sqlx::query_as::<_, StockValuationRow>(
+            r#"SELECT
+                sl.product_id,
+                p.code AS product_code,
+                p.name AS product_name,
+                sl.warehouse_id,
+                w.name AS warehouse_name,
+                sl.quantity_on_hand,
+                sl.average_cost,
+                sl.quantity_on_hand * sl.average_cost AS total_value,
+                sl.last_cost
+               FROM stock_levels sl
+               JOIN products p ON sl.product_id = p.id
+               JOIN warehouses w ON sl.warehouse_id = w.id
+               WHERE p.company_id = $1
+               AND p.is_active = true
+               AND sl.quantity_on_hand > 0
+               ORDER BY p.code"#,
+        )
+        .bind(company_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let grand_total_value = items.iter().fold(BigDecimal::from(0), |acc, item| acc + &item.total_value);
+        let total_products = items.len() as i64;
+
+        Ok(StockValuationSummary {
+            items,
+            grand_total_value,
+            total_products,
+        })
+    }
+
+    pub async fn get_low_stock_alerts(&self, company_id: Uuid) -> Result<Vec<LowStockAlert>> {
+        let rows = sqlx::query_as::<_, (Uuid, String, String, BigDecimal, BigDecimal, Option<BigDecimal>, Option<String>)>(
+            r#"SELECT
+                p.id,
+                p.code,
+                p.name,
+                COALESCE(sl.quantity_on_hand, 0),
+                p.reorder_level,
+                p.reorder_quantity,
+                w.name
+               FROM products p
+               LEFT JOIN stock_levels sl ON sl.product_id = p.id
+               LEFT JOIN warehouses w ON sl.warehouse_id = w.id
+               WHERE p.company_id = $1
+               AND p.is_active = true
+               AND p.reorder_level IS NOT NULL
+               AND COALESCE(sl.quantity_on_hand, 0) <= p.reorder_level
+               ORDER BY p.code"#,
+        )
+        .bind(company_id)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let alerts = rows
+            .into_iter()
+            .map(|r| LowStockAlert {
+                product_id: r.0,
+                product_code: r.1,
+                product_name: r.2,
+                quantity_on_hand: r.3.clone(),
+                reorder_level: r.4.clone(),
+                reorder_quantity: r.5,
+                deficit: &r.4 - &r.3,
+                warehouse_name: r.6,
+            })
+            .collect();
+
+        Ok(alerts)
+    }
+
+    pub async fn adjust_stock(
+        &self,
+        product_id: Uuid,
+        adjustment_type: String,
+        quantity: BigDecimal,
+        reason: String,
+        warehouse_id: Uuid,
+        created_by: Uuid,
+    ) -> Result<StockMovement> {
+        let product = sqlx::query_as::<_, Product>("SELECT * FROM products WHERE id = $1")
+            .bind(product_id)
+            .fetch_one(&self.pool)
+            .await
+            .map_err(|e| anyhow!("Product not found: {}", e))?;
+
+        let movement_type = match adjustment_type.to_lowercase().as_str() {
+            "increase" | "adjustment_increase" => MovementType::AdjustmentIncrease,
+            "decrease" | "adjustment_decrease" => MovementType::AdjustmentDecrease,
+            _ => return Err(anyhow!("Invalid adjustment_type: {}. Use 'increase' or 'decrease'", adjustment_type)),
+        };
+
+        let audit_id = Uuid::now_v7();
+        sqlx::query(
+            r#"INSERT INTO stock_adjustment_audits (id, product_id, adjustment_type, quantity, reason, warehouse_id, created_by, created_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, NOW())"#,
+        )
+        .bind(audit_id)
+        .bind(product_id)
+        .bind(&adjustment_type)
+        .bind(&quantity)
+        .bind(&reason)
+        .bind(warehouse_id)
+        .bind(created_by)
+        .execute(&self.pool)
+        .await?;
+
+        let unit_cost = Some(product.cost_price.clone().unwrap_or(BigDecimal::from(0)));
+
+        self.record_stock_movement(
+            product.company_id,
+            product_id,
+            warehouse_id,
+            movement_type,
+            quantity,
+            unit_cost,
+            Some(format!("Stock adjustment: {}", reason)),
+            Some(audit_id),
+            Some("stock_adjustment".to_string()),
+            Some(reason.clone()),
+            created_by,
+        )
+        .await
     }
 
     pub async fn check_reorder_alerts(&self, company_id: Uuid) -> Result<Vec<Product>> {

@@ -54,7 +54,7 @@
     "windows": {
       "certificateThumbprint": null,
       "digestAlgorithm": "sha256",
-      "timestampUrl": ""
+      "timestampUrl": "http://timestamp.digicert.com"
     },
     "fileAssociations": [
       {
@@ -89,7 +89,7 @@
     "updater": {
       "pubkey": "6fM+msMtWdvo3fHvb+88RY7STZyKW2v5q9yJ9cV3ceY=",
       "endpoints": ["https://releases.haqly.com/erp/desktop/{{target}}/{{arch}}/{{current_version}}"],
-      "_dev_note": "REPLACE PUBKEY WITH PRODUCTION Ed25519 KEY BEFORE RELEASE"
+      "_dev_note": "REPLACE PUBKEY WITH PRODUCTION Ed25519 KEY BEFORE RELEASE. Run scripts/generate-update-keys.sh to generate."
     }
   }
 }

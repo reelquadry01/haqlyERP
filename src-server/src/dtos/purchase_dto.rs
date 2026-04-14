@@ -58,6 +58,7 @@ pub struct BillItemDto {
     pub discount_percent: Option<BigDecimal>,
     pub tax_rate: Option<BigDecimal>,
     pub wht_rate: Option<BigDecimal>,
+    pub wht_category: Option<String>,
     pub cost_center_id: Option<Uuid>,
 }
 
@@ -72,5 +73,38 @@ pub struct CreatePaymentRequest {
     pub currency_code: Option<String>,
     pub payment_method: String,
     pub reference: Option<String>,
+    pub bank_account_id: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+pub struct CreateDebitNoteRequest {
+    pub company_id: Uuid,
+    pub branch_id: Option<Uuid>,
+    pub bill_id: Uuid,
+    pub reason: String,
+    pub currency_code: Option<String>,
+    #[validate(length(min = 1, message = "debit note must have at least 1 line item"))]
+    pub lines: Vec<DebitNoteLineDto>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct DebitNoteLineDto {
+    pub product_id: Option<Uuid>,
+    pub description: String,
+    pub quantity: BigDecimal,
+    pub unit_price: BigDecimal,
+    pub discount_percent: Option<BigDecimal>,
+    pub tax_rate: Option<BigDecimal>,
+    pub wht_rate: Option<BigDecimal>,
+    pub cost_center_id: Option<Uuid>,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RecordBillPaymentRequest {
+    pub bill_id: Uuid,
+    pub amount: BigDecimal,
+    pub payment_method: String,
+    pub reference: Option<String>,
+    pub payment_date: Option<String>,
     pub bank_account_id: Option<Uuid>,
 }

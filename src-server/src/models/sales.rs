@@ -102,6 +102,7 @@ pub struct SalesInvoice {
     pub currency_code: String,
     pub status: String,
     pub narration: Option<String>,
+    pub linked_invoice_id: Option<Uuid>,
     pub einvoice_irn: Option<String>,
     pub einvoice_status: Option<String>,
     pub journal_header_id: Option<Uuid>,
