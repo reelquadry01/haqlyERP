@@ -1,0 +1,235 @@
+{
+  "description": "Revenue recognition patterns per Nigerian industry, aligned with IFRS 15 Revenue from Contracts with Customers. Each industry lists performance obligations, revenue streams, recognition methods, and typical margins.",
+  "standard": "IFRS 15",
+  "author": "Quadri Atharu",
+  "project": "HAQLY ERP",
+  "industries": {
+    "Oil & Gas": {
+      "performance_obligations": [
+        { "name": "Delivery of crude oil at designated terminal", "standalone_selling_price_method": "Market price (dated Brent benchmark)", "recognition_timing": "At a point in time - upon delivery and title transfer at export terminal" },
+        { "name": "Delivery of natural gas per GSA", "standalone_selling_price_method": "Contract price per MMBtu (indexed to oil basket)", "recognition_timing": "Over time - as gas is delivered and measured at metering station" },
+        { "name": "Gas processing services", "standalone_selling_price_method": "Adjusted market assessment (comparable processing fees)", "recognition_timing": "Over time - as processing services are rendered per throughput" },
+        { "name": "Pipeline transportation (tariff)", "standalone_selling_price_method": "Regulated tariff (NERC/FGN approved)", "recognition_timing": "Over time - as gas/oil transported through pipeline system" }
+      ],
+      "revenue_streams": [
+        { "name": "Crude oil sales", "percentage_of_total": 55, "recognition_method": "Point in time - delivery at terminal (FOB/ CIF)", "typical_margin": 45 },
+        { "name": "Natural gas sales", "percentage_of_total": 25, "recognition_method": "Over time - measured delivery per GSA", "typical_margin": 40 },
+        { "name": "Condensate and NGL sales", "percentage_of_total": 10, "recognition_method": "Point in time - delivery at terminal", "typical_margin": 38 },
+        { "name": "Gas processing and tariff", "percentage_of_total": 7, "recognition_method": "Over time - service rendered", "typical_margin": 55 },
+        { "name": "Other operating income", "percentage_of_total": 3, "recognition_method": "As earned", "typical_margin": 30 }
+      ]
+    },
+    "Manufacturing": {
+      "performance_obligations": [
+        { "name": "Delivery of manufactured goods per sales contract", "standalone_selling_price_method": "Standalone selling price per product catalogue", "recognition_timing": "At a point in time - upon delivery and customer acceptance" },
+        { "name": "Warranty coverage (assurance type)", "standalone_selling_price_method": "Expected cost approach", "recognition_timing": "Not separate PO - assurance warranty" },
+        { "name": "Installation and commissioning", "standalone_selling_price_method": "Adjusted market assessment", "recognition_timing": "At a point in time - upon completion and sign-off" }
+      ],
+      "revenue_streams": [
+        { "name": "Domestic product sales", "percentage_of_total": 60, "recognition_method": "Point in time - upon delivery/acceptance", "typical_margin": 25 },
+        { "name": "Export product sales", "percentage_of_total": 25, "recognition_method": "Point in time - per Incoterms (FOB/CIF)", "typical_margin": 22 },
+        { "name": "By-product and scrap sales", "percentage_of_total": 8, "recognition_method": "Point in time - upon delivery", "typical_margin": 60 },
+        { "name": "Warranty service revenue (if service-type)", "percentage_of_total": 2, "recognition_method": "Over time - warranty period", "typical_margin": 35 },
+        { "name": "Other operating income", "percentage_of_total": 5, "recognition_method": "As earned", "typical_margin": 50 }
+      ]
+    },
+    "Banking": {
+      "performance_obligations": [
+        { "name": "Provision of loan facility", "standalone_selling_price_method": "Market rate (MPR + risk premium)", "recognition_timing": "Over time - interest accrued using EIR method per IFRS 9" },
+        { "name": "Deposit taking and custodial services", "standalone_selling_price_method": "Market comparable rates", "recognition_timing": "Over time - as service is provided" },
+        { "name": "Fee-based services (LC, guarantee, transfer)", "standalone_selling_price_method": "Adjusted market assessment (CBN guide charges)", "recognition_timing": "At a point in time - upon service completion" },
+        { "name": "Advisory and arrangement services", "standalone_selling_price_method": "Expected cost plus margin", "recognition_timing": "Over time or point in time - per contract terms" }
+      ],
+      "revenue_streams": [
+        { "name": "Interest income - loans and advances", "percentage_of_total": 55, "recognition_method": "Over time - EIR under IFRS 9 (not IFRS 15)", "typical_margin": 65 },
+        { "name": "Interest income - investment securities", "percentage_of_total": 15, "recognition_method": "Over time - EIR under IFRS 9", "typical_margin": 70 },
+        { "name": "Fee and commission income", "percentage_of_total": 15, "recognition_method": "Point in time - service rendered", "typical_margin": 80 },
+        { "name": "Trading income (FX, derivatives)", "percentage_of_total": 10, "recognition_method": "Fair value changes - FVTPL under IFRS 9", "typical_margin": 50 },
+        { "name": "Other operating income", "percentage_of_total": 5, "recognition_method": "As earned", "typical_margin": 45 }
+      ]
+    },
+    "Insurance": {
+      "performance_obligations": [
+        { "name": "Provision of insurance coverage (general)", "standalone_selling_price_method": "Premium per policy (actuarial pricing)", "recognition_timing": "Over time - coverage period per IFRS 17 PAA or GMM" },
+        { "name": "Provision of life insurance coverage", "standalone_selling_price_method": "Premium per policy (actuarial pricing)", "recognition_timing": "Over time - coverage period per IFRS 17 VFA" },
+        { "name": "Claims handling service", "standalone_selling_price_method": "Allocated transaction price", "recognition_timing": "Over time - as claims are assessed and settled" }
+      ],
+      "revenue_streams": [
+        { "name": "Gross premium income (net of reinsurance)", "percentage_of_total": 60, "recognition_method": "Over time - IFRS 17 insurance service revenue (PAA/GMM)", "typical_margin": 10 },
+        { "name": "Investment income", "percentage_of_total": 25, "recognition_method": "Over time - interest and dividends per IFRS 9", "typical_margin": 70 },
+        { "name": "Reinsurance commission", "percentage_of_total": 8, "recognition_method": "Over time - coverage period", "typical_margin": 60 },
+        { "name": "Fee and commission income", "percentage_of_total": 5, "recognition_method": "Point in time - service rendered", "typical_margin": 75 },
+        { "name": "Gains on investment property", "percentage_of_total": 2, "recognition_method": "Fair value changes under IAS 40", "typical_margin": 50 }
+      ]
+    },
+    "Retail": {
+      "performance_obligations": [
+        { "name": "Sale of merchandise to customer", "standalone_selling_price_method": "Standalone selling price (listed retail price)", "recognition_timing": "At a point in time - at checkout/POS or upon delivery for online" },
+        { "name": "Loyalty programme benefits", "standalone_selling_price_method": "Adjusted market assessment (loyalty point value)", "recognition_timing": "Over time - deferred and recognised upon redemption" },
+        { "name": "Gift card/voucher fulfilment", "standalone_selling_price_method": "Face value of gift card/voucher", "recognition_timing": "At a point in time - upon redemption by customer" }
+      ],
+      "revenue_streams": [
+        { "name": "In-store sales", "percentage_of_total": 55, "recognition_method": "Point in time - at POS checkout", "typical_margin": 18 },
+        { "name": "Online/e-commerce sales", "percentage_of_total": 25, "recognition_method": "Point in time - upon delivery to customer", "typical_margin": 15 },
+        { "name": "Wholesale/bulk sales", "percentage_of_total": 12, "recognition_method": "Point in time - upon delivery", "typical_margin": 10 },
+        { "name": "Loyalty programme breakage", "percentage_of_total": 3, "recognition_method": "Over time - based on expected breakage rate", "typical_margin": 90 },
+        { "name": "Other income (vendor rebates)", "percentage_of_total": 5, "recognition_method": "As earned - upon meeting volume targets", "typical_margin": 100 }
+      ]
+    },
+    "Telecom": {
+      "performance_obligations": [
+        { "name": "Provision of voice and data services", "standalone_selling_price_method": "Adjusted market assessment (tariff per minute/MB)", "recognition_timing": "Over time - as service is consumed by subscriber" },
+        { "name": "Sale of devices and SIM cards", "standalone_selling_price_method": "Standalone selling price (device retail price)", "recognition_timing": "At a point in time - upon delivery to subscriber" },
+        { "name": "VAS and digital services", "standalone_selling_price_method": "Expected cost plus margin / adjusted market", "recognition_timing": "Over time - as service is consumed" },
+        { "name": "Enterprise connectivity solutions", "standalone_selling_price_method": "Adjusted market assessment (contract pricing)", "recognition_timing": "Over time - service period per SLA" }
+      ],
+      "revenue_streams": [
+        { "name": "Voice revenue", "percentage_of_total": 25, "recognition_method": "Over time - as calls are made (prepaid/postpaid)", "typical_margin": 55 },
+        { "name": "Data revenue", "percentage_of_total": 40, "recognition_method": "Over time - as data is consumed per bundle", "typical_margin": 50 },
+        { "name": "VAS and digital services", "percentage_of_total": 12, "recognition_method": "Over time - as services are consumed", "typical_margin": 45 },
+        { "name": "Interconnect revenue", "percentage_of_total": 8, "recognition_method": "Over time - measured per interconnect traffic", "typical_margin": 60 },
+        { "name": "Device and handset sales", "percentage_of_total": 10, "recognition_method": "Point in time - upon sale", "typical_margin": 8 },
+        { "name": "Enterprise solutions", "percentage_of_total": 5, "recognition_method": "Over time - service period per contract", "typical_margin": 40 }
+      ]
+    },
+    "Agriculture": {
+      "performance_obligations": [
+        { "name": "Delivery of harvested produce", "standalone_selling_price_method": "Market price (commodity exchange/comparable market)", "recognition_timing": "At a point in time - upon delivery to buyer or off-taker" },
+        { "name": "Sale of livestock and poultry", "standalone_selling_price_method": "Market price per head/kg (livestock market)", "recognition_timing": "At a point in time - upon delivery" },
+        { "name": "Biological asset transformation (bearer plants)", "standalone_selling_price_method": "Fair value less cost to sell (IAS 41)", "recognition_timing": "Over time - change in fair value of biological assets" }
+      ],
+      "revenue_streams": [
+        { "name": "Crop sales", "percentage_of_total": 45, "recognition_method": "Point in time - upon harvest and delivery", "typical_margin": 30 },
+        { "name": "Livestock and poultry sales", "percentage_of_total": 25, "recognition_method": "Point in time - upon delivery/slaughter", "typical_margin": 25 },
+        { "name": "Dairy and fishery sales", "percentage_of_total": 10, "recognition_method": "Point in time - upon delivery", "typical_margin": 20 },
+        { "name": "Change in fair value of biological assets", "percentage_of_total": 12, "recognition_method": "Over time - fair value change per IAS 41", "typical_margin": 0 },
+        { "name": "Government grants (CBN Anchor/ATA)", "percentage_of_total": 5, "recognition_method": "Over time - as conditions met per IAS 20", "typical_margin": 100 },
+        { "name": "Other agricultural income", "percentage_of_total": 3, "recognition_method": "As earned", "typical_margin": 40 }
+      ]
+    },
+    "Construction": {
+      "performance_obligations": [
+        { "name": "Construction of asset per contract", "standalone_selling_price_method": "Expected cost plus margin (contract price)", "recognition_timing": "Over time - progress towards completion (cost-to-cost or output method)" },
+        { "name": "Variation orders and change orders", "standalone_selling_price_method": "Contract price per variation (approved rates)", "recognition_timing": "Over time - as variation work is performed" },
+        { "name": "Claims and performance bonuses", "standalone_selling_price_method": "Most likely amount / expected value", "recognition_timing": "At a point in time - upon settlement/achievement" }
+      ],
+      "revenue_streams": [
+        { "name": "Contract revenue (main works)", "percentage_of_total": 75, "recognition_method": "Over time - cost-to-cost method per IFRS 15", "typical_margin": 12 },
+        { "name": "Variation order revenue", "percentage_of_total": 12, "recognition_method": "Over time - as work performed (approved VO)", "typical_margin": 15 },
+        { "name": "Claims revenue", "percentage_of_total": 5, "recognition_method": "Point in time - upon settlement/agreement", "typical_margin": 60 },
+        { "name": "Performance bonus", "percentage_of_total": 3, "recognition_method": "Point in time - upon milestone achievement", "typical_margin": 100 },
+        { "name": "Equipment rental income", "percentage_of_total": 3, "recognition_method": "Over time - rental period", "typical_margin": 35 },
+        { "name": "Other income", "percentage_of_total": 2, "recognition_method": "As earned", "typical_margin": 50 }
+      ]
+    },
+    "Logistics": {
+      "performance_obligations": [
+        { "name": "Freight and haulage transportation", "standalone_selling_price_method": "Market price per tonne-km (adjusted market)", "recognition_timing": "Over time - as transportation service is rendered" },
+        { "name": "Warehousing and storage services", "standalone_selling_price_method": "Adjusted market assessment (per sqm/pallet/month)", "recognition_timing": "Over time - storage period" },
+        { "name": "Last-mile delivery", "standalone_selling_price_method": "Adjusted market assessment (per delivery/zone)", "recognition_timing": "At a point in time - upon delivery confirmation" },
+        { "name": "Clearing and forwarding", "standalone_selling_price_method": "Expected cost plus margin", "recognition_timing": "At a point in time - upon clearance completion" }
+      ],
+      "revenue_streams": [
+        { "name": "Freight and haulage", "percentage_of_total": 40, "recognition_method": "Over time - as transportation service is provided", "typical_margin": 20 },
+        { "name": "Warehousing revenue", "percentage_of_total": 25, "recognition_method": "Over time - monthly storage period", "typical_margin": 35 },
+        { "name": "Last-mile delivery", "percentage_of_total": 15, "recognition_method": "Point in time - upon successful delivery", "typical_margin": 15 },
+        { "name": "Clearing and forwarding", "percentage_of_total": 12, "recognition_method": "Point in time - upon completion of clearing", "typical_margin": 25 },
+        { "name": "Packaging and value-added services", "percentage_of_total": 5, "recognition_method": "Point in time - upon service completion", "typical_margin": 30 },
+        { "name": "Other logistics income", "percentage_of_total": 3, "recognition_method": "As earned", "typical_margin": 40 }
+      ]
+    },
+    "Healthcare": {
+      "performance_obligations": [
+        { "name": "Medical consultation and treatment", "standalone_selling_price_method": "Adjusted market assessment (tariff per service)", "recognition_timing": "At a point in time - upon completion of consultation/treatment" },
+        { "name": "Surgical procedures", "standalone_selling_price_method": "Standalone selling price (procedure tariff)", "recognition_timing": "At a point in time - upon completion of procedure" },
+        { "name": "Laboratory and diagnostic services", "standalone_selling_price_method": "Adjusted market assessment (test tariff)", "recognition_timing": "At a point in time - upon issuance of test results" },
+        { "name": "Inpatient care (ward and accommodation)", "standalone_selling_price_method": "Adjusted market assessment (daily rate)", "recognition_timing": "Over time - per day of admission" }
+      ],
+      "revenue_streams": [
+        { "name": "Consultation and procedure fees", "percentage_of_total": 30, "recognition_method": "Point in time - upon service completion", "typical_margin": 45 },
+        { "name": "Laboratory and diagnostic revenue", "percentage_of_total": 20, "recognition_method": "Point in time - upon result issuance", "typical_margin": 55 },
+        { "name": "Pharmacy dispensing revenue", "percentage_of_total": 25, "recognition_method": "Point in time - upon dispensing", "typical_margin": 25 },
+        { "name": "Ward and accommodation revenue", "percentage_of_total": 12, "recognition_method": "Over time - per day of admission", "typical_margin": 35 },
+        { "name": "HMO capitation revenue", "percentage_of_total": 8, "recognition_method": "Over time - per enrolled lives per period", "typical_margin": 15 },
+        { "name": "NHIS and other income", "percentage_of_total": 5, "recognition_method": "As earned / as services rendered", "typical_margin": 20 }
+      ]
+    },
+    "Education": {
+      "performance_obligations": [
+        { "name": "Provision of academic instruction (term/semester)", "standalone_selling_price_method": "Standalone selling price (tuition fee schedule)", "recognition_timing": "Over time - as instruction is delivered over academic term" },
+        { "name": "Boarding and hostel services", "standalone_selling_price_method": "Adjusted market assessment (boarding fee schedule)", "recognition_timing": "Over time - over boarding period" },
+        { "name": "Examination and certification services", "standalone_selling_price_method": "Expected cost plus margin", "recognition_timing": "At a point in time - upon examination completion and certification" }
+      ],
+      "revenue_streams": [
+        { "name": "Tuition and school fees", "percentage_of_total": 50, "recognition_method": "Over time - as academic services delivered per term", "typical_margin": 30 },
+        { "name": "Boarding and hostel fees", "percentage_of_total": 18, "recognition_method": "Over time - over boarding period", "typical_margin": 20 },
+        { "name": "Examination fees", "percentage_of_total": 8, "recognition_method": "Point in time - upon examination administration", "typical_margin": 50 },
+        { "name": "Laboratory and workshop fees", "percentage_of_total": 5, "recognition_method": "Over time - as services are provided", "typical_margin": 35 },
+        { "name": "TETFund and government grants", "percentage_of_total": 12, "recognition_method": "Over time - as conditions met per IAS 20", "typical_margin": 100 },
+        { "name": "Auxiliary (canteen, bookshop, events)", "percentage_of_total": 7, "recognition_method": "Point in time - upon sale/service", "typical_margin": 15 }
+      ]
+    },
+    "Government": {
+      "performance_obligations": [
+        { "name": "Tax assessment and collection (non-exchange)", "standalone_selling_price_method": "N/A - non-exchange revenue (IPSAS 23)", "recognition_timing": "At a point in time - upon assessment/meeting recognition criteria" },
+        { "name": "Statutory allocation (non-exchange)", "standalone_selling_price_method": "N/A - non-exchange revenue (IPSAS 23)", "recognition_timing": "At a point in time - upon receipt/entitlement" },
+        { "name": "Fees, licences and permits (exchange)", "standalone_selling_price_method": "Adjusted market assessment (regulated fees)", "recognition_timing": "At a point in time or over time - per service rendered" }
+      ],
+      "revenue_streams": [
+        { "name": "Federation account allocation (FAAC)", "percentage_of_total": 40, "recognition_method": "Point in time - non-exchange (IPSAS 23)", "typical_margin": 0 },
+        { "name": "Internally generated revenue (IGR)", "percentage_of_total": 20, "recognition_method": "Point in time - upon collection/assessment", "typical_margin": 0 },
+        { "name": "VAT share", "percentage_of_total": 15, "recognition_method": "Point in time - non-exchange (IPSAS 23)", "typical_margin": 0 },
+        { "name": "Grants and aid (exchange)", "percentage_of_total": 10, "recognition_method": "Over time - as conditions met (IPSAS 23/IAS 20)", "typical_margin": 0 },
+        { "name": "Capital receipts and borrowing", "percentage_of_total": 10, "recognition_method": "Point in time - upon receipt (capital revenue)", "typical_margin": 0 },
+        { "name": "Derivation and other statutory", "percentage_of_total": 5, "recognition_method": "Point in time - non-exchange", "typical_margin": 0 }
+      ]
+    },
+    "NGO": {
+      "performance_obligations": [
+        { "name": "Programme implementation per donor agreement", "standalone_selling_price_method": "Budgeted cost per donor agreement (cost-reimbursement)", "recognition_timing": "Over time - as programme activities are delivered" },
+        { "name": "Capacity building and training", "standalone_selling_price_method": "Expected cost per training engagement", "recognition_timing": "At a point in time - upon completion of training event" },
+        { "name": "Research and advocacy services", "standalone_selling_price_method": "Adjusted market assessment", "recognition_timing": "Over time - as deliverables are produced" }
+      ],
+      "revenue_streams": [
+        { "name": "Restricted grant income", "percentage_of_total": 55, "recognition_method": "Over time - as conditions met per IAS 20/donor agreement", "typical_margin": 0 },
+        { "name": "Unrestricted grant income", "percentage_of_total": 20, "recognition_method": "Point in time - upon receipt / entitlement", "typical_margin": 0 },
+        { "name": "Donation income", "percentage_of_total": 10, "recognition_method": "Point in time - upon receipt", "typical_margin": 0 },
+        { "name": "Programme service fees", "percentage_of_total": 8, "recognition_method": "Over time or point in time - per service delivery", "typical_margin": 5 },
+        { "name": "Investment income", "percentage_of_total": 5, "recognition_method": "Over time - interest and dividends", "typical_margin": 70 },
+        { "name": "Other income", "percentage_of_total": 2, "recognition_method": "As earned", "typical_margin": 30 }
+      ]
+    },
+    "Technology": {
+      "performance_obligations": [
+        { "name": "SaaS subscription (access to software)", "standalone_selling_price_method": "Standalone selling price (subscription tier pricing)", "recognition_timing": "Over time - ratably over subscription period" },
+        { "name": "Software licence (perpetual)", "standalone_selling_price_method": "Standalone selling price (licence fee)", "recognition_timing": "At a point in time - upon delivery/activation" },
+        { "name": "Professional services (implementation)", "standalone_selling_price_method": "Adjusted market assessment (day rate)", "recognition_timing": "Over time - as services rendered (hours-based or milestone)" },
+        { "name": "Post-implementation support", "standalone_selling_price_method": "Adjusted market assessment (annual support fee)", "recognition_timing": "Over time - over support period" }
+      ],
+      "revenue_streams": [
+        { "name": "SaaS subscription revenue", "percentage_of_total": 45, "recognition_method": "Over time - ratably over subscription term", "typical_margin": 70 },
+        { "name": "Software licence revenue", "percentage_of_total": 20, "recognition_method": "Point in time - upon delivery and activation", "typical_margin": 85 },
+        { "name": "Professional services", "percentage_of_total": 15, "recognition_method": "Over time - as services rendered per contract", "typical_margin": 35 },
+        { "name": "Maintenance and support", "percentage_of_total": 10, "recognition_method": "Over time - over support period", "typical_margin": 60 },
+        { "name": "API and transaction fees", "percentage_of_total": 7, "recognition_method": "Point in time - per transaction/usage", "typical_margin": 75 },
+        { "name": "Other income", "percentage_of_total": 3, "recognition_method": "As earned", "typical_margin": 50 }
+      ]
+    },
+    "Automotive": {
+      "performance_obligations": [
+        { "name": "Delivery of vehicle per sales contract", "standalone_selling_price_method": "Standalone selling price (MSRP / showroom price)", "recognition_timing": "At a point in time - upon delivery and customer acceptance" },
+        { "name": "After-sales service and maintenance", "standalone_selling_price_method": "Adjusted market assessment (service tariff)", "recognition_timing": "At a point in time - upon service completion" },
+        { "name": "Vehicle warranty (assurance type)", "standalone_selling_price_method": "Expected cost approach", "recognition_timing": "Not separate PO - assurance warranty per IFRS 15" },
+        { "name": "CKD/SKD assembly per contract", "standalone_selling_price_method": "Expected cost plus margin", "recognition_timing": "Over time - progress towards completion or point in time per terms" }
+      ],
+      "revenue_streams": [
+        { "name": "Vehicle sales", "percentage_of_total": 55, "recognition_method": "Point in time - upon delivery and acceptance", "typical_margin": 8 },
+        { "name": "Spare parts and accessories", "percentage_of_total": 20, "recognition_method": "Point in time - upon sale/delivery", "typical_margin": 25 },
+        { "name": "After-sales service revenue", "percentage_of_total": 12, "recognition_method": "Point in time - upon service completion", "typical_margin": 40 },
+        { "name": "Vehicle assembly (CKD/SKD)", "percentage_of_total": 8, "recognition_method": "Over time or point in time - per contract", "typical_margin": 5 },
+        { "name": "Insurance and registration commission", "percentage_of_total": 3, "recognition_method": "Point in time - upon referral/sale", "typical_margin": 80 },
+        { "name": "Other income", "percentage_of_total": 2, "recognition_method": "As earned", "typical_margin": 50 }
+      ]
+    }
+  }
+}

@@ -1,0 +1,466 @@
+{
+  "description": "Cost structure breakdowns per Nigerian industry. Includes direct costs, overhead costs, preferred depreciation methods per asset type, and typical margin ratios. Data reflects Nigerian operating environment including statutory levies.",
+  "standard": "IFRS / Nigerian GAAP",
+  "author": "Quadri Atharu",
+  "project": "HAQLY ERP",
+  "industries": {
+    "Oil & Gas": {
+      "direct_costs": [
+        { "name": "Exploration and evaluation costs", "percentage_of_revenue": 8, "behavior": "Semi-variable - activity-driven per well programme" },
+        { "name": "Well development and drilling costs", "percentage_of_revenue": 15, "behavior": "Variable - per well development" },
+        { "name": "Production operating costs (lifting costs)", "percentage_of_revenue": 12, "behavior": "Variable - per barrel produced" },
+        { "name": "Royalties (NNPC/FGN)", "percentage_of_revenue": 5, "behavior": "Variable - percentage of production value" },
+        { "name": "Crude transportation and shipping", "percentage_of_revenue": 3, "behavior": "Variable - per barrel transported" },
+        { "name": "Gas processing costs", "percentage_of_revenue": 2, "behavior": "Variable - per MMBtu processed" }
+      ],
+      "overhead_costs": [
+        { "name": "Staff costs (technical and administrative)", "percentage_of_revenue": 6 },
+        { "name": "Insurance (operational and asset)", "percentage_of_revenue": 2 },
+        { "name": "NDDC and PTDF levies", "percentage_of_revenue": 3 },
+        { "name": "Gas flaring penalties", "percentage_of_revenue": 1 },
+        { "name": "General and administrative expenses", "percentage_of_revenue": 3 },
+        { "name": "Community development (MOU obligations)", "percentage_of_revenue": 2 }
+      ],
+      "depreciation_methods": {
+        "Oil and gas properties": "Units of production (depletion)",
+        "Wells - development": "Units of production",
+        "Wells - exploration": "Expensed if unsuccessful per IFRS 6; units of production if successful",
+        "Pipelines and gathering systems": "Straight-line (useful life 20-30 years)",
+        "Processing plants": "Straight-line (useful life 15-25 years)",
+        "Service rigs": "Straight-line (useful life 10-15 years)",
+        "Motor vehicles": "Straight-line (useful life 4-5 years)",
+        "Office furniture and equipment": "Straight-line (useful life 5-10 years)",
+        "Right of use assets": "Straight-line over lease term per IFRS 16",
+        "Intangible exploration licences": "Amortised over licence term or units of production"
+      },
+      "typical_ratios": {
+        "gross_margin": 55,
+        "ebitda_margin": 45,
+        "net_margin": 25
+      }
+    },
+    "Manufacturing": {
+      "direct_costs": [
+        { "name": "Raw material purchases", "percentage_of_revenue": 40, "behavior": "Variable - per unit produced" },
+        { "name": "Direct labour", "percentage_of_revenue": 10, "behavior": "Semi-variable - production volume driven" },
+        { "name": "Factory energy and power (gas/diesel/grid)", "percentage_of_revenue": 6, "behavior": "Semi-variable - production and grid supply dependent" },
+        { "name": "Packaging materials", "percentage_of_revenue": 3, "behavior": "Variable - per unit produced" },
+        { "name": "Freight inwards (raw material transport)", "percentage_of_revenue": 2, "behavior": "Variable - per shipment" }
+      ],
+      "overhead_costs": [
+        { "name": "Factory overheads (maintenance, quality control)", "percentage_of_revenue": 5 },
+        { "name": "Staff costs (administrative and supervisory)", "percentage_of_revenue": 7 },
+        { "name": "Depreciation of plant and machinery", "percentage_of_revenue": 3 },
+        { "name": "Marketing and distribution", "percentage_of_revenue": 5 },
+        { "name": "ITF levy (2% of payroll)", "percentage_of_revenue": 1 },
+        { "name": "Utilities (water, telecom)", "percentage_of_revenue": 2 },
+        { "name": "Administrative and general expenses", "percentage_of_revenue": 4 }
+      ],
+      "depreciation_methods": {
+        "Factory buildings": "Straight-line (useful life 25-40 years)",
+        "Machinery and equipment": "Straight-line or units of production (useful life 5-15 years)",
+        "Motor vehicles": "Straight-line (useful life 4-5 years)",
+        "Furniture and fittings": "Straight-line (useful life 5-10 years)",
+        "Leasehold improvements": "Straight-line over shorter of lease term or useful life",
+        "Right of use assets": "Straight-line over lease term per IFRS 16",
+        "Intangible software": "Straight-line (useful life 3-5 years)"
+      },
+      "typical_ratios": {
+        "gross_margin": 25,
+        "ebitda_margin": 15,
+        "net_margin": 8
+      }
+    },
+    "Banking": {
+      "direct_costs": [
+        { "name": "Interest expense - customer deposits", "percentage_of_revenue": 25, "behavior": "Variable - rate and volume driven" },
+        { "name": "Interest expense - borrowings and CBN", "percentage_of_revenue": 8, "behavior": "Variable - rate driven" },
+        { "name": "Credit loss expense (ECL)", "percentage_of_revenue": 5, "behavior": "Variable - portfolio quality driven per IFRS 9" },
+        { "name": "Interconnect and settlement costs", "percentage_of_revenue": 2, "behavior": "Variable - transaction volume driven" }
+      ],
+      "overhead_costs": [
+        { "name": "Staff costs", "percentage_of_revenue": 20 },
+        { "name": "NDIC insurance premium", "percentage_of_revenue": 1 },
+        { "name": "AMCOSA contribution", "percentage_of_revenue": 0.5 },
+        { "name": "Branch operating costs", "percentage_of_revenue": 8 },
+        { "name": "IT and technology infrastructure", "percentage_of_revenue": 10 },
+        { "name": "Depreciation and amortisation", "percentage_of_revenue": 3 },
+        { "name": "Regulatory and compliance costs", "percentage_of_revenue": 2 },
+        { "name": "Marketing and customer acquisition", "percentage_of_revenue": 3 }
+      ],
+      "depreciation_methods": {
+        "Buildings (branch offices)": "Straight-line (useful life 25-40 years)",
+        "IT equipment and ATMs": "Straight-line (useful life 3-5 years)",
+        "Motor vehicles": "Straight-line (useful life 4-5 years)",
+        "Furniture and fittings": "Straight-line (useful life 5-10 years)",
+        "Right of use assets - branch leases": "Straight-line over lease term per IFRS 16",
+        "Intangible banking software": "Straight-line (useful life 3-7 years)"
+      },
+      "typical_ratios": {
+        "gross_margin": 65,
+        "ebitda_margin": 45,
+        "net_margin": 20
+      }
+    },
+    "Insurance": {
+      "direct_costs": [
+        { "name": "Net claims incurred", "percentage_of_revenue": 40, "behavior": "Variable - claims frequency and severity driven" },
+        { "name": "Reinsurance premiums ceded", "percentage_of_revenue": 15, "behavior": "Variable - proportional to gross premium" },
+        { "name": "Change in insurance contract liability", "percentage_of_revenue": 10, "behavior": "Variable - actuarial estimate per IFRS 17" },
+        { "name": "Acquisition costs (commission to brokers)", "percentage_of_revenue": 8, "behavior": "Variable - premium volume driven" }
+      ],
+      "overhead_costs": [
+        { "name": "Staff costs", "percentage_of_revenue": 10 },
+        { "name": "NAICOM levy and regulatory fees", "percentage_of_revenue": 1 },
+        { "name": "IT and actuarial systems", "percentage_of_revenue": 3 },
+        { "name": "Depreciation and amortisation", "percentage_of_revenue": 2 },
+        { "name": "General and administrative", "percentage_of_revenue": 5 },
+        { "name": "Investment management fees", "percentage_of_revenue": 2 }
+      ],
+      "depreciation_methods": {
+        "Buildings": "Straight-line (useful life 25-40 years)",
+        "Office equipment and furniture": "Straight-line (useful life 5-10 years)",
+        "Motor vehicles": "Straight-line (useful life 4-5 years)",
+        "Right of use assets": "Straight-line over lease term per IFRS 16",
+        "Intangible insurance software": "Straight-line (useful life 3-7 years)"
+      },
+      "typical_ratios": {
+        "gross_margin": 10,
+        "ebitda_margin": 5,
+        "net_margin": 3
+      }
+    },
+    "Retail": {
+      "direct_costs": [
+        { "name": "Cost of goods sold (merchandise)", "percentage_of_revenue": 65, "behavior": "Variable - per unit sold" },
+        { "name": "Freight inwards", "percentage_of_revenue": 3, "behavior": "Variable - per shipment" },
+        { "name": "Import duties and clearing (imported goods)", "percentage_of_revenue": 5, "behavior": "Variable - per shipment / HS code" }
+      ],
+      "overhead_costs": [
+        { "name": "Staff costs", "percentage_of_revenue": 8 },
+        { "name": "Rent and occupancy costs", "percentage_of_revenue": 5 },
+        { "name": "Utilities (power - generator/grid)", "percentage_of_revenue": 3 },
+        { "name": "Marketing and advertising", "percentage_of_revenue": 3 },
+        { "name": "Depreciation", "percentage_of_revenue": 2 },
+        { "name": "Inventory write-down / shrinkage", "percentage_of_revenue": 2 },
+        { "name": "Administrative expenses", "percentage_of_revenue": 3 }
+      ],
+      "depreciation_methods": {
+        "Shop fixtures and fittings": "Straight-line (useful life 5-10 years)",
+        "Delivery vehicles": "Straight-line (useful life 4-5 years)",
+        "Warehouse equipment": "Straight-line (useful life 5-10 years)",
+        "Right of use assets - shop leases": "Straight-line over lease term per IFRS 16",
+        "Intangible POS/inventory software": "Straight-line (useful life 3-5 years)"
+      },
+      "typical_ratios": {
+        "gross_margin": 18,
+        "ebitda_margin": 8,
+        "net_margin": 3
+      }
+    },
+    "Telecom": {
+      "direct_costs": [
+        { "name": "Interconnect expense", "percentage_of_revenue": 8, "behavior": "Variable - traffic volume driven" },
+        { "name": "Tower lease and colocation", "percentage_of_revenue": 12, "behavior": "Semi-variable - site count and capacity driven" },
+        { "name": "Network maintenance and operations", "percentage_of_revenue": 8, "behavior": "Semi-variable - network uptime and SLA driven" },
+        { "name": "Device and handset cost of sales", "percentage_of_revenue": 8, "behavior": "Variable - per device sold" },
+        { "name": "Fibre lease and capacity purchase", "percentage_of_revenue": 3, "behavior": "Semi-variable - bandwidth driven" }
+      ],
+      "overhead_costs": [
+        { "name": "Staff costs", "percentage_of_revenue": 10 },
+        { "name": "NCC annual operating levy (2.5%)", "percentage_of_revenue": 2.5 },
+        { "name": "Sales and marketing", "percentage_of_revenue": 8 },
+        { "name": "Spectrum amortisation", "percentage_of_revenue": 5 },
+        { "name": "Depreciation of network infrastructure", "percentage_of_revenue": 10 },
+        { "name": "IT systems and platforms", "percentage_of_revenue": 3 },
+        { "name": "General and administrative", "percentage_of_revenue": 5 },
+        { "name": "Power (diesel/grid for BTS)", "percentage_of_revenue": 4 }
+      ],
+      "depreciation_methods": {
+        "Base transceiver stations (BTS)": "Straight-line (useful life 7-10 years)",
+        "Fibre optic cable network": "Straight-line (useful life 15-25 years)",
+        "Switching equipment": "Straight-line (useful life 5-10 years)",
+        "Right of use assets - tower leases": "Straight-line over lease term per IFRS 16",
+        "Spectrum licences": "Amortised over licence term (typically 10-15 years)",
+        "Intangible IT systems": "Straight-line (useful life 3-5 years)"
+      },
+      "typical_ratios": {
+        "gross_margin": 50,
+        "ebitda_margin": 40,
+        "net_margin": 15
+      }
+    },
+    "Agriculture": {
+      "direct_costs": [
+        { "name": "Seeds and planting material", "percentage_of_revenue": 10, "behavior": "Variable - per planting cycle" },
+        { "name": "Fertiliser and agrochemicals", "percentage_of_revenue": 12, "behavior": "Variable - per application cycle" },
+        { "name": "Animal feed and veterinary costs", "percentage_of_revenue": 8, "behavior": "Variable - per head/production cycle" },
+        { "name": "Farm labour (casual and seasonal)", "percentage_of_revenue": 15, "behavior": "Semi-variable - seasonal peaks" },
+        { "name": "Irrigation and water costs", "percentage_of_revenue": 3, "behavior": "Semi-variable - dry season dependent" }
+      ],
+      "overhead_costs": [
+        { "name": "Permanent staff costs", "percentage_of_revenue": 8 },
+        { "name": "Depreciation of farm assets", "percentage_of_revenue": 5 },
+        { "name": "Storage and post-harvest costs", "percentage_of_revenue": 4 },
+        { "name": "Harvesting and processing", "percentage_of_revenue": 6 },
+        { "name": "Administrative expenses", "percentage_of_revenue": 5 },
+        { "name": "Transportation and logistics", "percentage_of_revenue": 4 }
+      ],
+      "depreciation_methods": {
+        "Agricultural land": "Not depreciated (indefinite life per IAS 16 / IAS 41)",
+        "Farm buildings and structures": "Straight-line (useful life 15-30 years)",
+        "Farm machinery and equipment": "Straight-line or units of production (useful life 5-15 years)",
+        "Irrigation systems": "Straight-line (useful life 10-20 years)",
+        "Motor vehicles": "Straight-line (useful life 4-5 years)",
+        "Biological assets - bearer plants": "Revalued per IAS 41 (fair value model); IAS 16 after reclassification",
+        "Right of use assets": "Straight-line over lease term per IFRS 16"
+      },
+      "typical_ratios": {
+        "gross_margin": 30,
+        "ebitda_margin": 20,
+        "net_margin": 10
+      }
+    },
+    "Construction": {
+      "direct_costs": [
+        { "name": "Construction materials (cement, steel, sand)", "percentage_of_revenue": 30, "behavior": "Variable - per contract specification" },
+        { "name": "Subcontractor costs", "percentage_of_revenue": 20, "behavior": "Variable - per subcontract scope" },
+        { "name": "Direct labour (site workers)", "percentage_of_revenue": 12, "behavior": "Semi-variable - project timeline driven" },
+        { "name": "Equipment hire and operating costs", "percentage_of_revenue": 8, "behavior": "Semi-variable - project duration driven" }
+      ],
+      "overhead_costs": [
+        { "name": "Site overheads (supervision, security, HSE)", "percentage_of_revenue": 5 },
+        { "name": "Administrative staff costs", "percentage_of_revenue": 5 },
+        { "name": "Depreciation - construction equipment", "percentage_of_revenue": 3 },
+        { "name": "Insurance - CAR and public liability", "percentage_of_revenue": 2 },
+        { "name": "Bid and tender costs", "percentage_of_revenue": 1 },
+        { "name": "General and administrative", "percentage_of_revenue": 4 }
+      ],
+      "depreciation_methods": {
+        "Heavy construction equipment (cranes, excavators)": "Straight-line or units of production (useful life 8-15 years)",
+        "Motor vehicles": "Straight-line (useful life 4-5 years)",
+        "Right of use assets - equipment leases": "Straight-line over lease term per IFRS 16",
+        "Site temporary structures": "Straight-line over project duration"
+      },
+      "typical_ratios": {
+        "gross_margin": 12,
+        "ebitda_margin": 7,
+        "net_margin": 4
+      }
+    },
+    "Logistics": {
+      "direct_costs": [
+        { "name": "Fuel and diesel", "percentage_of_revenue": 20, "behavior": "Variable - per km / per trip" },
+        { "name": "Driver and courier costs", "percentage_of_revenue": 12, "behavior": "Semi-variable - fleet size and delivery volume" },
+        { "name": "Vehicle maintenance and repairs", "percentage_of_revenue": 6, "behavior": "Semi-variable - fleet age and usage driven" },
+        { "name": "Tyre expenses", "percentage_of_revenue": 3, "behavior": "Variable - per km driven" },
+        { "name": "Toll and road expenses", "percentage_of_revenue": 2, "behavior": "Variable - route dependent" }
+      ],
+      "overhead_costs": [
+        { "name": "Warehouse operating costs", "percentage_of_revenue": 8 },
+        { "name": "Vehicle insurance", "percentage_of_revenue": 3 },
+        { "name": "Depreciation - fleet and equipment", "percentage_of_revenue": 8 },
+        { "name": "Administrative staff costs", "percentage_of_revenue": 5 },
+        { "name": "IT and tracking systems", "percentage_of_revenue": 3 },
+        { "name": "General and administrative", "percentage_of_revenue": 4 },
+        { "name": "Vehicle licence and regulatory", "percentage_of_revenue": 1 }
+      ],
+      "depreciation_methods": {
+        "Trucks and heavy vehicles": "Straight-line or units of production (useful life 5-8 years or per km)",
+        "Vans and light vehicles": "Straight-line (useful life 4-5 years)",
+        "Warehouse buildings": "Straight-line (useful life 20-30 years)",
+        "Material handling equipment (forklifts)": "Straight-line (useful life 5-10 years)",
+        "Right of use assets - vehicle leases": "Straight-line over lease term per IFRS 16",
+        "Right of use assets - warehouse leases": "Straight-line over lease term per IFRS 16",
+        "Intangible tracking software": "Straight-line (useful life 3-5 years)"
+      },
+      "typical_ratios": {
+        "gross_margin": 20,
+        "ebitda_margin": 12,
+        "net_margin": 5
+      }
+    },
+    "Healthcare": {
+      "direct_costs": [
+        { "name": "Drugs and pharmaceuticals", "percentage_of_revenue": 20, "behavior": "Variable - per patient/bed-day" },
+        { "name": "Medical supplies and consumables", "percentage_of_revenue": 10, "behavior": "Variable - per procedure/patient" },
+        { "name": "Medical staff costs (doctors, nurses)", "percentage_of_revenue": 20, "behavior": "Semi-variable - staffing level driven" },
+        { "name": "Laboratory reagents and test kits", "percentage_of_revenue": 5, "behavior": "Variable - per test volume" }
+      ],
+      "overhead_costs": [
+        { "name": "Administrative staff costs", "percentage_of_revenue": 8 },
+        { "name": "Depreciation - medical equipment", "percentage_of_revenue": 5 },
+        { "name": "Utilities (power - generator critical)", "percentage_of_revenue": 5 },
+        { "name": "Medical waste disposal and HSE", "percentage_of_revenue": 2 },
+        { "name": "Insurance (malpractice and property)", "percentage_of_revenue": 2 },
+        { "name": "General and administrative", "percentage_of_revenue": 5 },
+        { "name": "IT and hospital management systems", "percentage_of_revenue": 3 }
+      ],
+      "depreciation_methods": {
+        "Medical equipment (MRI, CT scan, X-ray)": "Straight-line (useful life 5-10 years)",
+        "Hospital buildings": "Straight-line (useful life 25-40 years)",
+        "Furniture and fittings": "Straight-line (useful life 5-10 years)",
+        "Right of use assets - equipment leases": "Straight-line over lease term per IFRS 16",
+        "Right of use assets - building leases": "Straight-line over lease term per IFRS 16",
+        "Intangible hospital management software": "Straight-line (useful life 3-5 years)"
+      },
+      "typical_ratios": {
+        "gross_margin": 45,
+        "ebitda_margin": 25,
+        "net_margin": 12
+      }
+    },
+    "Education": {
+      "direct_costs": [
+        { "name": "Academic staff costs (lecturers, teachers)", "percentage_of_revenue": 30, "behavior": "Semi-variable - student-teacher ratio driven" },
+        { "name": "Teaching materials and supplies", "percentage_of_revenue": 5, "behavior": "Variable - per student/enrolment" },
+        { "name": "Laboratory supplies and consumables", "percentage_of_revenue": 3, "behavior": "Variable - per student/department" },
+        { "name": "Library acquisitions", "percentage_of_revenue": 2, "behavior": "Semi-variable - annual acquisition budget" }
+      ],
+      "overhead_costs": [
+        { "name": "Non-academic staff costs", "percentage_of_revenue": 12 },
+        { "name": "Utilities (power, water, telecom)", "percentage_of_revenue": 8 },
+        { "name": "Campus maintenance and repairs", "percentage_of_revenue": 5 },
+        { "name": "Depreciation", "percentage_of_revenue": 4 },
+        { "name": "IT and e-learning costs", "percentage_of_revenue": 5 },
+        { "name": "Examination and accreditation costs", "percentage_of_revenue": 3 },
+        { "name": "General and administrative", "percentage_of_revenue": 5 },
+        { "name": "Insurance and security", "percentage_of_revenue": 2 }
+      ],
+      "depreciation_methods": {
+        "School/university buildings": "Straight-line (useful life 25-40 years)",
+        "Laboratory and workshop equipment": "Straight-line (useful life 5-15 years)",
+        "Library books": "Straight-line (useful life 5-10 years) or expensed if low value",
+        "Furniture and equipment": "Straight-line (useful life 5-10 years)",
+        "Motor vehicles (school bus)": "Straight-line (useful life 4-5 years)",
+        "Right of use assets": "Straight-line over lease term per IFRS 16",
+        "Intangible e-learning platform": "Straight-line (useful life 3-5 years)"
+      },
+      "typical_ratios": {
+        "gross_margin": 30,
+        "ebitda_margin": 18,
+        "net_margin": 8
+      }
+    },
+    "Government": {
+      "direct_costs": [
+        { "name": "Personnel costs - salaries and wages", "percentage_of_revenue": 35, "behavior": "Fixed - statutory emolument" },
+        { "name": "Pension and gratuity costs", "percentage_of_revenue": 8, "behavior": "Fixed - statutory obligation" },
+        { "name": "Capital expenditure (roads, buildings)", "percentage_of_revenue": 20, "behavior": "Variable - budget/plan driven" },
+        { "name": "Overhead costs (MDA operations)", "percentage_of_revenue": 10, "behavior": "Semi-variable - appropriated budget" }
+      ],
+      "overhead_costs": [
+        { "name": "Debt service - interest on domestic debt", "percentage_of_revenue": 8 },
+        { "name": "Debt service - interest on external debt", "percentage_of_revenue": 3 },
+        { "name": "Statutory transfers (LGAs, judiciary, NASS)", "percentage_of_revenue": 5 },
+        { "name": "Depreciation of government assets", "percentage_of_revenue": 2 },
+        { "name": "Governance and oversight costs", "percentage_of_revenue": 3 },
+        { "name": "Contingency and miscellaneous", "percentage_of_revenue": 2 }
+      ],
+      "depreciation_methods": {
+        "Government buildings": "Straight-line (useful life 30-50 years per IPSAS 17)",
+        "Road infrastructure": "Straight-line (useful life 20-40 years per IPSAS 17)",
+        "Motor vehicles": "Straight-line (useful life 4-5 years)",
+        "Office equipment and furniture": "Straight-line (useful life 5-10 years)",
+        "Right of use assets": "Straight-line over lease term per IPSAS 43",
+        "Intangible assets": "Straight-line (useful life 3-5 years)"
+      },
+      "typical_ratios": {
+        "gross_margin": 0,
+        "ebitda_margin": 0,
+        "net_margin": 0
+      }
+    },
+    "NGO": {
+      "direct_costs": [
+        { "name": "Programme direct costs (beneficiary-facing)", "percentage_of_revenue": 45, "behavior": "Variable - per donor budget/programme design" },
+        { "name": "Workshop and training costs", "percentage_of_revenue": 8, "behavior": "Variable - per event/participant count" },
+        { "name": "Field operations and monitoring", "percentage_of_revenue": 7, "behavior": "Semi-variable - programme scope driven" },
+        { "name": "Programme staff costs", "percentage_of_revenue": 10, "behavior": "Semi-variable - project staffing plan" }
+      ],
+      "overhead_costs": [
+        { "name": "Support staff costs", "percentage_of_revenue": 8 },
+        { "name": "Office and administrative costs", "percentage_of_revenue": 5 },
+        { "name": "Travel and transportation", "percentage_of_revenue": 4 },
+        { "name": "Depreciation", "percentage_of_revenue": 2 },
+        { "name": "Governance and compliance (audit, legal)", "percentage_of_revenue": 3 },
+        { "name": "IT and communication costs", "percentage_of_revenue": 2 },
+        { "name": "Fundraising costs", "percentage_of_revenue": 3 }
+      ],
+      "depreciation_methods": {
+        "Motor vehicles (field)": "Straight-line (useful life 4-5 years)",
+        "Office equipment": "Straight-line (useful life 5-10 years)",
+        "Right of use assets - office leases": "Straight-line over lease term per IFRS 16",
+        "Intangible assets": "Straight-line (useful life 3-5 years)"
+      },
+      "typical_ratios": {
+        "gross_margin": 0,
+        "ebitda_margin": 0,
+        "net_margin": 0
+      }
+    },
+    "Technology": {
+      "direct_costs": [
+        { "name": "Cloud infrastructure (AWS/Azure/GCP)", "percentage_of_revenue": 12, "behavior": "Variable - per usage/compute hours" },
+        { "name": "Software development costs (expensed R&D)", "percentage_of_revenue": 15, "behavior": "Semi-variable - sprint/release cycle driven" },
+        { "name": "Third-party API and data costs", "percentage_of_revenue": 3, "behavior": "Variable - per API call/transaction" },
+        { "name": "Customer support costs", "percentage_of_revenue": 5, "behavior": "Semi-variable - ticket volume driven" }
+      ],
+      "overhead_costs": [
+        { "name": "Staff costs (development, product, sales)", "percentage_of_revenue": 30 },
+        { "name": "Sales and marketing (CAC)", "percentage_of_revenue": 15 },
+        { "name": "Amortisation of capitalised development", "percentage_of_revenue": 5 },
+        { "name": "General and administrative", "percentage_of_revenue": 8 },
+        { "name": "Depreciation - IT equipment", "percentage_of_revenue": 2 },
+        { "name": "Professional fees (legal, audit)", "percentage_of_revenue": 3 },
+        { "name": "Office and occupancy", "percentage_of_revenue": 3 }
+      ],
+      "depreciation_methods": {
+        "Servers and IT infrastructure": "Straight-line (useful life 3-5 years)",
+        "Right of use assets - office leases": "Straight-line over lease term per IFRS 16",
+        "Intangible - developed software": "Amortised straight-line (useful life 3-5 years) per IAS 38",
+        "Intangible - capitalised development": "Amortised straight-line (useful life 3-5 years) per IAS 38",
+        "Intangible - acquired software": "Amortised straight-line (useful life 3-5 years)",
+        "Goodwill": "Annual impairment test per IFRS 3 / IAS 36 (no amortisation)"
+      },
+      "typical_ratios": {
+        "gross_margin": 70,
+        "ebitda_margin": 25,
+        "net_margin": 10
+      }
+    },
+    "Automotive": {
+      "direct_costs": [
+        { "name": "Cost of vehicles sold (inventory)", "percentage_of_revenue": 55, "behavior": "Variable - per unit sold" },
+        { "name": "Cost of spare parts and accessories sold", "percentage_of_revenue": 12, "behavior": "Variable - per part sold" },
+        { "name": "Assembly operating costs (CKD/SKD)", "percentage_of_revenue": 8, "behavior": "Semi-variable - production volume driven" },
+        { "name": "Import duties and tariffs", "percentage_of_revenue": 5, "behavior": "Variable - per import/HS code" },
+        { "name": "Freight and clearing costs", "percentage_of_revenue": 3, "behavior": "Variable - per shipment" }
+      ],
+      "overhead_costs": [
+        { "name": "Staff costs", "percentage_of_revenue": 5 },
+        { "name": "Showroom and marketing", "percentage_of_revenue": 4 },
+        { "name": "Vehicle warranty expense", "percentage_of_revenue": 2 },
+        { "name": "Depreciation - assembly equipment", "percentage_of_revenue": 2 },
+        { "name": "NADDC levy", "percentage_of_revenue": 0.5 },
+        { "name": "Insurance and registration costs", "percentage_of_revenue": 1 },
+        { "name": "General and administrative", "percentage_of_revenue": 3 }
+      ],
+      "depreciation_methods": {
+        "Assembly plant and equipment": "Straight-line or units of production (useful life 10-20 years)",
+        "Robotic assembly lines": "Straight-line (useful life 7-12 years)",
+        "Paint shop equipment": "Straight-line (useful life 8-12 years)",
+        "Testing and QC equipment": "Straight-line (useful life 5-10 years)",
+        "Showroom fixtures": "Straight-line (useful life 5-10 years)",
+        "Motor vehicles - demo": "Straight-line (useful life 2-3 years)",
+        "Right of use assets": "Straight-line over lease term per IFRS 16",
+        "Intangible design and patents": "Amortised straight-line (useful life 5-15 years)"
+      },
+      "typical_ratios": {
+        "gross_margin": 8,
+        "ebitda_margin": 4,
+        "net_margin": 2
+      }
+    }
+  }
+}

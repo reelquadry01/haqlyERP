@@ -3,9 +3,10 @@
 
 from __future__ import annotations
 
+import os
 from typing import Dict
 
-from pydantic import Field
+from pydantic import Field, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
@@ -30,8 +31,11 @@ class Settings(BaseSettings):
     api_host: str = Field(default="0.0.0.0", description="API bind host")
     api_port: int = Field(default=8200, description="API bind port")
     jwt_secret: str = Field(
-        default="change-me-in-production-use-a-strong-secret",
-        description="JWT signing secret (shared with Rust backend)",
+        default_factory=lambda: os.environ.get("NAIJA_ENGINE_JWT_SECRET") or (
+            "dev-only-secret" if os.environ.get("NAIJA_ENGINE_ENV") == "development"
+            else ""
+        ),
+        description="JWT signing secret (shared with Rust backend). Must be set in production.",
     )
     jwt_algorithm: str = Field(default="HS256", description="JWT algorithm")
     rust_backend_url: str = Field(
@@ -83,6 +87,12 @@ class Settings(BaseSettings):
         default=["http://localhost:3000", "http://localhost:8100", "tauri://localhost"],
         description="Allowed CORS origins",
     )
+
+    @model_validator(mode="after")
+    def _fail_secure_jwt_secret(self) -> "Settings":
+        if not self.jwt_secret and os.environ.get("NAIJA_ENGINE_ENV") != "development":
+            raise RuntimeError("FATAL: NAIJA_ENGINE_JWT_SECRET must be set in production")
+        return self
 
 
 settings = Settings()

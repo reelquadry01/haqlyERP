@@ -1,0 +1,107 @@
+{
+  "country": "Nigeria",
+  "currency": "NGN",
+  "source": "National Bureau of Statistics / World Bank / IMF",
+  "description": "Nigerian GDP data 2015-2025. Nominal values in USD billions and NGN billions. Sector breakdown reflects contribution to real GDP.",
+  "data": [
+    {
+      "year": 2015,
+      "gdp_nominal_usd_bn": 486.5,
+      "gdp_nominal_ngn_bn": 95630.0,
+      "gdp_growth_rate": 2.65,
+      "gdp_per_capita_usd": 2688,
+      "sector_breakdown": { "agriculture_pct": 23.1, "industry_pct": 22.0, "services_pct": 54.9 },
+      "inflation_rate": 9.01
+    },
+    {
+      "year": 2016,
+      "gdp_nominal_usd_bn": 404.7,
+      "gdp_nominal_ngn_bn": 123540.0,
+      "gdp_growth_rate": -1.62,
+      "gdp_per_capita_usd": 2188,
+      "sector_breakdown": { "agriculture_pct": 24.4, "industry_pct": 20.6, "services_pct": 55.0 },
+      "inflation_rate": 15.68
+    },
+    {
+      "year": 2017,
+      "gdp_nominal_usd_bn": 375.8,
+      "gdp_nominal_ngn_bn": 136250.0,
+      "gdp_growth_rate": 0.82,
+      "gdp_per_capita_usd": 1967,
+      "sector_breakdown": { "agriculture_pct": 25.1, "industry_pct": 21.8, "services_pct": 53.1 },
+      "inflation_rate": 16.52
+    },
+    {
+      "year": 2018,
+      "gdp_nominal_usd_bn": 398.2,
+      "gdp_nominal_ngn_bn": 143750.0,
+      "gdp_growth_rate": 1.91,
+      "gdp_per_capita_usd": 2031,
+      "sector_breakdown": { "agriculture_pct": 25.1, "industry_pct": 22.0, "services_pct": 52.9 },
+      "inflation_rate": 12.09
+    },
+    {
+      "year": 2019,
+      "gdp_nominal_usd_bn": 448.1,
+      "gdp_nominal_ngn_bn": 162180.0,
+      "gdp_growth_rate": 2.21,
+      "gdp_per_capita_usd": 2229,
+      "sector_breakdown": { "agriculture_pct": 24.0, "industry_pct": 22.3, "services_pct": 53.7 },
+      "inflation_rate": 11.40
+    },
+    {
+      "year": 2020,
+      "gdp_nominal_usd_bn": 432.3,
+      "gdp_nominal_ngn_bn": 164730.0,
+      "gdp_growth_rate": -1.79,
+      "gdp_per_capita_usd": 2099,
+      "sector_breakdown": { "agriculture_pct": 25.5, "industry_pct": 20.6, "services_pct": 53.9 },
+      "inflation_rate": 13.21
+    },
+    {
+      "year": 2021,
+      "gdp_nominal_usd_bn": 440.8,
+      "gdp_nominal_ngn_bn": 180920.0,
+      "gdp_growth_rate": 3.25,
+      "gdp_per_capita_usd": 2088,
+      "sector_breakdown": { "agriculture_pct": 24.3, "industry_pct": 20.8, "services_pct": 54.9 },
+      "inflation_rate": 16.98
+    },
+    {
+      "year": 2022,
+      "gdp_nominal_usd_bn": 477.4,
+      "gdp_nominal_ngn_bn": 210350.0,
+      "gdp_growth_rate": 3.52,
+      "gdp_per_capita_usd": 2189,
+      "sector_breakdown": { "agriculture_pct": 23.5, "industry_pct": 21.2, "services_pct": 55.3 },
+      "inflation_rate": 18.85
+    },
+    {
+      "year": 2023,
+      "gdp_nominal_usd_bn": 390.0,
+      "gdp_nominal_ngn_bn": 234000.0,
+      "gdp_growth_rate": 2.74,
+      "gdp_per_capita_usd": 1741,
+      "sector_breakdown": { "agriculture_pct": 24.2, "industry_pct": 21.5, "services_pct": 54.3 },
+      "inflation_rate": 24.46
+    },
+    {
+      "year": 2024,
+      "gdp_nominal_usd_bn": 205.0,
+      "gdp_nominal_ngn_bn": 295800.0,
+      "gdp_growth_rate": 3.19,
+      "gdp_per_capita_usd": 891,
+      "sector_breakdown": { "agriculture_pct": 24.8, "industry_pct": 22.0, "services_pct": 53.2 },
+      "inflation_rate": 28.92
+    },
+    {
+      "year": 2025,
+      "gdp_nominal_usd_bn": 195.0,
+      "gdp_nominal_ngn_bn": 310000.0,
+      "gdp_growth_rate": 3.40,
+      "gdp_per_capita_usd": 823,
+      "sector_breakdown": { "agriculture_pct": 25.0, "industry_pct": 22.1, "services_pct": 52.9 },
+      "inflation_rate": 23.50
+    }
+  ]
+}

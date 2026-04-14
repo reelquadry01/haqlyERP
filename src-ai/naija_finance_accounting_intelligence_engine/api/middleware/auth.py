@@ -3,6 +3,8 @@
 
 from __future__ import annotations
 
+import os
+
 import jwt
 from datetime import datetime, timedelta, timezone
 from typing import Any, Dict, Optional
@@ -10,7 +12,10 @@ from typing import Any, Dict, Optional
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 
-SECRET_KEY = "haqly_ai_finance_engine_secret_key_change_in_production"
+SECRET_KEY: str = os.environ.get("NAIJA_ENGINE_JWT_SECRET") or (
+    "dev-only-secret" if os.environ.get("NAIJA_ENGINE_ENV") == "development"
+    else (_ for _ in ()).throw(RuntimeError("FATAL: NAIJA_ENGINE_JWT_SECRET must be set in production"))
+)
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = 60
 

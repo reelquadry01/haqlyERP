@@ -42,3 +42,4 @@ cron = "0.12"
 lru = "0.12"
 dotenvy = "0.15"
 bigdecimal = { version = "0.4", features = ["serde"] }
+zeroize = { version = "1", features = ["derive"] }
