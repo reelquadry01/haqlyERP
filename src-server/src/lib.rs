@@ -7,3 +7,4 @@ pub mod einvoicing;
 pub mod middleware;
 pub mod routes;
 pub mod dtos;
+pub mod security;

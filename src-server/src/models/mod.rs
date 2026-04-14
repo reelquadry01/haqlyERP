@@ -14,3 +14,8 @@ pub mod einvoice;
 pub mod currency;
 pub mod company;
 pub mod ocr_document;
+pub mod payroll;
+pub mod crm;
+pub mod notification;
+pub mod bi;
+pub mod license;

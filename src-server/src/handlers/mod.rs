@@ -1,0 +1,53 @@
+// Author: Quadri Atharu
+// Crate: haqly-erp-server
+
+pub mod auth_handler;
+pub mod users_handler;
+pub mod org_handler;
+pub mod accounting_handler;
+pub mod journals_handler;
+pub mod payment_vouchers_handler;
+pub mod sales_handler;
+pub mod purchases_handler;
+pub mod inventory_handler;
+pub mod tax_handler;
+pub mod fixed_assets_handler;
+pub mod depreciation_handler;
+pub mod loans_handler;
+pub mod reports_handler;
+pub mod imports_handler;
+pub mod admin_handler;
+pub mod einvoicing_handler;
+pub mod ocr_handler;
+pub mod ai_intelligence_handler;
+pub mod payroll_handler;
+pub mod crm_handler;
+pub mod bi_handler;
+pub mod notification_handler;
+pub mod license_handler;
+
+pub use auth_handler::router as auth_routes;
+pub use users_handler::router as users_routes;
+pub use org_handler::router as org_routes;
+pub use accounting_handler::router as accounting_routes;
+pub use journals_handler::router as journals_routes;
+pub use payment_vouchers_handler::router as payment_vouchers_routes;
+pub use sales_handler::router as sales_routes;
+pub use purchases_handler::router as purchases_routes;
+pub use inventory_handler::router as inventory_routes;
+pub use tax_handler::router as tax_routes;
+pub use fixed_assets_handler::router as fixed_assets_routes;
+pub use depreciation_handler::router as depreciation_routes;
+pub use loans_handler::router as loans_routes;
+pub use reports_handler::router as reports_routes;
+pub use imports_handler::router as imports_routes;
+pub use admin_handler::router as admin_routes;
+pub use einvoicing_handler::router as einvoicing_routes;
+pub use ocr_handler::router as ocr_routes;
+pub use ai_intelligence_handler::router as ai_routes;
+pub use payroll_handler::router as payroll_routes;
+pub use crm_handler::router as crm_routes;
+pub use bi_handler::router as bi_routes;
+pub use notification_handler::router as notification_routes;
+pub use license_handler::validate_license as license_validate;
+pub use license_handler::get_license_status as license_status;

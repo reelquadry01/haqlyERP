@@ -7,3 +7,8 @@ pub mod tax_dto;
 pub mod einvoice_dto;
 pub mod ocr_dto;
 pub mod reports_dto;
+pub mod payroll_dto;
+pub mod crm_dto;
+pub mod notification_dto;
+pub mod bi_dto;
+pub mod license_dto;

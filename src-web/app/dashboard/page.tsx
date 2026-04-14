@@ -1,18 +1,27 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { apiGet } from "@/lib/api";
-import { getToken, getCompanyContext } from "@/lib/session";
+import { WorkspaceShell } from "@/components/workspace-shell";
 import { KPICard } from "@/components/ui/kpi-card";
-import { BrandLockup } from "@/components/ui/brand-lockup";
+import { DataTable, Column } from "@/components/ui/data-table";
+import { getToken, getCompanyContext } from "@/lib/session";
+import { apiGet } from "@/lib/api";
 import {
-  DollarSign,
-  TrendingDown,
   TrendingUp,
+  TrendingDown,
+  DollarSign,
+  ShoppingCart,
+  FileText,
+  CreditCard,
+  BookOpen,
+  Receipt,
+  BarChart3,
+  Users,
+  FileSpreadsheet,
   Wallet,
 } from "lucide-react";
 
-interface DashboardMetrics {
+interface KPIData {
   revenue: number;
   expenses: number;
   netIncome: number;
@@ -26,17 +35,30 @@ interface DashboardMetrics {
 interface Transaction {
   id: string;
   date: string;
+  reference: string;
   description: string;
-  type: string;
-  amount: number;
+  account: string;
+  debit: number;
+  credit: number;
   status: string;
 }
 
+const quickActions = [
+  { icon: ShoppingCart, label: "Create Invoice", path: "/sales" },
+  { icon: CreditCard, label: "Record Payment", path: "/sales" },
+  { icon: BookOpen, label: "Journal Entry", path: "/journal-entries" },
+  { icon: Users, label: "Run Payroll", path: "/hr-payroll" },
+  { icon: Receipt, label: "Tax Return", path: "/tax" },
+  { icon: FileText, label: "Create PO", path: "/purchases" },
+  { icon: BarChart3, label: "View Reports", path: "/reports" },
+  { icon: FileSpreadsheet, label: "E-Invoice", path: "/einvoicing" },
+];
+
 export default function DashboardPage() {
-  const [metrics, setMetrics] = useState<DashboardMetrics | null>(null);
+  const [kpi, setKpi] = useState<KPIData | null>(null);
   const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [period, setPeriod] = useState("this_month");
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function loadDashboard() {
@@ -46,31 +68,67 @@ export default function DashboardPage() {
         window.location.replace("/login");
         return;
       }
-
       try {
         const companyId = company || "";
         const [metricsRes, txRes] = await Promise.all([
-          apiGet(`/dashboard/metrics?companyId=${companyId}`, token),
-          apiGet(`/dashboard/recent-transactions?companyId=${companyId}&limit=10`, token),
+          apiGet(`/dashboard/metrics?companyId=${companyId}&period=${period}`, token),
+          apiGet(`/dashboard/recent-transactions?companyId=${companyId}&limit=15`, token),
         ]);
-
-        if (!metricsRes.ok || !txRes.ok) {
-          throw new Error("Failed to load dashboard data");
+        if (metricsRes.ok) {
+          const data = await metricsRes.json();
+          setKpi(data);
         }
-
-        const metricsData = await metricsRes.json();
-        const txData = await txRes.json();
-        setMetrics(metricsData);
-        setTransactions(txData.transactions || []);
-      } catch (err: any) {
-        setError(err.message || "Failed to load dashboard");
+        if (txRes.ok) {
+          const data = await txRes.json();
+          setTransactions(data.transactions || []);
+        }
+      } catch {
+        // offline
       } finally {
         setLoading(false);
       }
     }
-
     loadDashboard();
-  }, []);
+  }, [period]);
+
+  const transactionColumns: Column<Transaction>[] = [
+    { key: "date", label: "Date", sortable: true, width: "100px" },
+    { key: "reference", label: "Reference", sortable: true, width: "120px" },
+    { key: "description", label: "Description" },
+    { key: "account", label: "Account", width: "160px" },
+    {
+      key: "debit",
+      label: "Debit",
+      align: "right",
+      width: "120px",
+      render: (v: number) => (v ? `₦${v.toLocaleString("en-NG")}` : ""),
+    },
+    {
+      key: "credit",
+      label: "Credit",
+      align: "right",
+      width: "120px",
+      render: (v: number) => (v ? `₦${v.toLocaleString("en-NG")}` : ""),
+    },
+    {
+      key: "status",
+      label: "Status",
+      width: "90px",
+      render: (v: string) => {
+        const colors: Record<string, { bg: string; color: string }> = {
+          posted: { bg: "rgba(25,135,84,0.12)", color: "#198754" },
+          pending: { bg: "rgba(255,193,7,0.12)", color: "#B8860B" },
+          draft: { bg: "rgba(134,142,150,0.12)", color: "#868E96" },
+        };
+        const c = colors[v] || colors.draft;
+        return (
+          <span style={{ fontSize: "0.75rem", padding: "2px 8px", borderRadius: 4, background: c.bg, color: c.color }}>
+            {v.charAt(0).toUpperCase() + v.slice(1)}
+          </span>
+        );
+      },
+    },
+  ];
 
   if (loading) {
     return (
@@ -80,163 +138,69 @@ export default function DashboardPage() {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex-center full-viewport" style={{ flexDirection: "column", gap: 16 }}>
-        <p className="text-danger">{error}</p>
-        <button className="btn btn-primary" onClick={() => window.location.reload()}>
-          Retry
-        </button>
-      </div>
-    );
-  }
-
-  const chartPlaceholderStyle: React.CSSProperties = {
-    height: 240,
-    display: "flex",
-    alignItems: "center",
-    justifyContent: "center",
-    border: "1px dashed #2a3754",
-    borderRadius: 8,
-    color: "#64748b",
-    fontSize: "0.85rem",
-  };
-
-  const thStyle: React.CSSProperties = {
-    padding: "8px 12px",
-    textAlign: "left",
-    fontWeight: 600,
-    fontSize: "0.8rem",
-    color: "#94a3b8",
-    textTransform: "uppercase",
-    letterSpacing: "0.05em",
-    borderBottom: "1px solid #2a3754",
-  };
-
-  const tdStyle: React.CSSProperties = {
-    padding: "10px 12px",
-    fontSize: "0.875rem",
-    borderBottom: "1px solid #1e2a3e",
-  };
-
-  function statusColor(status: string) {
-    if (status === "posted") return { bg: "rgba(16,185,129,0.15)", color: "#10b981" };
-    if (status === "pending") return { bg: "rgba(245,158,11,0.15)", color: "#f59e0b" };
-    return { bg: "rgba(100,116,139,0.15)", color: "#64748b" };
-  }
-
   return (
-    <div style={{ padding: 24, maxWidth: 1400, margin: "0 auto" }} className="fade-in">
-      <div style={{ marginBottom: 24, display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-        <div>
-          <h1 style={{ fontSize: "1.5rem", fontWeight: 700 }}>Dashboard</h1>
-          <p className="text-muted">Financial overview and recent activity</p>
+    <WorkspaceShell>
+      <div style={{ padding: 24 }}>
+        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+          <h1 style={{ fontSize: "1.25rem", fontWeight: 600, color: "#1A1A2E" }}>Dashboard</h1>
+          <select
+            value={period}
+            onChange={(e) => setPeriod(e.target.value)}
+            style={{ padding: "6px 12px", borderRadius: 8, border: "1px solid #DEE2E6", background: "#FFFFFF", fontSize: "0.85rem", color: "#495057" }}
+          >
+            <option value="this_month">This Month</option>
+            <option value="this_quarter">This Quarter</option>
+            <option value="this_year">This Year</option>
+            <option value="last_month">Last Month</option>
+          </select>
         </div>
-        <BrandLockup />
-      </div>
 
-      <div className="grid-kpi" style={{ marginBottom: 24 }}>
-        <KPICard
-          title="Revenue"
-          value={metrics?.revenue ?? 0}
-          change={metrics?.revenueChange ?? 0}
-          trend={metrics && metrics.revenueChange >= 0 ? "up" : "down"}
-          color="success"
-          icon={<DollarSign size={18} />}
-        />
-        <KPICard
-          title="Expenses"
-          value={metrics?.expenses ?? 0}
-          change={metrics?.expensesChange ?? 0}
-          trend={metrics && metrics.expensesChange >= 0 ? "up" : "down"}
-          color="danger"
-          icon={<TrendingDown size={18} />}
-        />
-        <KPICard
-          title="Net Income"
-          value={metrics?.netIncome ?? 0}
-          change={metrics?.netIncomeChange ?? 0}
-          trend={metrics && metrics.netIncomeChange >= 0 ? "up" : "down"}
-          color="info"
-          icon={<TrendingUp size={18} />}
-        />
-        <KPICard
-          title="Cash Balance"
-          value={metrics?.cashBalance ?? 0}
-          change={metrics?.cashBalanceChange ?? 0}
-          trend={metrics && metrics.cashBalanceChange >= 0 ? "up" : "down"}
-          color="primary"
-          icon={<Wallet size={18} />}
-        />
-      </div>
+        <div className="grid-kpi" style={{ marginBottom: 24 }}>
+          <KPICard title="Revenue" value={kpi?.revenue || 0} change={kpi?.revenueChange || 0} trend={kpi?.revenueChange >= 0 ? "up" : "down"} color="success" icon={<DollarSign size={16} />} />
+          <KPICard title="Expenses" value={kpi?.expenses || 0} change={kpi?.expensesChange || 0} trend={kpi?.expensesChange <= 0 ? "up" : "down"} color="warning" icon={<TrendingDown size={16} />} />
+          <KPICard title="Net Income" value={kpi?.netIncome || 0} change={kpi?.netIncomeChange || 0} trend={kpi?.netIncomeChange >= 0 ? "up" : "down"} color="primary" icon={<TrendingUp size={16} />} />
+          <KPICard title="Cash Balance" value={kpi?.cashBalance || 0} change={kpi?.cashBalanceChange || 0} trend={kpi?.cashBalanceChange >= 0 ? "up" : "down"} color="info" icon={<Wallet size={16} />} />
+        </div>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16, marginBottom: 24 }}>
-        <div className="card">
-          <h3 style={{ marginBottom: 16, fontSize: "1rem", fontWeight: 600 }}>Revenue vs Expenses</h3>
-          <div style={chartPlaceholderStyle}>
-            Chart placeholder — integrate Chart.js or Recharts
+        <div style={{ display: "grid", gridTemplateColumns: "3fr 2fr", gap: 20, marginBottom: 24 }}>
+          <div style={{ background: "#FFFFFF", border: "1px solid #E9ECEF", borderRadius: 12, padding: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+            <h3 style={{ fontSize: "0.95rem", fontWeight: 600, marginBottom: 16, color: "#1A1A2E" }}>Recent Transactions</h3>
+            <DataTable columns={transactionColumns} data={transactions} pageSize={8} emptyMessage="No recent transactions" />
           </div>
-        </div>
-        <div className="card">
-          <h3 style={{ marginBottom: 16, fontSize: "1rem", fontWeight: 600 }}>Cash Flow Trend</h3>
-          <div style={chartPlaceholderStyle}>
-            Chart placeholder — integrate Chart.js or Recharts
-          </div>
-        </div>
-      </div>
 
-      <div className="card">
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 16 }}>
-          <h3 style={{ fontSize: "1rem", fontWeight: 600 }}>Recent Transactions</h3>
-          <a href="/accounting" style={{ fontSize: "0.85rem" }}>View all →</a>
-        </div>
-        {transactions.length === 0 ? (
-          <p className="text-muted" style={{ textAlign: "center", padding: 24 }}>
-            No recent transactions
-          </p>
-        ) : (
-          <table style={{ width: "100%", borderCollapse: "collapse" }}>
-            <thead>
-              <tr>
-                <th style={thStyle}>Date</th>
-                <th style={thStyle}>Description</th>
-                <th style={thStyle}>Type</th>
-                <th style={{ ...thStyle, textAlign: "right" }}>Amount</th>
-                <th style={thStyle}>Status</th>
-              </tr>
-            </thead>
-            <tbody>
-              {transactions.map((tx) => {
-                const sc = statusColor(tx.status);
+          <div style={{ background: "#FFFFFF", border: "1px solid #E9ECEF", borderRadius: 12, padding: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
+            <h3 style={{ fontSize: "0.95rem", fontWeight: 600, marginBottom: 16, color: "#1A1A2E" }}>Quick Actions</h3>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+              {quickActions.map((action) => {
+                const Icon = action.icon;
                 return (
-                  <tr key={tx.id}>
-                    <td style={tdStyle}>{tx.date}</td>
-                    <td style={tdStyle}>{tx.description}</td>
-                    <td style={tdStyle}>{tx.type}</td>
-                    <td style={{ ...tdStyle, textAlign: "right", fontFamily: "var(--font-mono)" }}>
-                      ₦{tx.amount.toLocaleString()}
-                    </td>
-                    <td style={tdStyle}>
-                      <span
-                        style={{
-                          padding: "2px 8px",
-                          borderRadius: 12,
-                          fontSize: "0.75rem",
-                          fontWeight: 600,
-                          background: sc.bg,
-                          color: sc.color,
-                        }}
-                      >
-                        {tx.status}
-                      </span>
-                    </td>
-                  </tr>
+                  <button
+                    key={action.label}
+                    onClick={() => (window.location.href = action.path)}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      gap: 8,
+                      padding: "10px 12px",
+                      borderRadius: 8,
+                      border: "1px solid #E9ECEF",
+                      background: "#F8F9FA",
+                      fontSize: "0.8rem",
+                      color: "#495057",
+                      transition: "all 150ms ease",
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = "#F1F3F5"; e.currentTarget.style.borderColor = "#DEE2E6"; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = "#F8F9FA"; e.currentTarget.style.borderColor = "#E9ECEF"; }}
+                  >
+                    <Icon size={16} />
+                    {action.label}
+                  </button>
                 );
               })}
-            </tbody>
-          </table>
-        )}
+            </div>
+          </div>
+        </div>
       </div>
-    </div>
+    </WorkspaceShell>
   );
 }
