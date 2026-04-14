@@ -13,6 +13,8 @@ use tower::Layer;
 use tower::Service;
 use uuid::Uuid;
 
+use crate::security::audit_chain::{self, AuditChainEntry};
+
 fn extract_user_id_from_token(auth_header: &str) -> Option<Uuid> {
     let token = auth_header.strip_prefix("Bearer ")?;
     let parts: Vec<&str> = token.split('.').collect();
@@ -112,18 +114,23 @@ where
             let ip_bg = ip_address.clone();
             let entity_bg = entity.clone();
             tokio::spawn(async move {
-                let result = sqlx::query(
-                    "INSERT INTO audit_logs (user_id, action, entity, ip_address) VALUES ($1, $2, $3, $4)",
-                )
-                .bind(user_id)
-                .bind(&action)
-                .bind(&entity_bg)
-                .bind(&ip_bg)
-                .execute(&pool_bg)
-                .await;
+                let chain_entry = AuditChainEntry {
+                    id: Uuid::now_v7(),
+                    user_id,
+                    action: action.clone(),
+                    entity: entity_bg.clone(),
+                    entity_id: None,
+                    details: None,
+                    ip_address: ip_bg.clone(),
+                    created_at: chrono::Utc::now().naive_utc(),
+                    previous_hash: None,
+                    entry_hash: String::new(),
+                };
+
+                let result = audit_chain::append_to_chain(&pool_bg, &chain_entry).await;
 
                 if let Err(e) = result {
-                    tracing::error!("Failed to write audit log: {}", e);
+                    tracing::error!("Failed to write audit chain entry: {}", e);
                 }
             });
 

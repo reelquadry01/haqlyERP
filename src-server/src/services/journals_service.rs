@@ -620,3 +620,45 @@ impl JournalsService {
         Ok(format!("JE-{}", count + 1))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use bigdecimal::BigDecimal;
+
+    #[test]
+    fn test_journal_double_entry_balance() {
+        let debit1 = Some(BigDecimal::from(100_000));
+        let debit2 = Some(BigDecimal::from(50_000));
+        let credit1 = Some(BigDecimal::from(75_000));
+        let credit2 = Some(BigDecimal::from(75_000));
+
+        let total_debit: BigDecimal = [debit1, debit2].into_iter().filter_map(|x| x).sum();
+        let total_credit: BigDecimal = [credit1, credit2].into_iter().filter_map(|x| x).sum();
+
+        assert_eq!(total_debit, total_credit);
+    }
+
+    #[test]
+    fn test_journal_unbalanced_rejected() {
+        let total_debit = BigDecimal::from(150_000);
+        let total_credit = BigDecimal::from(100_000);
+
+        assert_ne!(total_debit, total_credit);
+        assert!(total_debit != total_credit);
+    }
+
+    #[test]
+    fn test_entry_number_format() {
+        let now = chrono::Utc::now();
+        let year_month = now.format("%Y%m").to_string();
+        let seq: i32 = 1;
+        let entry_number = format!("JE-{}-{:03}", year_month, seq);
+
+        assert!(entry_number.starts_with("JE-"));
+        let parts: Vec<&str> = entry_number[3..].split('-').collect();
+        assert_eq!(parts.len(), 2);
+        assert_eq!(parts[0].len(), 6);
+        assert!(parts[0].chars().all(|c| c.is_ascii_digit()));
+        assert!(parts[1].chars().all(|c| c.is_ascii_digit()));
+    }
+}

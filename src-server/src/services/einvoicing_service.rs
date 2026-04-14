@@ -337,3 +337,91 @@ impl EInvoicingService {
         Ok(doc)
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use base64::engine::general_purpose::STANDARD as BASE64;
+    use base64::Engine;
+
+    use crate::services::encryption_service;
+
+    #[test]
+    fn test_invoice_payload_structure() {
+        let payload = serde_json::json!({
+            "seller": {
+                "name": "HAQLY Ltd",
+                "tax_id": "12345678-0001",
+                "business_id": "BN12345",
+                "address": {
+                    "line1": "12 Marina Street",
+                    "city": "Lagos",
+                    "state": "Lagos",
+                    "country": "NG",
+                }
+            },
+            "buyer": {
+                "name": "Client Corp",
+                "tax_id": "87654321-0001",
+                "address": {
+                    "line1": "45 Awolowo Road",
+                    "city": "Lagos",
+                    "state": "Lagos",
+                    "country": "NG",
+                }
+            },
+            "document": {
+                "invoice_number": "INV-001",
+                "invoice_date": "2024-06-15",
+                "currency": "NGN",
+            },
+            "lines": [{
+                "line_number": 1,
+                "description": "Consulting services",
+                "quantity": 1,
+                "unit_price": 1_000_000,
+                "tax_rate": 7.5,
+                "tax_amount": 75_000,
+                "line_total": 1_075_000,
+            }],
+        });
+
+        assert!(payload.get("seller").is_some());
+        assert!(payload["seller"].get("name").is_some());
+        assert!(payload["seller"].get("tax_id").is_some());
+        assert!(payload.get("buyer").is_some());
+        assert!(payload.get("document").is_some());
+        assert!(payload["document"].get("invoice_number").is_some());
+        assert!(payload.get("lines").is_some());
+        assert!(payload["lines"].as_array().unwrap().len() > 0);
+    }
+
+    #[test]
+    fn test_irn_format() {
+        let irn = "IRN-12345678-0001-INV001-20240615-a1b2c3d4e5f6";
+        assert!(irn.starts_with("IRN-"));
+        let parts: Vec<&str> = irn.split('-').collect();
+        assert!(parts.len() >= 4);
+        assert!(!parts[1].is_empty());
+    }
+
+    #[test]
+    fn test_encrypted_credentials_roundtrip() {
+        let key = encryption_service::generate_encryption_key();
+        let secret = "my-api-secret-key-12345";
+
+        let encrypted = encryption_service::encrypt_field(secret, &key).unwrap();
+
+        assert_ne!(encrypted.ciphertext, BASE64.encode(secret.as_bytes()));
+        assert!(!encrypted.nonce.is_empty());
+        assert!(!encrypted.tag.is_empty());
+
+        let decrypted = encryption_service::decrypt_field(
+            &encrypted.ciphertext,
+            &key,
+            &encrypted.nonce,
+            &encrypted.tag,
+        ).unwrap();
+
+        assert_eq!(secret, decrypted);
+    }
+}

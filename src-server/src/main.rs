@@ -1,8 +1,8 @@
 use axum::Router;
 use haqly_erp_server::{
     config::settings::Settings,
-    db::pool::create_pool,
-    middleware::{auth::AuthLayer, audit::AuditLayer, error::ErrorLayer, rbac::RbacLayer},
+    db::pool::{create_pool_with_fallback, DbPool},
+    middleware::{auth::AuthLayer, audit::AuditLayer, error::ErrorLayer, rbac::RbacLayer, rate_limit::RateLimitLayer},
     routes::app_routes,
 };
 use sqlx::postgres::PgPoolOptions;
@@ -29,17 +29,27 @@ async fn main() -> anyhow::Result<()> {
     tracing::info!("HAQLY ERP Server starting...");
 
     let settings = Settings::load()?;
-    let pool = create_pool(&settings.database_url).await?;
+    let app_data_dir = std::env::var("APP_DATA_DIR")
+        .unwrap_or_else(|_| ".".to_string());
 
-    tracing::info!("Running database migrations...");
-    sqlx::migrate!("./src/db/migrations")
-        .run(&pool)
-        .await
-        .map_err(|e| {
-            tracing::error!("Migration failed: {}", e);
-            e
-        })?;
-    tracing::info!("Migrations applied successfully.");
+    let db_pool = create_pool_with_fallback(&settings.database_url, &app_data_dir).await?;
+
+    match &db_pool {
+        DbPool::Postgres(pool) => {
+            tracing::info!("Running database migrations (PostgreSQL)...");
+            sqlx::migrate!("./src/db/migrations")
+                .run(pool)
+                .await
+                .map_err(|e| {
+                    tracing::error!("Migration failed: {}", e);
+                    e
+                })?;
+            tracing::info!("Migrations applied successfully.");
+        }
+        DbPool::Sqlite(_) => {
+            tracing::info!("SQLite migrations already applied during pool initialization.");
+        }
+    }
 
     let cors = CorsLayer::permissive()
         .allow_origin(
@@ -68,12 +78,23 @@ async fn main() -> anyhow::Result<()> {
         ])
         .allow_credentials(true);
 
-    let app = app_routes(pool.clone(), settings.clone())
+    let pg_pool_for_routes = match &db_pool {
+        DbPool::Postgres(p) => p.clone(),
+        DbPool::Sqlite(_) => {
+            anyhow::bail!(
+                "SQLite fallback mode is not yet supported for the full Axum route stack. \
+                 Please configure PostgreSQL or bundle embedded PostgreSQL binaries."
+            );
+        }
+    };
+
+    let app = app_routes(pg_pool_for_routes.clone(), settings.clone())
         .layer(CompressionLayer::new())
         .layer(TraceLayer::new_for_http())
         .layer(RbacLayer::new())
         .layer(AuthLayer::new(settings.rsa_keypair.clone(), settings.jwt_expiration))
-        .layer(AuditLayer::new(pool.clone()))
+        .layer(AuditLayer::new(pg_pool_for_routes.clone()))
+        .layer(RateLimitLayer::new())
         .layer(ErrorLayer::new())
         .layer(cors);
 

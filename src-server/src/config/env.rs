@@ -17,6 +17,12 @@ pub const REDIS_URL: &str = "REDIS_URL";
 pub const RUST_LOG: &str = "RUST_LOG";
 pub const RSA_PRIVATE_KEY_PATH: &str = "RSA_PRIVATE_KEY_PATH";
 pub const RSA_PUBLIC_KEY_PATH: &str = "RSA_PUBLIC_KEY_PATH";
+pub const SMTP_HOST: &str = "SMTP_HOST";
+pub const SMTP_PORT: &str = "SMTP_PORT";
+pub const SMTP_USERNAME: &str = "SMTP_USERNAME";
+pub const SMTP_PASSWORD: &str = "SMTP_PASSWORD";
+pub const SMTP_FROM_EMAIL: &str = "SMTP_FROM_EMAIL";
+pub const EMAIL_ENABLED: &str = "EMAIL_ENABLED";
 
 pub fn env_or(key: &str, default: &str) -> String {
     env::var(key).unwrap_or_else(|_| default.to_string())

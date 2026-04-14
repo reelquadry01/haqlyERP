@@ -214,3 +214,75 @@ impl TaxService {
         })
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use bigdecimal::BigDecimal;
+
+    use crate::models::tax::WhtRateCategory;
+    use crate::services::tax_service::TaxService;
+
+    fn mock_pool() -> sqlx::PgPool {
+        sqlx::postgres::PgPoolOptions::new()
+            .connect_lazy("postgres://test:test@localhost/test")
+            .expect("mock pool")
+    }
+
+    #[test]
+    fn test_vat_7_5_percent() {
+        let svc = TaxService::new(mock_pool());
+        let base = BigDecimal::from(1_000_000);
+        let result = svc.compute_vat(&base);
+
+        assert_eq!(result.tax_type, "VAT");
+        assert_eq!(result.tax_amount, BigDecimal::from(75_000));
+        assert_eq!(result.currency, "NGN");
+    }
+
+    #[test]
+    fn test_wht_5_percent() {
+        let svc = TaxService::new(mock_pool());
+        let base = BigDecimal::from(500_000);
+        let result = svc.compute_wht(&base, &WhtRateCategory::ContractGeneral);
+
+        assert_eq!(result.tax_type, "WHT");
+        assert_eq!(result.tax_amount, BigDecimal::from(25_000));
+        assert_eq!(result.currency, "NGN");
+    }
+
+    #[test]
+    fn test_cit_small_business_exemption() {
+        let svc = TaxService::new(mock_pool());
+        let profit = BigDecimal::from(5_000_000);
+        let revenue = BigDecimal::from(20_000_000);
+        let result = svc.compute_cit(&profit, &revenue);
+
+        assert_eq!(result.tax_type, "CIT");
+        assert_eq!(result.tax_amount, BigDecimal::from(0));
+        assert_eq!(result.rate, BigDecimal::from(0));
+    }
+
+    #[test]
+    fn test_cit_medium_company() {
+        let svc = TaxService::new(mock_pool());
+        let profit = BigDecimal::from(50_000_000);
+        let revenue = BigDecimal::from(80_000_000);
+        let result = svc.compute_cit(&profit, &revenue);
+
+        assert_eq!(result.tax_type, "CIT");
+        assert_eq!(result.rate, BigDecimal::from(20));
+        assert_eq!(result.tax_amount, BigDecimal::from(10_000_000));
+    }
+
+    #[test]
+    fn test_education_tax_2_percent() {
+        let svc = TaxService::new(mock_pool());
+        let profit = BigDecimal::from(50_000_000);
+        let result = svc.compute_education_tax(&profit);
+
+        assert_eq!(result.tax_type, "Education Tax");
+        assert_eq!(result.rate, BigDecimal::from(2));
+        assert_eq!(result.tax_amount, BigDecimal::from(1_000_000));
+        assert_eq!(result.currency, "NGN");
+    }
+}

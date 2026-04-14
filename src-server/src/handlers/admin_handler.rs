@@ -11,6 +11,8 @@ use serde::Deserialize;
 use serde_json::{json, Value};
 use uuid::Uuid;
 
+use crate::security::audit_chain;
+
 #[derive(Debug, Deserialize)]
 pub struct ListFiscalYearsQuery {
     pub page: Option<i64>,
@@ -35,6 +37,8 @@ pub fn router() -> Router<PgPool> {
         .route("/accounting-periods/:period_id", patch(update_accounting_period))
         .route("/settings/:company_id", get(get_settings).patch(update_settings))
         .route("/approval-rules", get(list_approval_rules).post(create_approval_rule))
+        .route("/audit-chain/verify", post(verify_audit_chain))
+        .route("/audit-chain/status", get(audit_chain_status))
 }
 
 async fn create_permission(
@@ -124,4 +128,39 @@ async fn create_approval_rule(
     Json(_body): Json<Value>,
 ) -> Json<Value> {
     Json(json!({"message": "admin/approval-rules POST - not implemented"}))
+}
+
+async fn verify_audit_chain(
+    State(pool): State<PgPool>,
+) -> Json<Value> {
+    match audit_chain::verify_chain(&pool).await {
+        Ok(result) => Json(json!({
+            "is_intact": result.is_intact,
+            "total_entries": result.total_entries,
+            "first_broken_entry_id": result.first_broken_entry_id,
+            "verified_at": result.verified_at.to_rfc3339(),
+        })),
+        Err(e) => Json(json!({"error": e})),
+    }
+}
+
+async fn audit_chain_status(
+    State(pool): State<PgPool>,
+) -> Json<Value> {
+    match audit_chain::get_last_verification(&pool).await {
+        Ok(Some(result)) => Json(json!({
+            "is_intact": result.is_intact,
+            "total_entries": result.total_entries,
+            "first_broken_entry_id": result.first_broken_entry_id,
+            "verified_at": result.verified_at.to_rfc3339(),
+        })),
+        Ok(None) => Json(json!({
+            "is_intact": null,
+            "total_entries": 0,
+            "first_broken_entry_id": null,
+            "verified_at": null,
+            "message": "No verification has been performed yet",
+        })),
+        Err(e) => Json(json!({"error": e})),
+    }
 }

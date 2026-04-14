@@ -115,10 +115,17 @@ pub struct IncomeStatement {
     pub to_date: String,
     pub revenue: Vec<StatementLine>,
     pub total_revenue: bigdecimal::BigDecimal,
-    pub expenses: Vec<StatementLine>,
-    pub total_expenses: bigdecimal::BigDecimal,
+    pub cost_of_sales: Vec<StatementLine>,
+    pub total_cost_of_sales: bigdecimal::BigDecimal,
     pub gross_profit: bigdecimal::BigDecimal,
-    pub net_income: bigdecimal::BigDecimal,
+    pub operating_expenses: Vec<StatementLine>,
+    pub total_operating_expenses: bigdecimal::BigDecimal,
+    pub operating_profit: bigdecimal::BigDecimal,
+    pub finance_costs: Vec<StatementLine>,
+    pub total_finance_costs: bigdecimal::BigDecimal,
+    pub tax_expense: Vec<StatementLine>,
+    pub total_tax_expense: bigdecimal::BigDecimal,
+    pub net_profit_loss: bigdecimal::BigDecimal,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -138,6 +145,7 @@ pub struct BalanceSheet {
     pub total_liabilities: bigdecimal::BigDecimal,
     pub equity: Vec<BalanceSheetSection>,
     pub total_equity: bigdecimal::BigDecimal,
+    pub is_balanced: bool,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -162,6 +170,17 @@ pub struct CashFlowStatement {
     pub net_change: bigdecimal::BigDecimal,
     pub opening_cash: bigdecimal::BigDecimal,
     pub closing_cash: bigdecimal::BigDecimal,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct RetainedEarnings {
+    pub company_id: Uuid,
+    pub from_date: String,
+    pub to_date: String,
+    pub opening_balance: bigdecimal::BigDecimal,
+    pub net_profit_loss: bigdecimal::BigDecimal,
+    pub dividends_declared: bigdecimal::BigDecimal,
+    pub closing_balance: bigdecimal::BigDecimal,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]

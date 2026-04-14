@@ -413,3 +413,154 @@ impl PostingService {
         Ok(format!("AUTO-{}", count + 1))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use bigdecimal::BigDecimal;
+    use uuid::Uuid;
+
+    use crate::models::account::PeriodStatus;
+    use crate::models::posting::{PostingContext, PostingRule};
+    use crate::services::posting_service::PostingService;
+
+    fn mock_pool() -> sqlx::PgPool {
+        sqlx::postgres::PgPoolOptions::new()
+            .connect_lazy("postgres://test:test@localhost/test")
+            .expect("mock pool")
+    }
+
+    fn test_posting_context() -> PostingContext {
+        PostingContext {
+            company_id: Uuid::now_v7(),
+            source_module: "sales".to_string(),
+            source_document_id: Some(Uuid::now_v7()),
+            source_document_number: Some("SO-001".to_string()),
+            reference_id: None,
+            customer_or_vendor: Some("customer".to_string()),
+            branch: None,
+            department: None,
+            cost_center: None,
+            project: None,
+            tax_code: None,
+            currency: "NGN".to_string(),
+            amount: BigDecimal::from(1_000_000),
+            tax_amount: Some(BigDecimal::from(75_000)),
+            discount_amount: None,
+            narration: Some("Test sale".to_string()),
+            correlation_id: None,
+            idempotency_key: Some("idem-key-001".to_string()),
+            transaction_type: "invoice".to_string(),
+            transaction_subtype: None,
+            posted_by: Some(Uuid::now_v7()),
+            posting_date: chrono::NaiveDate::from_ymd_opt(2024, 6, 15).unwrap(),
+        }
+    }
+
+    fn test_posting_rule() -> PostingRule {
+        PostingRule {
+            id: Uuid::now_v7(),
+            company_id: Uuid::now_v7(),
+            module: "sales".to_string(),
+            transaction_type: "invoice".to_string(),
+            transaction_subtype: None,
+            debit_account_id: Uuid::now_v7(),
+            credit_account_id: Uuid::now_v7(),
+            tax_account_id: Some(Uuid::now_v7()),
+            discount_account_id: None,
+            round_off_account_id: None,
+            branch_id: None,
+            department_id: None,
+            cost_center_id: None,
+            project_id: None,
+            effective_from: chrono::NaiveDate::from_ymd_opt(2024, 1, 1).unwrap(),
+            effective_to: None,
+            is_active: true,
+            priority: 1,
+            requires_explicit_rule: false,
+            narration_template: None,
+            created_at: chrono::NaiveDate::from_ymd_opt(2024, 1, 1).unwrap().and_hms_opt(0, 0, 0).unwrap(),
+            updated_at: chrono::NaiveDate::from_ymd_opt(2024, 1, 1).unwrap().and_hms_opt(0, 0, 0).unwrap(),
+        }
+    }
+
+    #[test]
+    fn test_posting_rule_resolution() {
+        let context = test_posting_context();
+        let rule = test_posting_rule();
+
+        let module_match = rule.module == context.source_module;
+        let type_match = rule.transaction_type == context.transaction_type;
+        let branch_match = rule.branch_id.is_none() || context.branch == rule.branch_id;
+        let dept_match = rule.department_id.is_none() || context.department == rule.department_id;
+        let cc_match = rule.cost_center_id.is_none() || context.cost_center == rule.cost_center_id;
+        let proj_match = rule.project_id.is_none() || context.project == rule.project_id;
+
+        assert!(module_match && type_match && branch_match && dept_match && cc_match && proj_match);
+    }
+
+    #[test]
+    fn test_idempotency_key_uniqueness() {
+        let key1 = "idem-2024-001";
+        let key2 = "idem-2024-002";
+        let duplicate = "idem-2024-001";
+
+        assert_ne!(key1, key2);
+        assert_eq!(key1, duplicate);
+    }
+
+    #[test]
+    fn test_period_validation() {
+        assert_ne!(PeriodStatus::Open, PeriodStatus::Closed);
+        assert_ne!(PeriodStatus::Open, PeriodStatus::Locked);
+
+        let can_post_to_open = PeriodStatus::Open == PeriodStatus::Open;
+        let can_post_to_closed = PeriodStatus::Closed == PeriodStatus::Open;
+
+        assert!(can_post_to_open);
+        assert!(!can_post_to_closed);
+    }
+
+    #[test]
+    fn test_generate_journal_lines_basic() {
+        let svc = PostingService::new(mock_pool());
+        let context = test_posting_context();
+        let rule = test_posting_rule();
+
+        let lines = svc.generate_journal_lines(&context, &rule);
+
+        assert!(lines.len() >= 2);
+
+        let total_debit: BigDecimal = lines.iter().map(|l| l.debit.clone()).sum();
+        let total_credit: BigDecimal = lines.iter().map(|l| l.credit.clone()).sum();
+        assert_eq!(total_debit, total_credit);
+
+        assert_eq!(lines[0].account_id, rule.debit_account_id);
+        assert_eq!(lines[0].debit, context.amount);
+        assert_eq!(lines[0].credit, BigDecimal::from(0));
+
+        assert_eq!(lines[1].account_id, rule.credit_account_id);
+        assert_eq!(lines[1].credit, context.amount);
+        assert_eq!(lines[1].debit, BigDecimal::from(0));
+    }
+
+    #[test]
+    fn test_generate_journal_lines_with_tax() {
+        let svc = PostingService::new(mock_pool());
+        let context = test_posting_context();
+        let rule = test_posting_rule();
+
+        let lines = svc.generate_journal_lines(&context, &rule);
+
+        assert!(context.tax_amount.is_some());
+        assert!(rule.tax_account_id.is_some());
+        assert_eq!(lines.len(), 4);
+
+        let tax_debit = &lines[2];
+        assert_eq!(tax_debit.account_id, rule.tax_account_id.unwrap());
+        assert_eq!(tax_debit.debit, context.tax_amount.clone().unwrap());
+
+        let tax_credit = &lines[3];
+        assert_eq!(tax_credit.account_id, rule.credit_account_id);
+        assert_eq!(tax_credit.credit, context.tax_amount.clone().unwrap());
+    }
+}

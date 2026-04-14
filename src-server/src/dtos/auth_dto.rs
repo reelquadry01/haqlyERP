@@ -55,3 +55,17 @@ pub struct MfaVerifyRequest {
     #[validate(length(min = 6, max = 6, message = "MFA code must be 6 digits"))]
     pub code: String,
 }
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+pub struct ForgotPasswordRequest {
+    #[validate(email(message = "invalid email format"))]
+    pub email: String,
+}
+
+#[derive(Debug, Clone, Serialize, Deserialize, Validate)]
+pub struct ResetPasswordRequest {
+    #[validate(length(min = 1, message = "token is required"))]
+    pub token: String,
+    #[validate(length(min = 6, message = "password must be at least 6 characters"))]
+    pub new_password: String,
+}

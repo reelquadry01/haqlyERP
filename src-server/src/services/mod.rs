@@ -22,6 +22,7 @@ pub mod ai_bridge_service;
 pub mod payroll_service;
 pub mod crm_service;
 pub mod notification_service;
+pub mod email_service;
 pub mod bi_service;
 pub mod encryption_service;
 pub mod license_service;

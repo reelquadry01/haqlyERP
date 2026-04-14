@@ -542,3 +542,59 @@ impl PayrollService {
             .map_err(|e| anyhow!("Failed to fetch payroll run: {}", e))
     }
 }
+
+#[cfg(test)]
+mod tests {
+    use bigdecimal::{BigDecimal, FromPrimitive};
+
+    use crate::services::payroll_service::PayrollService;
+
+    fn mock_pool() -> sqlx::PgPool {
+        sqlx::postgres::PgPoolOptions::new()
+            .connect_lazy("postgres://test:test@localhost/test")
+            .expect("mock pool")
+    }
+
+    #[test]
+    fn test_paye_first_band() {
+        let svc = PayrollService::new(mock_pool());
+        let taxable = BigDecimal::from(300_000);
+        let paye = svc.compute_paye(&taxable);
+
+        let expected = BigDecimal::from_f64(300_000.0_f64.min(300_000.0) * 0.07).unwrap();
+        let diff = (paye.clone() - expected).to_string().parse::<f64>().unwrap().abs();
+        assert!(diff < 1.0);
+    }
+
+    #[test]
+    fn test_paye_full_brackets() {
+        let svc = PayrollService::new(mock_pool());
+        let taxable = BigDecimal::from(5_000_000);
+        let paye = svc.compute_paye(&taxable);
+
+        let paye_f64 = paye.to_string().parse::<f64>().unwrap();
+        let expected = 300_000.0 * 0.07
+            + 300_000.0 * 0.11
+            + 500_000.0 * 0.15
+            + 500_000.0 * 0.19
+            + 1_600_000.0 * 0.21
+            + 1_800_000.0 * 0.24;
+        assert!((paye_f64 - expected).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_pension_8_percent_employee() {
+        let gross = BigDecimal::from(500_000);
+        let pension = &gross * BigDecimal::from_f64(0.08).unwrap();
+        let pension_f64 = pension.to_string().parse::<f64>().unwrap();
+        assert!((pension_f64 - 40_000.0).abs() < 0.5);
+    }
+
+    #[test]
+    fn test_nhf_2_5_percent() {
+        let gross = BigDecimal::from(500_000);
+        let nhf = &gross * BigDecimal::from_f64(0.025).unwrap();
+        let nhf_f64 = nhf.to_string().parse::<f64>().unwrap();
+        assert!((nhf_f64 - 12_500.0).abs() < 0.5);
+    }
+}

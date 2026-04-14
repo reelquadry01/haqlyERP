@@ -21,6 +21,12 @@ pub struct Settings {
     pub ollama_base_url: String,
     pub python_engine_url: String,
     pub redis_url: String,
+    pub smtp_host: String,
+    pub smtp_port: u16,
+    pub smtp_username: String,
+    pub smtp_password: String,
+    pub smtp_from_email: String,
+    pub email_enabled: bool,
 }
 
 impl Settings {
@@ -92,6 +98,16 @@ impl Settings {
             ollama_base_url: env_or(OLLAMA_BASE_URL, "http://localhost:11434"),
             python_engine_url: env_or(PYTHON_ENGINE_URL, "http://localhost:8000"),
             redis_url: env_or(REDIS_URL, "redis://localhost:6379"),
+            smtp_host: env_or(SMTP_HOST, "smtp.example.com"),
+            smtp_port: env_or_parse(SMTP_PORT, 587u16),
+            smtp_username: std::env::var(SMTP_USERNAME).unwrap_or_default(),
+            smtp_password: std::env::var(SMTP_PASSWORD).unwrap_or_default(),
+            smtp_from_email: env_or(SMTP_FROM_EMAIL, "noreply@haqly-erp.com"),
+            email_enabled: if is_dev {
+                env_or_parse(EMAIL_ENABLED, false)
+            } else {
+                env_or_parse(EMAIL_ENABLED, true)
+            },
         })
     }
 }
