@@ -1,0 +1,97 @@
+{
+  "country": "Nigeria",
+  "currency": "NGN",
+  "source": "National Bureau of Statistics",
+  "data": [
+    {
+      "year": 2015,
+      "annual_rate": 9.01,
+      "monthly": [
+        {"month": "Jan", "rate": 8.2},
+        {"month": "Jun", "rate": 9.0},
+        {"month": "Dec", "rate": 9.6}
+      ]
+    },
+    {
+      "year": 2016,
+      "annual_rate": 15.68,
+      "monthly": [
+        {"month": "Jan", "rate": 11.4},
+        {"month": "Jun", "rate": 15.6},
+        {"month": "Dec", "rate": 17.8}
+      ]
+    },
+    {
+      "year": 2017,
+      "annual_rate": 16.52,
+      "monthly": [
+        {"month": "Jan", "rate": 18.7},
+        {"month": "Jun", "rate": 16.1},
+        {"month": "Dec", "rate": 15.4}
+      ]
+    },
+    {
+      "year": 2018,
+      "annual_rate": 12.09,
+      "monthly": [
+        {"month": "Jan", "rate": 15.1},
+        {"month": "Jun", "rate": 11.2},
+        {"month": "Dec", "rate": 11.4}
+      ]
+    },
+    {
+      "year": 2019,
+      "annual_rate": 11.40,
+      "monthly": [
+        {"month": "Jan", "rate": 11.1},
+        {"month": "Jun", "rate": 11.2},
+        {"month": "Dec", "rate": 11.9}
+      ]
+    },
+    {
+      "year": 2020,
+      "annual_rate": 13.21,
+      "monthly": [
+        {"month": "Jan", "rate": 12.1},
+        {"month": "Jun", "rate": 12.6},
+        {"month": "Dec", "rate": 15.8}
+      ]
+    },
+    {
+      "year": 2021,
+      "annual_rate": 16.98,
+      "monthly": [
+        {"month": "Jan", "rate": 16.5},
+        {"month": "Jun", "rate": 17.8},
+        {"month": "Dec", "rate": 17.2}
+      ]
+    },
+    {
+      "year": 2022,
+      "annual_rate": 18.85,
+      "monthly": [
+        {"month": "Jan", "rate": 15.6},
+        {"month": "Jun", "rate": 18.6},
+        {"month": "Dec", "rate": 21.3}
+      ]
+    },
+    {
+      "year": 2023,
+      "annual_rate": 24.46,
+      "monthly": [
+        {"month": "Jan", "rate": 21.8},
+        {"month": "Jun", "rate": 22.8},
+        {"month": "Dec", "rate": 28.9}
+      ]
+    },
+    {
+      "year": 2024,
+      "annual_rate": 28.92,
+      "monthly": [
+        {"month": "Jan", "rate": 29.9},
+        {"month": "Jun", "rate": 34.2},
+        {"month": "Dec", "rate": 24.7}
+      ]
+    }
+  ]
+}

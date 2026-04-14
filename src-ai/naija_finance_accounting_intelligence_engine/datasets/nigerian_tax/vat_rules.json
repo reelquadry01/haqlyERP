@@ -1,0 +1,28 @@
+{
+  "standard_rate": 0.075,
+  "exempt_items": [
+    "medical_services",
+    "educational_services",
+    "financial_services",
+    "religious_items",
+    "baby_products",
+    "newspapers_and_magazines",
+    "commercial_rent",
+    "plays_and_games",
+    "professional_services_of_medical_doctors",
+    "mortuary_services"
+  ],
+  "zero_rated": [
+    "exported_goods",
+    "exported_services",
+    "goods_purchased_by_diplomats",
+    "goods_and_services_purchased_by_international_organizations",
+    "supply_to_seaward_petroleum_operations"
+  ],
+  "registration_threshold": 25000000,
+  "filing_deadline_day": 21,
+  "returns_period": "monthly",
+  "penalty_late_filing": "5% of tax_due plus interest",
+  "effective_date": "2020-02-01",
+  "authority": "Federal Inland Revenue Service"
+}

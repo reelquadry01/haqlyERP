@@ -1,0 +1,61 @@
+{
+  "categories": [
+    {
+      "name": "Contractors/Suppliers",
+      "rate": 0.05,
+      "threshold": 0,
+      "notes": "All supplies to companies"
+    },
+    {
+      "name": "Consultancy/Professional Services",
+      "rate": 0.05,
+      "threshold": 0,
+      "notes": "Including legal, accounting, engineering"
+    },
+    {
+      "name": "Management Services",
+      "rate": 0.05,
+      "threshold": 0,
+      "notes": ""
+    },
+    {
+      "name": "Technical Services",
+      "rate": 0.05,
+      "threshold": 0,
+      "notes": ""
+    },
+    {
+      "name": "Commission",
+      "rate": 0.05,
+      "threshold": 0,
+      "notes": ""
+    },
+    {
+      "name": "Interest",
+      "rate": 0.10,
+      "threshold": 0,
+      "notes": "Bank deposits, bonds"
+    },
+    {
+      "name": "Dividends",
+      "rate": 0.10,
+      "threshold": 0,
+      "notes": ""
+    },
+    {
+      "name": "Rent",
+      "rate": 0.10,
+      "threshold": 0,
+      "notes": "Commercial and residential"
+    },
+    {
+      "name": "Royalties",
+      "rate": 0.05,
+      "threshold": 0,
+      "notes": ""
+    }
+  ],
+  "gross_up_applicable": true,
+  "filing_deadline_day": 21,
+  "authority": "Federal Inland Revenue Service"
+}

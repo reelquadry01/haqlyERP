@@ -1,0 +1,56 @@
+{
+  "small_company": {
+    "max_turnover": 250000,
+    "rate": 0.00,
+    "conditions": "Turnover below 250k"
+  },
+  "medium_company_manufacturing": {
+    "max_turnover": 1000000,
+    "rate": 0.15,
+    "conditions": "Only manufacturing and agricultural companies"
+  },
+  "large_company": {
+    "rate": 0.30,
+    "conditions": "All other companies or turnover above 1M"
+  },
+  "minimum_tax": {
+    "rate": 0.005,
+    "calculation": "0.5% of gross turnover, or 0.5% of gross profit, whichever is higher",
+    "exempt_years": 4,
+    "exempt_condition": "First 4 years of operations for companies with at least 25% Nigerian equity"
+  },
+  "capital_allowances": [
+    {
+      "category": "Buildings",
+      "initial_allowance": 0.15,
+      "annual_allowance": 0.04
+    },
+    {
+      "category": "Plant and Machinery",
+      "initial_allowance": 0.15,
+      "annual_allowance": 0.15
+    },
+    {
+      "category": "Furniture and Fittings",
+      "initial_allowance": 0.15,
+      "annual_allowance": 0.10
+    },
+    {
+      "category": "Motor Vehicles (non-commercial)",
+      "initial_allowance": 0.15,
+      "annual_allowance": 0.20
+    },
+    {
+      "category": "Computers and IT Equipment",
+      "initial_allowance": 0.15,
+      "annual_allowance": 0.20
+    },
+    {
+      "category": "Agricultural Plant",
+      "initial_allowance": 0.15,
+      "annual_allowance": 0.50
+    }
+  ],
+  "education_tax_rate": 0.02,
+  "authority": "Federal Inland Revenue Service"
+}
