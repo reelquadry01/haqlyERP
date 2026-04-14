@@ -1,4 +1,5 @@
 const BASE_URL = "http://localhost:8100/api/v1";
+import { clearToken } from "./session";
 
 function authHeaders(token: string | null): Record<string, string> {
   const headers: Record<string, string> = {
@@ -14,8 +15,7 @@ function authHeaders(token: string | null): Record<string, string> {
 export function handleAuthError(response: Response): void {
   if (response.status === 401) {
     if (typeof window !== "undefined") {
-      localStorage.removeItem("haqly_token");
-      localStorage.removeItem("haqly_company");
+      clearToken();
       window.location.replace("/login");
     }
   }

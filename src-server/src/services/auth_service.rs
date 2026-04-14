@@ -4,30 +4,46 @@ use argon2::password_hash::SaltString;
 use argon2::{Argon2, PasswordHash, PasswordHasher, PasswordVerifier};
 use base64::Engine;
 use chrono::Utc;
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{encode, Algorithm, EncodingKey, Header};
 use rand::rngs::OsRng;
 use sqlx::PgPool;
+use std::sync::Arc;
+use totp_rs::{Algorithm as TotpAlgorithm, Secret, TOTP};
 use uuid::Uuid;
 
+use crate::config::rsa_keys::RsaKeypair;
 use crate::dtos::auth_dto::{
     AuthResponse, LoginRequest, MfaSetupResponse, MfaVerifyRequest, RefreshRequest, RegisterRequest,
 };
 use crate::models::user::{Session, User};
+use crate::middleware::auth::Claims;
 
 #[derive(Clone)]
 pub struct AuthService {
     pub pool: PgPool,
-    pub jwt_secret: String,
+    pub rsa_keypair: Arc<RsaKeypair>,
     pub jwt_expiration: u64,
 }
 
 impl AuthService {
-    pub fn new(pool: PgPool, jwt_secret: String, jwt_expiration: u64) -> Self {
+    pub fn new(pool: PgPool, rsa_keypair: Arc<RsaKeypair>, jwt_expiration: u64) -> Self {
         Self {
             pool,
-            jwt_secret,
+            rsa_keypair,
             jwt_expiration,
         }
+    }
+
+    async fn get_user_role(&self, user_id: Uuid) -> String {
+        let role_name: Option<String> = sqlx::query_scalar(
+            r#"SELECT r.name FROM user_roles ur JOIN roles r ON ur.role_id = r.id WHERE ur.user_id = $1 LIMIT 1"#,
+        )
+        .bind(user_id)
+        .fetch_optional(&self.pool)
+        .await
+        .ok()
+        .flatten();
+        role_name.unwrap_or_else(|| "Viewer".to_string())
     }
 
     pub async fn register(&self, req: RegisterRequest) -> Result<AuthResponse> {
@@ -64,7 +80,8 @@ impl AuthService {
             .fetch_one(&self.pool)
             .await?;
 
-        let access_token = self.generate_jwt(&user, &self.jwt_secret, self.jwt_expiration)?;
+        let role = self.get_user_role(user.id).await;
+        let access_token = self.generate_jwt(&user, &role, self.jwt_expiration)?;
         let refresh_token = Uuid::now_v7().to_string();
         let expires_in = self.jwt_expiration;
 
@@ -125,7 +142,8 @@ impl AuthService {
             .execute(&self.pool)
             .await?;
 
-        let access_token = self.generate_jwt(&user, &self.jwt_secret, self.jwt_expiration)?;
+        let role = self.get_user_role(user.id).await;
+        let access_token = self.generate_jwt(&user, &role, self.jwt_expiration)?;
         let refresh_token = Uuid::now_v7().to_string();
         let expires_in = self.jwt_expiration;
 
@@ -169,7 +187,8 @@ impl AuthService {
             .fetch_one(&self.pool)
             .await?;
 
-        let access_token = self.generate_jwt(&user, &self.jwt_secret, self.jwt_expiration)?;
+        let role = self.get_user_role(user.id).await;
+        let access_token = self.generate_jwt(&user, &role, self.jwt_expiration)?;
         let new_refresh_token = Uuid::now_v7().to_string();
         let expires_at = Utc::now().naive_utc() + chrono::Duration::seconds(self.jwt_expiration as i64);
 
@@ -196,25 +215,45 @@ impl AuthService {
     }
 
     pub async fn setup_mfa(&self, user_id: Uuid) -> Result<MfaSetupResponse> {
-        let secret = base64::engine::general_purpose::URL_SAFE_NO_PAD.encode(rand::random::<[u8; 20]>());
+        let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
+            .bind(user_id)
+            .fetch_one(&self.pool)
+            .await?;
+
+        let secret_raw = Secret::generate_secret();
+        let secret_encoded = secret_raw.to_encoded();
+        let secret_bytes = secret_raw.to_bytes()
+            .map_err(|e| anyhow!("Invalid TOTP secret: {}", e))?;
+
+        let totp = TOTP::new(
+            TotpAlgorithm::SHA1,
+            6,
+            1,
+            30,
+            secret_bytes,
+            "HAQLY-ERP".to_string(),
+            user.email.clone(),
+        ).map_err(|e| anyhow!("Failed to create TOTP: {}", e))?;
+
         let recovery_codes: Vec<String> = (0..8)
             .map(|_| Uuid::now_v7().to_string().replace("-", "").chars().take(8).collect())
             .collect();
+        let hashed_recovery_codes: Vec<String> = recovery_codes.iter()
+            .filter_map(|code| self.hash_password(code).ok())
+            .collect();
+        let recovery_json = serde_json::to_value(&hashed_recovery_codes)
+            .unwrap_or(serde_json::Value::Null);
 
-        sqlx::query("UPDATE users SET mfa_secret = $1, mfa_enabled = true WHERE id = $2")
-            .bind(&secret)
+        sqlx::query("UPDATE users SET mfa_secret = $1, mfa_enabled = true, mfa_recovery_codes = $2 WHERE id = $3")
+            .bind(secret_encoded.to_string())
+            .bind(&recovery_json)
             .bind(user_id)
             .execute(&self.pool)
             .await?;
 
-        let qr_code_url = format!(
-            "otpauth://totp/HAQLY-ERP:user-{}?secret={}&issuer=HAQLY-ERP",
-            user_id, secret
-        );
-
         Ok(MfaSetupResponse {
-            secret,
-            qr_code_url,
+            secret: secret_encoded.to_string(),
+            qr_code_url: totp.get_url(),
             recovery_codes,
         })
     }
@@ -230,33 +269,33 @@ impl AuthService {
         }
 
         let secret = user.mfa_secret.ok_or_else(|| anyhow!("MFA secret not found"))?;
-        let time_counter = Utc::now().timestamp() / 30;
-        let expected = self.generate_totp_code(&secret, time_counter);
-        let prev_expected = self.generate_totp_code(&secret, time_counter - 1);
+        let totp = build_totp(&secret, &user.email)?;
 
-        if code == expected || code == prev_expected {
-            Ok(true)
-        } else {
-            Ok(false)
+        match totp.check_current(code) {
+            Ok(valid) => Ok(valid),
+            Err(_) => Err(anyhow!("Time-based verification failed")),
         }
     }
 
-    pub fn generate_jwt(&self, user: &User, secret: &str, expiration: u64) -> Result<String> {
+    pub fn generate_jwt(&self, user: &User, role: &str, expiration: u64) -> Result<String> {
         let now = Utc::now();
-        let claims = serde_json::json!({
-            "sub": user.id.to_string(),
-            "email": user.email,
-            "company_id": user.company_id.to_string(),
-            "iat": now.timestamp(),
-            "exp": now.timestamp() + expiration as i64,
-        });
+        let claims = Claims {
+            sub: user.id,
+            email: user.email.clone(),
+            role: role.to_string(),
+            company_id: user.company_id,
+            iat: now.timestamp() as usize,
+            exp: (now.timestamp() + expiration as i64) as usize,
+        };
 
-        let token = encode(
-            &Header::default(),
-            &claims,
-            &EncodingKey::from_secret(secret.as_bytes()),
-        )
-        .context("Failed to encode JWT")?;
+        let mut header = Header::new(Algorithm::RS256);
+        header.kid = Some(self.rsa_keypair.kid.clone());
+
+        let encoding_key = EncodingKey::from_rsa_pem(&self.rsa_keypair.private_pem)
+            .map_err(|e| anyhow!("Failed to create RSA encoding key: {}", e))?;
+
+        let token = encode(&header, &claims, &encoding_key)
+            .context("Failed to encode JWT with RS256")?;
 
         Ok(token)
     }
@@ -280,32 +319,19 @@ impl AuthService {
             .is_ok()
     }
 
-    fn generate_totp_code(&self, secret: &str, time_counter: i64) -> String {
-        let key = base64::engine::general_purpose::URL_SAFE_NO_PAD
-            .decode(secret)
-            .unwrap_or_default();
-        let counter_bytes = time_counter.to_be_bytes();
-        let mut hmac_input = [0u8; 8];
-        hmac_input.copy_from_slice(&counter_bytes);
-
-        use aes_gcm::aead::generic_array::GenericArray;
-        let mut mac = [0u8; 20];
-        let _ = hmac_sha1(&key, &hmac_input, &mut mac);
-        let offset = (mac[19] & 0xf) as usize;
-        let code = ((mac[offset] as u32 & 0x7f) << 24)
-            | ((mac[offset + 1] as u32) << 16)
-            | ((mac[offset + 2] as u32) << 8)
-            | (mac[offset + 3] as u32);
-        format!("{:06}", code % 1_000_000)
-    }
 }
 
-fn hmac_sha1(key: &[u8], message: &[u8], output: &mut [u8; 20]) -> Result<(), ()> {
-    use std::io::Write;
-    let mut hasher = openssl::sha::Sha1::new();
-    let _ = hasher.write(key);
-    let _ = hasher.write(message);
-    let result = hasher.finish();
-    output.copy_from_slice(&result);
-    Ok(())
+fn build_totp(secret: &str, account_name: &str) -> Result<TOTP> {
+    let secret_bytes = Secret::Encoded(secret.to_string()).to_bytes()
+        .map_err(|e| anyhow!("Invalid TOTP secret: {}", e))?;
+    let totp = TOTP::new(
+        TotpAlgorithm::SHA1,
+        6,
+        1,
+        30,
+        secret_bytes,
+        "HAQLY-ERP".to_string(),
+        account_name.to_string(),
+    ).map_err(|e| anyhow!("Failed to create TOTP: {}", e))?;
+    Ok(totp)
 }

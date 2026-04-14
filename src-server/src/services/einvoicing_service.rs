@@ -1,5 +1,7 @@
 // Author: Quadri Atharu
 use anyhow::{anyhow, Result};
+use base64::engine::general_purpose::STANDARD as BASE64;
+use base64::Engine;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -7,6 +9,20 @@ use crate::dtos::einvoice_dto::{EInvoiceReadinessCheck, SaveCredentialsRequest, 
 use crate::models::einvoice::{
     EInvoiceCredential, EInvoiceDocument, EInvoiceProfile, EInvoiceStatus, InvoiceCategory,
 };
+use crate::services::encryption_service;
+
+fn get_encryption_key() -> Result<[u8; 32]> {
+    let key_b64 = std::env::var("HAQLY_ENCRYPTION_KEY")
+        .map_err(|_| anyhow!("HAQLY_ENCRYPTION_KEY not set"))?;
+    let key_bytes = BASE64.decode(&key_b64)
+        .map_err(|e| anyhow!("Invalid encryption key: {}", e))?;
+    if key_bytes.len() != 32 {
+        return Err(anyhow!("Encryption key must be 32 bytes"));
+    }
+    let mut key = [0u8; 32];
+    key.copy_from_slice(&key_bytes);
+    Ok(key)
+}
 
 #[derive(Clone)]
 pub struct EInvoicingService {
@@ -43,18 +59,26 @@ impl EInvoicingService {
     }
 
     pub async fn save_credentials(&self, req: SaveCredentialsRequest) -> Result<EInvoiceCredential> {
-        let encrypted_secret = req.client_secret.clone();
+        let key = get_encryption_key()?;
+        let encrypted = encryption_service::encrypt_field(&req.client_secret, &key)
+            .map_err(|e| anyhow!("Encryption failed: {}", e))?;
+        let nonce_bytes = BASE64.decode(&encrypted.nonce)
+            .map_err(|e| anyhow!("Invalid nonce: {}", e))?;
+        let tag_bytes = BASE64.decode(&encrypted.tag)
+            .map_err(|e| anyhow!("Invalid tag: {}", e))?;
 
         let id = Uuid::now_v7();
         sqlx::query(
-            r#"INSERT INTO einvoice_credentials (id, profile_id, company_id, client_id, client_secret_encrypted, certificate_path, is_active, created_at, updated_at)
-               VALUES ($1, $2, $3, $4, $5, $6, true, NOW(), NOW())"#,
+            r#"INSERT INTO einvoice_credentials (id, profile_id, company_id, client_id, client_secret_encrypted, client_secret_nonce, client_secret_tag, certificate_path, is_active, created_at, updated_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true, NOW(), NOW())"#,
         )
         .bind(id)
         .bind(req.profile_id)
         .bind(req.company_id)
         .bind(&req.client_id)
-        .bind(&encrypted_secret)
+        .bind(&encrypted.ciphertext)
+        .bind(&nonce_bytes)
+        .bind(&tag_bytes)
         .bind(&req.certificate_path)
         .execute(&self.pool)
         .await?;
@@ -191,10 +215,23 @@ impl EInvoicingService {
             .await?;
 
             if let Some(cred) = credentials {
+                let key = get_encryption_key()?;
+                let nonce_b64 = cred.client_secret_nonce
+                    .as_ref()
+                    .map(|n| BASE64.encode(n))
+                    .unwrap_or_default();
+                let tag_b64 = cred.client_secret_tag
+                    .as_ref()
+                    .map(|t| BASE64.encode(t))
+                    .unwrap_or_default();
+                let decrypted_secret = encryption_service::decrypt_field(
+                    &cred.client_secret_encrypted, &key, &nonce_b64, &tag_b64,
+                ).map_err(|e| anyhow!("Decryption failed: {}", e))?;
+
                 let client = reqwest::Client::new();
                 let response = client
                     .post(format!("{}/invoices", url))
-                    .header("Authorization", format!("Bearer {}:{}", cred.client_id, cred.client_secret_encrypted))
+                    .header("Authorization", format!("Bearer {}:{}", cred.client_id, decrypted_secret))
                     .json(&payload)
                     .timeout(std::time::Duration::from_secs(30))
                     .send()

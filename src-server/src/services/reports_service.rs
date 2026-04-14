@@ -25,7 +25,7 @@ impl ReportsService {
 
     pub async fn trial_balance(&self, company_id: Uuid, as_of_date: Option<NaiveDate>) -> Result<TrialBalance> {
         let accounts = sqlx::query_as::<_, Account>(
-            "SELECT * FROM accounts WHERE company_id = $1 AND is_active = true ORDER BY code",
+            "SELECT * FROM chart_of_accounts WHERE company_id = $1 AND is_active = true ORDER BY code",
         )
         .bind(company_id)
         .fetch_all(&self.pool)
@@ -86,7 +86,7 @@ impl ReportsService {
         from_date: NaiveDate,
         to_date: NaiveDate,
     ) -> Result<AccountStatement> {
-        let account = sqlx::query_as::<_, Account>("SELECT * FROM accounts WHERE id = $1")
+        let account = sqlx::query_as::<_, Account>("SELECT * FROM chart_of_accounts WHERE id = $1")
             .bind(account_id)
             .fetch_one(&self.pool)
             .await?;
@@ -151,14 +151,14 @@ impl ReportsService {
         to_date: NaiveDate,
     ) -> Result<IncomeStatement> {
         let revenue_accounts = sqlx::query_as::<_, Account>(
-            "SELECT * FROM accounts WHERE company_id = $1 AND account_type = 'revenue' AND is_active = true ORDER BY code",
+            "SELECT * FROM chart_of_accounts WHERE company_id = $1 AND account_type = 'revenue' AND is_active = true ORDER BY code",
         )
         .bind(company_id)
         .fetch_all(&self.pool)
         .await?;
 
         let expense_accounts = sqlx::query_as::<_, Account>(
-            "SELECT * FROM accounts WHERE company_id = $1 AND account_type = 'expense' AND is_active = true ORDER BY code",
+            "SELECT * FROM chart_of_accounts WHERE company_id = $1 AND account_type = 'expense' AND is_active = true ORDER BY code",
         )
         .bind(company_id)
         .fetch_all(&self.pool)
@@ -238,21 +238,21 @@ impl ReportsService {
 
     pub async fn balance_sheet(&self, company_id: Uuid, as_of_date: NaiveDate) -> Result<BalanceSheet> {
         let asset_accounts = sqlx::query_as::<_, Account>(
-            "SELECT * FROM accounts WHERE company_id = $1 AND account_type = 'asset' AND is_active = true ORDER BY code",
+            "SELECT * FROM chart_of_accounts WHERE company_id = $1 AND account_type = 'asset' AND is_active = true ORDER BY code",
         )
         .bind(company_id)
         .fetch_all(&self.pool)
         .await?;
 
         let liability_accounts = sqlx::query_as::<_, Account>(
-            "SELECT * FROM accounts WHERE company_id = $1 AND account_type = 'liability' AND is_active = true ORDER BY code",
+            "SELECT * FROM chart_of_accounts WHERE company_id = $1 AND account_type = 'liability' AND is_active = true ORDER BY code",
         )
         .bind(company_id)
         .fetch_all(&self.pool)
         .await?;
 
         let equity_accounts = sqlx::query_as::<_, Account>(
-            "SELECT * FROM accounts WHERE company_id = $1 AND account_type = 'equity' AND is_active = true ORDER BY code",
+            "SELECT * FROM chart_of_accounts WHERE company_id = $1 AND account_type = 'equity' AND is_active = true ORDER BY code",
         )
         .bind(company_id)
         .fetch_all(&self.pool)
@@ -519,7 +519,7 @@ impl ReportsService {
         let interest_expense: BigDecimal = sqlx::query_scalar(
             r#"SELECT COALESCE(SUM(jl.debit - jl.credit), 0)
                FROM journal_lines jl JOIN journal_headers jh ON jl.journal_header_id = jh.id
-               JOIN accounts a ON jl.account_id = a.id
+               JOIN chart_of_accounts a ON jl.account_id = a.id
                WHERE jh.company_id = $1 AND a.account_type = 'expense'
                AND (a.name ILIKE '%interest%' OR a.code LIKE '5205%')
                AND jh.status = 'posted'

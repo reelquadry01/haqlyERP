@@ -151,7 +151,7 @@ impl PostingRepo {
 
     pub async fn create_audit(&self, entry: NewPostingAudit) -> Result<PostingAudit, sqlx::Error> {
         sqlx::query_as::<_, PostingAudit>(
-            r#"INSERT INTO posting_audit (
+            r#"INSERT INTO posting_audits (
                 source_module, source_table, source_document_id, source_document_number,
                 reference_id, customer_or_vendor, triggering_event, posting_rule_id,
                 user_id, approval_reference, period_id, branch_id, legal_entity_id,
@@ -202,7 +202,7 @@ impl PostingRepo {
                 legal_entity_id, department_id, cost_center_id, project_id, tax_code,
                 currency_code, narration, correlation_id, idempotency_key,
                 reversal_of_audit_id, rule_snapshot, created_at
-            FROM posting_audit WHERE idempotency_key = $1"#,
+            FROM posting_audits WHERE idempotency_key = $1"#,
         )
         .bind(key)
         .fetch_optional(&self.pool)

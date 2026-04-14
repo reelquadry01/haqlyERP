@@ -79,6 +79,7 @@ class ErrorResult:
         self.timestamp = datetime.now().isoformat()
 
     def to_dict(self) -> Dict[str, Any]:
+        logger.error("agent_error", error_type=self.error_type, message=self.message, code=self.code, traceback=self.traceback)
         return {
             "success": False,
             "error": {
@@ -86,7 +87,6 @@ class ErrorResult:
                 "message": self.message,
                 "code": self.code,
                 "details": self.details,
-                "traceback": self.traceback,
                 "timestamp": self.timestamp,
             },
         }

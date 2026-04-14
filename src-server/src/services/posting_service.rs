@@ -58,6 +58,8 @@ impl PostingService {
             .clone()
             .unwrap_or_else(|| format!("Auto-posting: {} - {}", context.source_module, context.transaction_type));
 
+        let mut tx = self.pool.begin().await.map_err(|e| anyhow!("Failed to begin transaction: {}", e))?;
+
         sqlx::query(
             r#"INSERT INTO journal_headers (id, company_id, branch_id, fiscal_year_id, period_id, entry_number, reference, narration, status, journal_type, source_module, source_document_id, source_document_number, total_debit, total_credit, currency_code, posted_at, posted_by, created_by, created_at, updated_at)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'posted', 'auto', $9, $10, $11, $12, $13, $14, NOW(), $15, $15, NOW(), NOW())"#,
@@ -77,7 +79,7 @@ impl PostingService {
         .bind(&total_credit)
         .bind(&context.currency)
         .bind(context.posted_by)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
 
         for (i, line) in journal_lines.iter().enumerate() {
@@ -98,11 +100,29 @@ impl PostingService {
             .bind(line.cost_center_id)
             .bind(line.project_id)
             .bind(line.department_id)
-            .execute(&self.pool)
+            .execute(&mut *tx)
             .await?;
         }
 
-        self.persist_audit(&context, &rule, journal_id).await?;
+        let audit_id = Uuid::now_v7();
+        sqlx::query(
+            r#"INSERT INTO posting_audits (id, company_id, journal_header_id, posting_rule_id, source_module, source_document_id, source_document_number, correlation_id, idempotency_key, status, posted_by, posted_at)
+               VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, 'success', $10, NOW())"#,
+        )
+        .bind(audit_id)
+        .bind(context.company_id)
+        .bind(journal_id)
+        .bind(rule.id)
+        .bind(&context.source_module)
+        .bind(context.source_document_id)
+        .bind(&context.source_document_number)
+        .bind(&context.correlation_id)
+        .bind(&context.idempotency_key)
+        .bind(context.posted_by)
+        .execute(&mut *tx)
+        .await?;
+
+        tx.commit().await.map_err(|e| anyhow!("Failed to commit posting transaction: {}", e))?;
 
         let journal = sqlx::query_as::<_, JournalHeader>(
             "SELECT * FROM journal_headers WHERE id = $1",
@@ -205,7 +225,7 @@ impl PostingService {
 
         for account_id in &[rule.debit_account_id, rule.credit_account_id] {
             let account: Option<(bool, bool, bool)> = sqlx::query_as(
-                "SELECT is_active, allowed_posting, is_control_account FROM accounts WHERE id = $1",
+                "SELECT is_active, allowed_posting, is_control_account FROM chart_of_accounts WHERE id = $1",
             )
             .bind(*account_id)
             .fetch_optional(&self.pool)
@@ -228,7 +248,7 @@ impl PostingService {
 
         if let Some(tax_account_id) = rule.tax_account_id {
             let is_active: bool = sqlx::query_scalar(
-                "SELECT is_active FROM accounts WHERE id = $1",
+                "SELECT is_active FROM chart_of_accounts WHERE id = $1",
             )
             .bind(tax_account_id)
             .fetch_one(&self.pool)

@@ -15,6 +15,8 @@ pub const OLLAMA_BASE_URL: &str = "OLLAMA_BASE_URL";
 pub const PYTHON_ENGINE_URL: &str = "PYTHON_ENGINE_URL";
 pub const REDIS_URL: &str = "REDIS_URL";
 pub const RUST_LOG: &str = "RUST_LOG";
+pub const RSA_PRIVATE_KEY_PATH: &str = "RSA_PRIVATE_KEY_PATH";
+pub const RSA_PUBLIC_KEY_PATH: &str = "RSA_PUBLIC_KEY_PATH";
 
 pub fn env_or(key: &str, default: &str) -> String {
     env::var(key).unwrap_or_else(|_| default.to_string())

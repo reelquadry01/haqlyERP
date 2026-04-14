@@ -28,7 +28,7 @@
       }
     ],
     "security": {
-      "csp": "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval'; style-src 'self' 'unsafe-inline'; img-src 'self' asset: https://data: blob:; font-src 'self' data:; connect-src 'self' http://localhost:8100 http://localhost:8200 http://localhost:11434 https://imsin.nbr.gov.bd; frame-src 'none'; object-src 'none'"
+      "csp": "script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:; connect-src 'self' http://localhost:8100 http://localhost:8200; font-src 'self'; default-src 'self'"
     },
     "trayIcon": {
       "iconPath": "icons/icon.png",
@@ -87,8 +87,9 @@
       "open": true
     },
     "updater": {
-      "pubkey": "",
-      "endpoints": ["https://releases.haqly.com/erp/desktop/{{target}}/{{arch}}/{{current_version}}"]
+      "pubkey": "6fM+msMtWdvo3fHvb+88RY7STZyKW2v5q9yJ9cV3ceY=",
+      "endpoints": ["https://releases.haqly.com/erp/desktop/{{target}}/{{arch}}/{{current_version}}"],
+      "_dev_note": "REPLACE PUBKEY WITH PRODUCTION Ed25519 KEY BEFORE RELEASE"
     }
   }
 }

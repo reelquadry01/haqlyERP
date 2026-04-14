@@ -1,12 +1,17 @@
 // Author: Quadri Atharu
 use crate::config::env::*;
+use crate::config::rsa_keys::{self, RsaKeypair};
 use serde::{Deserialize, Serialize};
+use std::sync::Arc;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
     pub database_url: String,
-    pub jwt_secret: String,
     pub jwt_expiration: u64,
+    pub rsa_private_key_path: String,
+    pub rsa_public_key_path: String,
+    #[serde(skip)]
+    pub rsa_keypair: Arc<RsaKeypair>,
     pub server_port: u16,
     pub cors_origins: Vec<String>,
     pub firs_base_url: String,
@@ -24,14 +29,29 @@ impl Settings {
 
         let is_dev = std::env::var("HAQLY_ENV").unwrap_or_default() == "development";
 
-        let fail_secure = |key: &str, label: &str| -> String {
-            if is_dev {
-                format!("dev-only-{}", label)
+        let rsa_private_key_path = env_or(
+            RSA_PRIVATE_KEY_PATH,
+            if cfg!(windows) {
+                let app_data = std::env::var("APPDATA").unwrap_or_else(|_| ".".to_string());
+                format!("{}\\haqly-erp\\keys\\private.pem", app_data)
             } else {
-                eprintln!("FATAL: {} environment variable must be set in production", key);
-                std::process::exit(1);
-            }
-        };
+                let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+                format!("{}/.haqly-erp/keys/private.pem", home)
+            },
+        );
+
+        let rsa_public_key_path = env_or(
+            RSA_PUBLIC_KEY_PATH,
+            if cfg!(windows) {
+                let app_data = std::env::var("APPDATA").unwrap_or_else(|_| ".".to_string());
+                format!("{}\\haqly-erp\\keys\\public.pem", app_data)
+            } else {
+                let home = std::env::var("HOME").unwrap_or_else(|_| ".".to_string());
+                format!("{}/.haqly-erp/keys/public.pem", home)
+            },
+        );
+
+        let rsa_keypair = rsa_keys::ensure_rsa_keypair(&rsa_private_key_path, &rsa_public_key_path)?;
 
         Ok(Settings {
             database_url: std::env::var(DATABASE_URL).unwrap_or_else(|_| {
@@ -42,15 +62,10 @@ impl Settings {
                     std::process::exit(1);
                 }
             }),
-            jwt_secret: std::env::var(JWT_SECRET).unwrap_or_else(|_| {
-                if is_dev {
-                    "dev-only-secret-change-in-production".to_string()
-                } else {
-                    eprintln!("FATAL: JWT_SECRET environment variable must be set in production");
-                    std::process::exit(1);
-                }
-            }),
             jwt_expiration: env_or_parse(JWT_EXPIRATION, 86400u64),
+            rsa_private_key_path,
+            rsa_public_key_path,
+            rsa_keypair: Arc::new(rsa_keypair),
             server_port: env_or_parse(SERVER_PORT, 8080u16),
             cors_origins: env_or(CORS_ORIGINS, "http://localhost:3000")
                 .split(',')

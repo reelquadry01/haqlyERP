@@ -7,6 +7,10 @@ use uuid::Uuid;
 
 use crate::models::payroll::{Employee, EmploymentType, PayrollRun, PayrollRunStatus, Payslip};
 
+fn safe_bd(val: f64) -> BigDecimal {
+    BigDecimal::from_f64(val).unwrap_or_else(|| BigDecimal::from(0))
+}
+
 const HOUSING_ALLOWANCE_PERCENT: f64 = 0.20;
 const TRANSPORT_ALLOWANCE_PERCENT: f64 = 0.05;
 const MEAL_ALLOWANCE_PERCENT: f64 = 0.05;
@@ -170,12 +174,12 @@ impl PayrollService {
         &self,
         annual_gross: &BigDecimal,
     ) -> BigDecimal {
-        let housing = annual_gross * BigDecimal::from_f64(HOUSING_ALLOWANCE_PERCENT).unwrap();
-        let transport = annual_gross * BigDecimal::from_f64(TRANSPORT_ALLOWANCE_PERCENT).unwrap();
-        let meal = annual_gross * BigDecimal::from_f64(MEAL_ALLOWANCE_PERCENT).unwrap();
-        let utility = annual_gross * BigDecimal::from_f64(UTILITY_ALLOWANCE_PERCENT).unwrap();
-        let pension = annual_gross * BigDecimal::from_f64(PENSION_EMPLOYEE_PERCENT).unwrap();
-        let nhf = annual_gross * BigDecimal::from_f64(NHF_PERCENT).unwrap();
+        let housing = annual_gross * safe_bd(HOUSING_ALLOWANCE_PERCENT);
+        let transport = annual_gross * safe_bd(TRANSPORT_ALLOWANCE_PERCENT);
+        let meal = annual_gross * safe_bd(MEAL_ALLOWANCE_PERCENT);
+        let utility = annual_gross * safe_bd(UTILITY_ALLOWANCE_PERCENT);
+        let pension = annual_gross * safe_bd(PENSION_EMPLOYEE_PERCENT);
+        let nhf = annual_gross * safe_bd(NHF_PERCENT);
 
         let total_tax_free = &housing + &transport + &meal + &utility + &pension + &nhf;
         annual_gross - total_tax_free
@@ -226,6 +230,8 @@ impl PayrollService {
         .fetch_all(&self.pool)
         .await?;
 
+        let mut tx = self.pool.begin().await.map_err(|e| anyhow!("Failed to begin transaction: {}", e))?;
+
         let mut total_gross = BigDecimal::from(0);
         let mut total_deductions = BigDecimal::from(0);
         let mut total_net = BigDecimal::from(0);
@@ -234,10 +240,10 @@ impl PayrollService {
         for emp in &employees {
             let annual_salary = &emp.salary_amount * BigDecimal::from(12);
             let monthly_basic = &emp.salary_amount;
-            let housing = monthly_basic * BigDecimal::from_f64(HOUSING_ALLOWANCE_PERCENT).unwrap();
-            let transport = monthly_basic * BigDecimal::from_f64(TRANSPORT_ALLOWANCE_PERCENT).unwrap();
-            let meal = monthly_basic * BigDecimal::from_f64(MEAL_ALLOWANCE_PERCENT).unwrap();
-            let utility = monthly_basic * BigDecimal::from_f64(UTILITY_ALLOWANCE_PERCENT).unwrap();
+            let housing = monthly_basic * safe_bd(HOUSING_ALLOWANCE_PERCENT);
+            let transport = monthly_basic * safe_bd(TRANSPORT_ALLOWANCE_PERCENT);
+            let meal = monthly_basic * safe_bd(MEAL_ALLOWANCE_PERCENT);
+            let utility = monthly_basic * safe_bd(UTILITY_ALLOWANCE_PERCENT);
 
             let monthly_gross = &monthly_basic + &housing + &transport + &meal + &utility;
 
@@ -245,11 +251,11 @@ impl PayrollService {
             let annual_paye = self.compute_paye(&annual_taxable);
             let monthly_paye = &annual_paye / BigDecimal::from(12);
 
-            let pension_employee = monthly_basic * BigDecimal::from_f64(PENSION_EMPLOYEE_PERCENT).unwrap();
-            let pension_employer = monthly_basic * BigDecimal::from_f64(PENSION_EMPLOYER_PERCENT).unwrap();
-            let nhf = monthly_basic * BigDecimal::from_f64(NHF_PERCENT).unwrap();
-            let nsitf = monthly_basic * BigDecimal::from_f64(NSITF_PERCENT).unwrap();
-            let itf_levy = monthly_basic * BigDecimal::from_f64(ITF_PERCENT).unwrap();
+            let pension_employee = monthly_basic * safe_bd(PENSION_EMPLOYEE_PERCENT);
+            let pension_employer = monthly_basic * safe_bd(PENSION_EMPLOYER_PERCENT);
+            let nhf = monthly_basic * safe_bd(NHF_PERCENT);
+            let nsitf = monthly_basic * safe_bd(NSITF_PERCENT);
+            let itf_levy = monthly_basic * safe_bd(ITF_PERCENT);
 
             let monthly_deductions = &monthly_paye + &pension_employee + &nhf + &nsitf + &itf_levy;
             let monthly_net = &monthly_gross - &monthly_deductions;
@@ -277,7 +283,7 @@ impl PayrollService {
             .bind(&monthly_deductions)
             .bind(&monthly_net)
             .bind(&emp.currency_code)
-            .execute(&self.pool)
+            .execute(&mut *tx)
             .await?;
 
             total_gross = total_gross + monthly_gross;
@@ -295,8 +301,10 @@ impl PayrollService {
         .bind(&total_employer_contributions)
         .bind(processed_by)
         .bind(payroll_run_id)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
+
+        tx.commit().await.map_err(|e| anyhow!("Failed to commit payroll processing: {}", e))?;
 
         sqlx::query_as::<_, PayrollRun>("SELECT * FROM payroll_runs WHERE id = $1")
             .bind(payroll_run_id)
@@ -388,8 +396,10 @@ impl PayrollService {
         let journal_id = Uuid::now_v7();
         let entry_number = format!("PR-{}", payroll_run_id);
 
-        let mut total_debit = run.total_gross.clone();
-        let mut total_credit = run.total_net.clone();
+        let total_debit = run.total_gross.clone();
+        let total_credit = run.total_net.clone();
+
+        let mut tx = self.pool.begin().await.map_err(|e| anyhow!("Failed to begin transaction: {}", e))?;
 
         sqlx::query(
             r#"INSERT INTO journal_headers (id, company_id, fiscal_year_id, period_id, entry_number, narration, status, journal_type, source_module, source_document_id, total_debit, total_credit, currency_code, posted_at, posted_by, created_by, created_at, updated_at)
@@ -406,7 +416,7 @@ impl PayrollService {
         .bind(&total_credit)
         .bind(&currency)
         .bind(posted_by)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
 
         let mut line_num = 1i32;
@@ -421,7 +431,7 @@ impl PayrollService {
         .bind(line_num)
         .bind(&run.total_gross)
         .bind(&currency)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
         line_num += 1;
 
@@ -438,7 +448,7 @@ impl PayrollService {
                 .bind(line_num)
                 .bind(&total_paye)
                 .bind(&currency)
-                .execute(&self.pool)
+                .execute(&mut *tx)
                 .await?;
                 line_num += 1;
             }
@@ -459,7 +469,7 @@ impl PayrollService {
                 .bind(line_num)
                 .bind(&total_pension)
                 .bind(&currency)
-                .execute(&self.pool)
+                .execute(&mut *tx)
                 .await?;
                 line_num += 1;
             }
@@ -478,7 +488,7 @@ impl PayrollService {
                 .bind(line_num)
                 .bind(&total_nhf)
                 .bind(&currency)
-                .execute(&self.pool)
+                .execute(&mut *tx)
                 .await?;
                 line_num += 1;
             }
@@ -494,7 +504,7 @@ impl PayrollService {
         .bind(line_num)
         .bind(&run.total_net)
         .bind(&currency)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
         line_num += 1;
 
@@ -511,7 +521,7 @@ impl PayrollService {
                 .bind(line_num)
                 .bind(&er_contributions)
                 .bind(&currency)
-                .execute(&self.pool)
+                .execute(&mut *tx)
                 .await?;
             }
         }
@@ -520,8 +530,10 @@ impl PayrollService {
             "UPDATE payroll_runs SET status = 'posted' WHERE id = $1",
         )
         .bind(payroll_run_id)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
+
+        tx.commit().await.map_err(|e| anyhow!("Failed to commit payroll GL posting: {}", e))?;
 
         sqlx::query_as::<_, PayrollRun>("SELECT * FROM payroll_runs WHERE id = $1")
             .bind(payroll_run_id)

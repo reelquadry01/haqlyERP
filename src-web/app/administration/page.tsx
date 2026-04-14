@@ -43,6 +43,7 @@ export default function AdministrationPage() {
   const [roles, setRoles] = useState<Role[]>([]);
   const [fiscalYears, setFiscalYears] = useState<FiscalYear[]>([]);
   const [loading, setLoading] = useState(true);
+  const [fetchError, setFetchError] = useState<string | null>(null);
 
   useEffect(() => {
     async function load() {
@@ -55,8 +56,8 @@ export default function AdministrationPage() {
         if (uRes.ok) setUsers((await uRes.json()).data || []);
         if (rRes.ok) setRoles((await rRes.json()).data || []);
         if (fRes.ok) setFiscalYears((await fRes.json()).data || []);
-      } catch {
-        // offline
+      } catch (err) {
+        setFetchError(err instanceof Error ? err.message : "Failed to load administration data");
       } finally {
         setLoading(false);
       }
@@ -109,6 +110,7 @@ export default function AdministrationPage() {
 
         <div style={{ background: "#FFFFFF", border: "1px solid #E9ECEF", borderRadius: 12, padding: 20, boxShadow: "0 2px 8px rgba(0,0,0,0.08)" }}>
           {loading ? <div style={{ display: "flex", justifyContent: "center", padding: 40 }}><div className="splash-loader" /></div>
+            : fetchError ? <div style={{ textAlign: "center", padding: 40, color: "#DC3545" }}><p>{fetchError}</p></div>
             : activeTab === "users" ? <DataTable columns={userColumns} data={users} pageSize={15} emptyMessage="No users" />
             : activeTab === "roles" ? <DataTable columns={roleColumns} data={roles} pageSize={15} emptyMessage="No roles" />
             : activeTab === "fiscal-years" ? <DataTable columns={fyColumns} data={fiscalYears} pageSize={10} emptyMessage="No fiscal years" />

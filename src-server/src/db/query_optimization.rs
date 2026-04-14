@@ -71,7 +71,7 @@ WITH account_balances AS (
         a.org_id,
         COALESCE(SUM(CASE WHEN jl.debit_amount > 0 THEN jl.debit_amount ELSE 0 END), 0) AS total_debit,
         COALESCE(SUM(CASE WHEN jl.credit_amount > 0 THEN jl.credit_amount ELSE 0 END), 0) AS total_credit
-    FROM accounts a
+    FROM chart_of_accounts a
     LEFT JOIN journal_lines jl ON jl.account_id = a.id
     LEFT JOIN journal_entries je ON je.id = jl.journal_entry_id AND je.status = 'posted'
     GROUP BY a.id, a.code, a.name, a.account_type, a.org_id
@@ -125,7 +125,7 @@ SELECT
     a.name AS account_name
 FROM journal_entries je
 LEFT JOIN journal_lines jl ON jl.journal_entry_id = je.id
-LEFT JOIN accounts a ON a.id = jl.account_id
+    LEFT JOIN chart_of_accounts a ON a.id = jl.account_id
 WHERE je.org_id = $1
 ORDER BY je.entry_date DESC, je.created_at DESC, jl.line_order ASC
         "#.trim().to_string()
@@ -138,8 +138,8 @@ ORDER BY je.entry_date DESC, je.created_at DESC, jl.line_order ASC
             "CREATE INDEX IF NOT EXISTS idx_journal_entries_source ON journal_entries (source_type, source_id)".to_string(),
             "CREATE INDEX IF NOT EXISTS idx_journal_lines_entry_id ON journal_lines (journal_entry_id)".to_string(),
             "CREATE INDEX IF NOT EXISTS idx_journal_lines_account_id ON journal_lines (account_id)".to_string(),
-            "CREATE INDEX IF NOT EXISTS idx_accounts_code_org ON accounts (code, org_id)".to_string(),
-            "CREATE INDEX IF NOT EXISTS idx_accounts_type_org ON accounts (account_type, org_id)".to_string(),
+            "CREATE INDEX IF NOT EXISTS idx_accounts_code_org ON chart_of_accounts (code, company_id)".to_string(),
+            "CREATE INDEX IF NOT EXISTS idx_accounts_type_org ON chart_of_accounts (account_type, company_id)".to_string(),
             "CREATE INDEX IF NOT EXISTS idx_posting_status_date ON journal_entries (status, posting_date) WHERE status = 'posted'".to_string(),
             "CREATE INDEX IF NOT EXISTS idx_payment_vouchers_org_date ON payment_vouchers (org_id, created_at DESC)".to_string(),
             "CREATE INDEX IF NOT EXISTS idx_sales_invoices_org_date ON sales_invoices (org_id, invoice_date DESC)".to_string(),

@@ -16,6 +16,7 @@ pub struct User {
     pub is_active: bool,
     pub mfa_enabled: bool,
     pub mfa_secret: Option<String>,
+    pub mfa_recovery_codes: Option<serde_json::Value>,
     pub last_login_at: Option<NaiveDateTime>,
     pub created_at: NaiveDateTime,
     pub updated_at: NaiveDateTime,

@@ -33,7 +33,7 @@ impl AccountingService {
     ) -> Result<Account> {
         let id = Uuid::now_v7();
         sqlx::query(
-            r#"INSERT INTO accounts (id, company_id, code, name, account_type, sub_type, parent_id, is_control_account, is_active, allowed_posting, currency_code, balance, created_at, updated_at)
+            r#"INSERT INTO chart_of_accounts (id, company_id, code, name, account_type, sub_type, parent_id, is_control_account, is_active, allowed_posting, currency_code, balance, created_at, updated_at)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, true, $9, $10, 0, NOW(), NOW())"#,
         )
         .bind(id)
@@ -53,7 +53,7 @@ impl AccountingService {
     }
 
     pub async fn get_account(&self, id: Uuid) -> Result<Account> {
-        sqlx::query_as::<_, Account>("SELECT * FROM accounts WHERE id = $1")
+        sqlx::query_as::<_, Account>("SELECT * FROM chart_of_accounts WHERE id = $1")
             .bind(id)
             .fetch_optional(&self.pool)
             .await?
@@ -62,7 +62,7 @@ impl AccountingService {
 
     pub async fn list_accounts(&self, company_id: Uuid) -> Result<Vec<Account>> {
         let accounts = sqlx::query_as::<_, Account>(
-            "SELECT * FROM accounts WHERE company_id = $1 AND is_active = true ORDER BY code",
+            "SELECT * FROM chart_of_accounts WHERE company_id = $1 AND is_active = true ORDER BY code",
         )
         .bind(company_id)
         .fetch_all(&self.pool)

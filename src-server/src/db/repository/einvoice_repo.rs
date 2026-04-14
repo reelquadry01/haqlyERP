@@ -1,10 +1,28 @@
 // Author: Quadri Atharu
+use anyhow::{anyhow, Result};
+use base64::engine::general_purpose::STANDARD as BASE64;
+use base64::Engine;
 use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use serde_json::Value as JsonValue;
 use sqlx::FromRow;
 use sqlx::PgPool;
 use uuid::Uuid;
+
+use crate::services::encryption_service;
+
+fn get_encryption_key() -> Result<[u8; 32]> {
+    let key_b64 = std::env::var("HAQLY_ENCRYPTION_KEY")
+        .map_err(|_| anyhow!("HAQLY_ENCRYPTION_KEY not set"))?;
+    let key_bytes = BASE64.decode(&key_b64)
+        .map_err(|e| anyhow!("Invalid encryption key: {}", e))?;
+    if key_bytes.len() != 32 {
+        return Err(anyhow!("Encryption key must be 32 bytes"));
+    }
+    let mut key = [0u8; 32];
+    key.copy_from_slice(&key_bytes);
+    Ok(key)
+}
 
 #[derive(Debug, Clone, Serialize, Deserialize, FromRow)]
 pub struct EInvoiceProfile {
@@ -40,6 +58,10 @@ pub struct EInvoiceCredential {
     pub environment: String,
     pub is_active: bool,
     pub last_tested_at: Option<DateTime<Utc>>,
+    pub api_key_nonce: Option<Vec<u8>>,
+    pub api_key_tag: Option<Vec<u8>>,
+    pub api_secret_nonce: Option<Vec<u8>>,
+    pub api_secret_tag: Option<Vec<u8>>,
     pub created_at: DateTime<Utc>,
     pub updated_at: DateTime<Utc>,
 }
@@ -163,38 +185,87 @@ impl EInvoiceRepo {
         &self,
         company_id: Uuid,
     ) -> Result<Option<EInvoiceCredential>, sqlx::Error> {
-        sqlx::query_as::<_, EInvoiceCredential>(
+        let mut result = sqlx::query_as::<_, EInvoiceCredential>(
             r#"SELECT id, company_id, api_key, api_secret, crypto_key, base_url, environment,
-                is_active, last_tested_at, created_at, updated_at
+                is_active, last_tested_at, api_key_nonce, api_key_tag, api_secret_nonce, api_secret_tag,
+                created_at, updated_at
             FROM einvoice_credentials WHERE company_id = $1"#,
         )
         .bind(company_id)
         .fetch_optional(&self.pool)
-        .await
+        .await?;
+
+        if let Some(ref mut cred) = result {
+            if let Ok(key) = get_encryption_key() {
+                if let (Some(ref nonce), Some(ref tag)) = (cred.api_key_nonce, cred.api_key_tag) {
+                    let nonce_b64 = BASE64.encode(nonce);
+                    let tag_b64 = BASE64.encode(tag);
+                    if let Ok(plain) = encryption_service::decrypt_field(&cred.api_key, &key, &nonce_b64, &tag_b64) {
+                        cred.api_key = plain;
+                    }
+                }
+                if let (Some(ref nonce), Some(ref tag)) = (cred.api_secret_nonce, cred.api_secret_tag) {
+                    let nonce_b64 = BASE64.encode(nonce);
+                    let tag_b64 = BASE64.encode(tag);
+                    if let Ok(plain) = encryption_service::decrypt_field(&cred.api_secret, &key, &nonce_b64, &tag_b64) {
+                        cred.api_secret = plain;
+                    }
+                }
+            }
+        }
+
+        Ok(result)
     }
 
     pub async fn save_credentials(
         &self,
         cred: NewEInvoiceCredential,
     ) -> Result<EInvoiceCredential, sqlx::Error> {
-        sqlx::query_as::<_, EInvoiceCredential>(
-            r#"INSERT INTO einvoice_credentials (company_id, api_key, api_secret, crypto_key, base_url, environment)
-            VALUES ($1, $2, $3, $4, $5, $6)
+        let key = get_encryption_key().map_err(|e| sqlx::Error::Configuration(e.into()))?;
+        let enc_api_key = encryption_service::encrypt_field(&cred.api_key, &key)
+            .map_err(|e| sqlx::Error::Configuration(e.into()))?;
+        let enc_api_secret = encryption_service::encrypt_field(&cred.api_secret, &key)
+            .map_err(|e| sqlx::Error::Configuration(e.into()))?;
+
+        let api_key_nonce = BASE64.decode(&enc_api_key.nonce)
+            .map_err(|e| sqlx::Error::Configuration(e.into()))?;
+        let api_key_tag = BASE64.decode(&enc_api_key.tag)
+            .map_err(|e| sqlx::Error::Configuration(e.into()))?;
+        let api_secret_nonce = BASE64.decode(&enc_api_secret.nonce)
+            .map_err(|e| sqlx::Error::Configuration(e.into()))?;
+        let api_secret_tag = BASE64.decode(&enc_api_secret.tag)
+            .map_err(|e| sqlx::Error::Configuration(e.into()))?;
+
+        let mut result = sqlx::query_as::<_, EInvoiceCredential>(
+            r#"INSERT INTO einvoice_credentials (company_id, api_key, api_secret, crypto_key, base_url, environment, api_key_nonce, api_key_tag, api_secret_nonce, api_secret_tag)
+            VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)
             ON CONFLICT (company_id) DO UPDATE SET
                 api_key = EXCLUDED.api_key, api_secret = EXCLUDED.api_secret,
                 crypto_key = EXCLUDED.crypto_key, base_url = EXCLUDED.base_url,
-                environment = EXCLUDED.environment, updated_at = now()
+                environment = EXCLUDED.environment,
+                api_key_nonce = EXCLUDED.api_key_nonce, api_key_tag = EXCLUDED.api_key_tag,
+                api_secret_nonce = EXCLUDED.api_secret_nonce, api_secret_tag = EXCLUDED.api_secret_tag,
+                updated_at = now()
             RETURNING id, company_id, api_key, api_secret, crypto_key, base_url, environment,
-                is_active, last_tested_at, created_at, updated_at"#,
+                is_active, last_tested_at, api_key_nonce, api_key_tag, api_secret_nonce, api_secret_tag,
+                created_at, updated_at"#,
         )
         .bind(cred.company_id)
-        .bind(&cred.api_key)
-        .bind(&cred.api_secret)
+        .bind(&enc_api_key.ciphertext)
+        .bind(&enc_api_secret.ciphertext)
         .bind(&cred.crypto_key)
         .bind(&cred.base_url)
         .bind(&cred.environment)
+        .bind(&api_key_nonce)
+        .bind(&api_key_tag)
+        .bind(&api_secret_nonce)
+        .bind(&api_secret_tag)
         .fetch_one(&self.pool)
-        .await
+        .await?;
+
+        result.api_key = cred.api_key;
+        result.api_secret = cred.api_secret;
+        Ok(result)
     }
 
     pub async fn create_document(

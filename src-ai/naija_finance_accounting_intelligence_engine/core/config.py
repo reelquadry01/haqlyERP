@@ -21,11 +21,11 @@ class Settings(BaseSettings):
     )
 
     database_url: str = Field(
-        default="postgresql+asyncpg://haqly:haqly_secret@localhost:5432/haqly_erp",
+        default="",
         description="Async PostgreSQL connection string",
     )
     database_url_sync: str = Field(
-        default="postgresql://haqly:haqly_secret@localhost:5432/haqly_erp",
+        default="",
         description="Sync PostgreSQL connection string for migrations",
     )
     api_host: str = Field(default="0.0.0.0", description="API bind host")
@@ -92,6 +92,10 @@ class Settings(BaseSettings):
     def _fail_secure_jwt_secret(self) -> "Settings":
         if not self.jwt_secret and os.environ.get("NAIJA_ENGINE_ENV") != "development":
             raise RuntimeError("FATAL: NAIJA_ENGINE_JWT_SECRET must be set in production")
+        if not self.database_url and os.environ.get("NAIJA_ENGINE_ENV") != "development":
+            raise RuntimeError("FATAL: NAIJA_ENGINE_DATABASE_URL must be set in production")
+        if not self.database_url_sync and os.environ.get("NAIJA_ENGINE_ENV") != "development":
+            raise RuntimeError("FATAL: NAIJA_ENGINE_DATABASE_URL_SYNC must be set in production")
         return self
 
 

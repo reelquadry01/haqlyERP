@@ -2,7 +2,7 @@ use axum::Router;
 use haqly_erp_server::{
     config::settings::Settings,
     db::pool::create_pool,
-    middleware::{auth::AuthLayer, audit::AuditLayer, error::ErrorLayer},
+    middleware::{auth::AuthLayer, audit::AuditLayer, error::ErrorLayer, rbac::RbacLayer},
     routes::app_routes,
 };
 use sqlx::postgres::PgPoolOptions;
@@ -71,7 +71,8 @@ async fn main() -> anyhow::Result<()> {
     let app = app_routes(pool.clone(), settings.clone())
         .layer(CompressionLayer::new())
         .layer(TraceLayer::new_for_http())
-        .layer(AuthLayer::new(settings.jwt_secret.clone(), settings.jwt_expiration))
+        .layer(RbacLayer::new())
+        .layer(AuthLayer::new(settings.rsa_keypair.clone(), settings.jwt_expiration))
         .layer(AuditLayer::new(pool.clone()))
         .layer(ErrorLayer::new())
         .layer(cors);

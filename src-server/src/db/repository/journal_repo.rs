@@ -14,13 +14,13 @@ pub struct JournalHeader {
     pub department_id: Option<Uuid>,
     pub fiscal_year_id: Uuid,
     pub period_id: Uuid,
-    pub number: String,
+    pub entry_number: String,
     pub date: NaiveDate,
     pub narration: Option<String>,
     pub source_module: Option<String>,
     pub source_type: Option<String>,
     pub source_document_id: Option<Uuid>,
-    pub reference_id: Option<String>,
+    pub reference: Option<String>,
     pub currency_code: String,
     pub exchange_rate: BigDecimal,
     pub status: String,
@@ -69,13 +69,13 @@ pub struct NewJournalHeader {
     pub department_id: Option<Uuid>,
     pub fiscal_year_id: Uuid,
     pub period_id: Uuid,
-    pub number: String,
+    pub entry_number: String,
     pub date: NaiveDate,
     pub narration: Option<String>,
     pub source_module: Option<String>,
     pub source_type: Option<String>,
     pub source_document_id: Option<Uuid>,
-    pub reference_id: Option<String>,
+    pub reference: Option<String>,
     pub currency_code: String,
     pub exchange_rate: BigDecimal,
     pub created_by: Uuid,
@@ -110,12 +110,12 @@ impl JournalRepo {
         sqlx::query_as::<_, JournalHeader>(
             r#"INSERT INTO journal_headers (
                 company_id, branch_id, department_id, fiscal_year_id, period_id,
-                number, date, narration, source_module, source_type,
-                source_document_id, reference_id, currency_code, exchange_rate, created_by
+                entry_number, date, narration, source_module, source_type,
+                source_document_id, reference, currency_code, exchange_rate, created_by
             ) VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11, $12, $13, $14, $15)
             RETURNING id, company_id, branch_id, department_id, fiscal_year_id, period_id,
-                number, date, narration, source_module, source_type, source_document_id,
-                reference_id, currency_code, exchange_rate, status, total_debit, total_credit,
+                entry_number, date, narration, source_module, source_type, source_document_id,
+                reference, currency_code, exchange_rate, status, total_debit, total_credit,
                 is_balanced, created_by, submitted_by, approved_by, posted_by,
                 submitted_at, approved_at, posted_at, reversal_of, reversal_reason,
                 created_at, updated_at"#,
@@ -125,13 +125,13 @@ impl JournalRepo {
         .bind(new_header.department_id)
         .bind(new_header.fiscal_year_id)
         .bind(new_header.period_id)
-        .bind(&new_header.number)
+        .bind(&new_header.entry_number)
         .bind(new_header.date)
         .bind(&new_header.narration)
         .bind(&new_header.source_module)
         .bind(&new_header.source_type)
         .bind(new_header.source_document_id)
-        .bind(&new_header.reference_id)
+        .bind(&new_header.reference)
         .bind(&new_header.currency_code)
         .bind(&new_header.exchange_rate)
         .bind(new_header.created_by)
@@ -173,7 +173,7 @@ impl JournalRepo {
 
     pub async fn find_by_id(&self, id: Uuid) -> Result<Option<JournalHeaderWithLines>, sqlx::Error> {
         let header = sqlx::query_as::<_, JournalHeader>(
-            "SELECT id, company_id, branch_id, department_id, fiscal_year_id, period_id, number, date, narration, source_module, source_type, source_document_id, reference_id, currency_code, exchange_rate, status, total_debit, total_credit, is_balanced, created_by, submitted_by, approved_by, posted_by, submitted_at, approved_at, posted_at, reversal_of, reversal_reason, created_at, updated_at FROM journal_headers WHERE id = $1",
+            "SELECT id, company_id, branch_id, department_id, fiscal_year_id, period_id, entry_number, date, narration, source_module, source_type, source_document_id, reference, currency_code, exchange_rate, status, total_debit, total_credit, is_balanced, created_by, submitted_by, approved_by, posted_by, submitted_at, approved_at, posted_at, reversal_of, reversal_reason, created_at, updated_at FROM journal_headers WHERE id = $1",
         )
         .bind(id)
         .fetch_optional(&self.pool)
@@ -202,7 +202,7 @@ impl JournalRepo {
         match status {
             Some(s) => {
                 sqlx::query_as::<_, JournalHeader>(
-                    "SELECT id, company_id, branch_id, department_id, fiscal_year_id, period_id, number, date, narration, source_module, source_type, source_document_id, reference_id, currency_code, exchange_rate, status, total_debit, total_credit, is_balanced, created_by, submitted_by, approved_by, posted_by, submitted_at, approved_at, posted_at, reversal_of, reversal_reason, created_at, updated_at FROM journal_headers WHERE company_id = $1 AND status = $2 ORDER BY date DESC, number",
+                    "SELECT id, company_id, branch_id, department_id, fiscal_year_id, period_id, entry_number, date, narration, source_module, source_type, source_document_id, reference, currency_code, exchange_rate, status, total_debit, total_credit, is_balanced, created_by, submitted_by, approved_by, posted_by, submitted_at, approved_at, posted_at, reversal_of, reversal_reason, created_at, updated_at FROM journal_headers WHERE company_id = $1 AND status = $2 ORDER BY date DESC, entry_number",
                 )
                 .bind(company_id)
                 .bind(s)
@@ -211,7 +211,7 @@ impl JournalRepo {
             }
             None => {
                 sqlx::query_as::<_, JournalHeader>(
-                    "SELECT id, company_id, branch_id, department_id, fiscal_year_id, period_id, number, date, narration, source_module, source_type, source_document_id, reference_id, currency_code, exchange_rate, status, total_debit, total_credit, is_balanced, created_by, submitted_by, approved_by, posted_by, submitted_at, approved_at, posted_at, reversal_of, reversal_reason, created_at, updated_at FROM journal_headers WHERE company_id = $1 ORDER BY date DESC, number",
+                    "SELECT id, company_id, branch_id, department_id, fiscal_year_id, period_id, entry_number, date, narration, source_module, source_type, source_document_id, reference, currency_code, exchange_rate, status, total_debit, total_credit, is_balanced, created_by, submitted_by, approved_by, posted_by, submitted_at, approved_at, posted_at, reversal_of, reversal_reason, created_at, updated_at FROM journal_headers WHERE company_id = $1 ORDER BY date DESC, entry_number",
                 )
                 .bind(company_id)
                 .fetch_all(&self.pool)

@@ -274,7 +274,7 @@ impl OcrService {
 
         let account_id: Option<Uuid> = if !account_code.is_empty() {
             sqlx::query_scalar(
-                "SELECT id FROM accounts WHERE company_id = $1 AND code = $2 AND is_active = true",
+                "SELECT id FROM chart_of_accounts WHERE company_id = $1 AND code = $2 AND is_active = true",
             )
             .bind(doc.company_id)
             .bind(&account_code)
@@ -286,7 +286,7 @@ impl OcrService {
 
         let debit_account_id = account_id.unwrap_or(Uuid::nil());
         let credit_account_id: Uuid = sqlx::query_scalar(
-            "SELECT id FROM accounts WHERE company_id = $1 AND code = '2101' AND is_active = true LIMIT 1",
+            "SELECT id FROM chart_of_accounts WHERE company_id = $1 AND code = '2101' AND is_active = true LIMIT 1",
         )
         .bind(doc.company_id)
         .fetch_optional(&self.pool)

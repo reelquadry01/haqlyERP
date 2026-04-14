@@ -1,7 +1,6 @@
 // Author: Quadri Atharu
 use anyhow::{anyhow, Result};
 use bigdecimal::BigDecimal;
-use chrono::NaiveDate;
 use sqlx::PgPool;
 use uuid::Uuid;
 
@@ -40,6 +39,8 @@ impl JournalsService {
         let id = Uuid::now_v7();
         let currency = req.currency_code.unwrap_or_else(|| "NGN".to_string());
 
+        let mut tx = self.pool.begin().await.map_err(|e| anyhow!("Failed to begin transaction: {}", e))?;
+
         sqlx::query(
             r#"INSERT INTO journal_headers (id, company_id, branch_id, fiscal_year_id, period_id, entry_number, reference, narration, status, journal_type, total_debit, total_credit, currency_code, created_by, created_at, updated_at)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'draft', $9, $10, $11, $12, $13, NOW(), NOW())"#,
@@ -57,7 +58,7 @@ impl JournalsService {
         .bind(&total_credit)
         .bind(&currency)
         .bind(created_by)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
 
         for (i, line) in req.lines.iter().enumerate() {
@@ -77,9 +78,11 @@ impl JournalsService {
             .bind(line.cost_center_id)
             .bind(line.project_id)
             .bind(line.department_id)
-            .execute(&self.pool)
+            .execute(&mut *tx)
             .await?;
         }
+
+        tx.commit().await.map_err(|e| anyhow!("Failed to commit journal creation: {}", e))?;
 
         self.get_journal(id).await
     }
@@ -94,18 +97,20 @@ impl JournalsService {
             return Err(anyhow!("Only draft journals can be updated"));
         }
 
+        let mut tx = self.pool.begin().await.map_err(|e| anyhow!("Failed to begin transaction: {}", e))?;
+
         if let Some(narration) = req.narration {
             sqlx::query("UPDATE journal_headers SET narration = $1, updated_at = NOW() WHERE id = $2")
                 .bind(&narration)
                 .bind(journal_id)
-                .execute(&self.pool)
+                .execute(&mut *tx)
                 .await?;
         }
 
         if let Some(lines) = req.lines {
             sqlx::query("DELETE FROM journal_lines WHERE journal_header_id = $1")
                 .bind(journal_id)
-                .execute(&self.pool)
+                .execute(&mut *tx)
                 .await?;
 
             let total_debit: BigDecimal = lines.iter().filter_map(|l| l.debit.clone()).sum();
@@ -128,7 +133,7 @@ impl JournalsService {
                 .bind(line.cost_center_id)
                 .bind(line.project_id)
                 .bind(line.department_id)
-                .execute(&self.pool)
+                .execute(&mut *tx)
                 .await?;
             }
 
@@ -138,9 +143,11 @@ impl JournalsService {
             .bind(&total_debit)
             .bind(&total_credit)
             .bind(journal_id)
-            .execute(&self.pool)
+            .execute(&mut *tx)
             .await?;
         }
+
+        tx.commit().await.map_err(|e| anyhow!("Failed to commit journal update: {}", e))?;
 
         self.get_journal(journal_id).await
     }
@@ -278,6 +285,8 @@ impl JournalsService {
         .fetch_all(&self.pool)
         .await?;
 
+        let mut tx = self.pool.begin().await.map_err(|e| anyhow!("Failed to begin transaction: {}", e))?;
+
         for line in &lines {
             let debit: BigDecimal = line.debit.clone();
             let credit: BigDecimal = line.credit.clone();
@@ -287,7 +296,7 @@ impl JournalsService {
                 "SELECT account_type::text FROM accounts WHERE id = $1",
             )
             .bind(line.account_id)
-            .fetch_one(&self.pool)
+            .fetch_one(&mut *tx)
             .await?;
 
             let balance_change = match account_type.as_str() {
@@ -302,7 +311,7 @@ impl JournalsService {
                 )
                 .bind(&balance_change)
                 .bind(line.account_id)
-                .execute(&self.pool)
+                .execute(&mut *tx)
                 .await?;
             }
         }
@@ -312,8 +321,10 @@ impl JournalsService {
         )
         .bind(posted_by)
         .bind(journal_id)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
+
+        tx.commit().await.map_err(|e| anyhow!("Failed to commit GL posting: {}", e))?;
 
         self.get_journal(journal_id).await
     }
@@ -335,6 +346,8 @@ impl JournalsService {
         let reversal_id = Uuid::now_v7();
         let reversal_narration = format!("Reversal of {} - {}", journal.entry_number, reason);
 
+        let mut tx = self.pool.begin().await.map_err(|e| anyhow!("Failed to begin transaction: {}", e))?;
+
         sqlx::query(
             r#"INSERT INTO journal_headers (id, company_id, branch_id, fiscal_year_id, period_id, entry_number, reference, narration, status, journal_type, source_module, reversal_of, total_debit, total_credit, currency_code, created_by, created_at, updated_at)
                VALUES ($1, $2, $3, $4, $5, $6, $7, $8, 'posted', $9, $10, $11, $12, $13, $14, $15, NOW(), NOW())"#,
@@ -354,7 +367,7 @@ impl JournalsService {
         .bind(&journal.total_debit)
         .bind(&journal.currency_code)
         .bind(reversed_by)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
 
         for (i, line) in lines.iter().enumerate() {
@@ -374,7 +387,7 @@ impl JournalsService {
             .bind(line.cost_center_id)
             .bind(line.project_id)
             .bind(line.department_id)
-            .execute(&self.pool)
+            .execute(&mut *tx)
             .await?;
         }
 
@@ -382,8 +395,10 @@ impl JournalsService {
             "UPDATE journal_headers SET status = 'reversed', updated_at = NOW() WHERE id = $1",
         )
         .bind(journal_id)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
+
+        tx.commit().await.map_err(|e| anyhow!("Failed to commit reversal: {}", e))?;
 
         self.get_journal(reversal_id).await
     }
@@ -408,24 +423,6 @@ impl JournalsService {
         let limit = params.limit.unwrap_or(50);
         let offset = (params.page.unwrap_or(1) - 1) * limit;
 
-        let mut query = String::from("SELECT * FROM journal_headers WHERE 1=1");
-        let mut bind_index = 1u32;
-
-        if params.company_id.is_some() {
-            query.push_str(&format!(" AND company_id = ${}", bind_index));
-            bind_index += 1;
-        }
-        if params.status.is_some() {
-            query.push_str(&format!(" AND status = ${}", bind_index));
-            bind_index += 1;
-        }
-        if params.branch_id.is_some() {
-            query.push_str(&format!(" AND branch_id = ${}", bind_index));
-            bind_index += 1;
-        }
-
-        query.push_str(&format!(" ORDER BY created_at DESC LIMIT ${} OFFSET ${}", bind_index, bind_index + 1));
-
         let headers = sqlx::query_as::<_, JournalHeader>(
             "SELECT * FROM journal_headers WHERE company_id = $1 AND ($2::text IS NULL OR status::text = $2) AND ($3::uuid IS NULL OR branch_id = $3) ORDER BY created_at DESC LIMIT $4 OFFSET $5",
         )
@@ -437,17 +434,34 @@ impl JournalsService {
         .fetch_all(&self.pool)
         .await?;
 
-        let mut result = Vec::new();
-        for header in headers {
-            let lines = sqlx::query_as::<_, JournalLine>(
-                "SELECT * FROM journal_lines WHERE journal_header_id = $1 ORDER BY line_number",
-            )
-            .bind(header.id)
-            .fetch_all(&self.pool)
-            .await?;
-
-            result.push(JournalHeaderWithLines { header, lines });
+        if headers.is_empty() {
+            return Ok(Vec::new());
         }
+
+        let header_ids: Vec<Uuid> = headers.iter().map(|h| h.id).collect();
+
+        let all_lines = sqlx::query_as::<_, JournalLine>(
+            "SELECT * FROM journal_lines WHERE journal_header_id = ANY($1) ORDER BY line_number",
+        )
+        .bind(&header_ids)
+        .fetch_all(&self.pool)
+        .await?;
+
+        let mut lines_by_header: std::collections::HashMap<Uuid, Vec<JournalLine>> = std::collections::HashMap::new();
+        for line in all_lines {
+            lines_by_header
+                .entry(line.journal_header_id)
+                .or_default()
+                .push(line);
+        }
+
+        let result = headers
+            .into_iter()
+            .map(|header| {
+                let lines = lines_by_header.remove(&header.id).unwrap_or_default();
+                JournalHeaderWithLines { header, lines }
+            })
+            .collect();
 
         Ok(result)
     }
@@ -477,6 +491,9 @@ impl JournalsService {
         created_by: Uuid,
     ) -> Result<JournalTemplate> {
         let id = Uuid::now_v7();
+
+        let mut tx = self.pool.begin().await.map_err(|e| anyhow!("Failed to begin transaction: {}", e))?;
+
         sqlx::query(
             r#"INSERT INTO journal_templates (id, company_id, name, narration_template, journal_type, recurrence, is_active, created_by, created_at, updated_at)
                VALUES ($1, $2, $3, $4, $5, $6, true, $7, NOW(), NOW())"#,
@@ -488,7 +505,7 @@ impl JournalsService {
         .bind(&req.journal_type)
         .bind(&req.recurrence)
         .bind(created_by)
-        .execute(&self.pool)
+        .execute(&mut *tx)
         .await?;
 
         for (i, line) in req.lines.iter().enumerate() {
@@ -504,9 +521,11 @@ impl JournalsService {
             .bind(&line.narration)
             .bind(line.cost_center_id)
             .bind(line.project_id)
-            .execute(&self.pool)
+            .execute(&mut *tx)
             .await?;
         }
+
+        tx.commit().await.map_err(|e| anyhow!("Failed to commit template creation: {}", e))?;
 
         sqlx::query_as::<_, JournalTemplate>("SELECT * FROM journal_templates WHERE id = $1")
             .bind(id)

@@ -71,7 +71,7 @@ impl ImportsService {
 
             let id = Uuid::now_v7();
             let res = sqlx::query(
-                r#"INSERT INTO accounts (id, company_id, code, name, account_type, is_active, allowed_posting, is_control_account, currency_code, balance, created_at, updated_at)
+                r#"INSERT INTO chart_of_accounts (id, company_id, code, name, account_type, is_active, allowed_posting, is_control_account, currency_code, balance, created_at, updated_at)
                    VALUES ($1, $2, $3, $4, $5, true, true, false, 'NGN', 0, NOW(), NOW())"#,
             )
             .bind(id)
@@ -378,14 +378,14 @@ impl ImportsService {
 
             let account_code = record.get(0).unwrap_or("");
             let account_id: Option<Uuid> = sqlx::query_scalar(
-                "SELECT id FROM accounts WHERE company_id = $1 AND code = $2"
+                "SELECT id FROM chart_of_accounts WHERE company_id = $1 AND code = $2"
             )
             .bind(company_id).bind(account_code)
             .fetch_optional(&self.pool).await.unwrap_or(None);
 
             if let Some(acc_id) = account_id {
                 let res = sqlx::query(
-                    "UPDATE accounts SET balance = $1 WHERE id = $2"
+                    "UPDATE chart_of_accounts SET balance = $1 WHERE id = $2"
                 )
                 .bind(record.get(1).unwrap_or("0"))
                 .bind(acc_id)

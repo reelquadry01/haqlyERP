@@ -2,21 +2,25 @@
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use axum::response::{IntoResponse, Response};
-use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
+use jsonwebtoken::{decode, encode, Algorithm, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use std::convert::Infallible;
 use std::future::Future;
 use std::pin::Pin;
+use std::sync::Arc;
 use std::task::{Context, Poll};
 use tower::Layer;
 use tower::Service;
 use uuid::Uuid;
+
+use crate::config::rsa_keys::RsaKeypair;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Claims {
     pub sub: Uuid,
     pub email: String,
     pub role: String,
+    pub company_id: Uuid,
     pub exp: usize,
     pub iat: usize,
 }
@@ -28,18 +32,19 @@ pub struct TokenResponse {
     pub expires_in: u64,
 }
 
-pub fn validate_token(token: &str, secret: &str) -> Result<Claims, jsonwebtoken::errors::Error> {
-    let validation = Validation::default();
-    let token_data = decode::<Claims>(token, &DecodingKey::from_secret(secret), &validation)?;
+pub fn validate_token(token: &str, public_key_pem: &[u8]) -> Result<Claims, jsonwebtoken::errors::Error> {
+    let mut validation = Validation::new(Algorithm::RS256);
+    validation.validate_exp = true;
+    let decoding_key = DecodingKey::from_rsa_pem(public_key_pem)?;
+    let token_data = decode::<Claims>(token, &decoding_key, &validation)?;
     Ok(token_data.claims)
 }
 
-pub fn generate_token(claims: Claims, secret: &str) -> Result<String, jsonwebtoken::errors::Error> {
-    encode(
-        &Header::default(),
-        &claims,
-        &EncodingKey::from_secret(secret),
-    )
+pub fn generate_token(claims: Claims, private_key_pem: &[u8], kid: &str) -> Result<String, jsonwebtoken::errors::Error> {
+    let mut header = Header::new(Algorithm::RS256);
+    header.kid = Some(kid.to_string());
+    let encoding_key = EncodingKey::from_rsa_pem(private_key_pem)?;
+    encode(&header, &claims, &encoding_key)
 }
 
 fn is_public_route(path: &str) -> bool {
@@ -56,14 +61,14 @@ fn is_public_route(path: &str) -> bool {
 
 #[derive(Clone)]
 pub struct AuthLayer {
-    jwt_secret: String,
+    rsa_keypair: Arc<RsaKeypair>,
     jwt_expiration: u64,
 }
 
 impl AuthLayer {
-    pub fn new(jwt_secret: String, jwt_expiration: u64) -> Self {
+    pub fn new(rsa_keypair: Arc<RsaKeypair>, jwt_expiration: u64) -> Self {
         Self {
-            jwt_secret,
+            rsa_keypair,
             jwt_expiration,
         }
     }
@@ -79,7 +84,7 @@ where
     fn layer(&self, inner: S) -> Self::Service {
         AuthService {
             inner,
-            jwt_secret: self.jwt_secret.clone(),
+            rsa_keypair: self.rsa_keypair.clone(),
             jwt_expiration: self.jwt_expiration,
         }
     }
@@ -88,7 +93,7 @@ where
 #[derive(Clone)]
 pub struct AuthService<S> {
     inner: S,
-    jwt_secret: String,
+    rsa_keypair: Arc<RsaKeypair>,
     jwt_expiration: u64,
 }
 
@@ -107,7 +112,7 @@ where
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
         let inner = self.inner.clone();
-        let jwt_secret = self.jwt_secret.clone();
+        let rsa_keypair = self.rsa_keypair.clone();
         let _jwt_expiration = self.jwt_expiration;
 
         Box::pin(async move {
@@ -125,7 +130,7 @@ where
             match auth_header {
                 Some(header) if header.starts_with("Bearer ") => {
                     let token = &header[7..];
-                    match validate_token(token, &jwt_secret) {
+                    match validate_token(token, &rsa_keypair.public_pem) {
                         Ok(claims) => {
                             let (mut parts, body) = req.into_parts();
                             parts.extensions.insert(claims);

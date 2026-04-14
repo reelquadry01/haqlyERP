@@ -43,3 +43,5 @@ lru = "0.12"
 dotenvy = "0.15"
 bigdecimal = { version = "0.4", features = ["serde"] }
 zeroize = { version = "1", features = ["derive"] }
+rsa = { version = "0.9", features = ["pem"] }
+totp-rs = "5"

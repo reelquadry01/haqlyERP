@@ -68,6 +68,8 @@ pub struct EInvoiceCredential {
     pub company_id: Uuid,
     pub client_id: String,
     pub client_secret_encrypted: String,
+    pub client_secret_nonce: Option<Vec<u8>>,
+    pub client_secret_tag: Option<Vec<u8>>,
     pub certificate_path: Option<String>,
     pub is_active: bool,
     pub expires_at: Option<NaiveDateTime>,

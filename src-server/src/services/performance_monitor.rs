@@ -256,7 +256,7 @@ mod tests {
     #[test]
     fn test_slow_query_threshold() {
         let monitor = PerformanceMonitor::new();
-        monitor.record_slow_query("SELECT * FROM accounts".into(), 300, "/api/accounts".into());
+        monitor.record_slow_query("SELECT * FROM chart_of_accounts".into(), 300, "/api/accounts".into());
         monitor.record_slow_query("SELECT * FROM journals".into(), 600, "/api/journals".into());
 
         let slow = monitor.get_slow_queries(10);
