@@ -5,6 +5,7 @@ use haqly_erp_server::{
     middleware::{auth::AuthLayer, audit::AuditLayer, error::ErrorLayer, rbac::RbacLayer, rate_limit::RateLimitLayer},
     routes::app_routes,
 };
+use argon2::PasswordHasher;
 use sqlx::postgres::PgPoolOptions;
 use std::net::SocketAddr;
 use tower_http::cors::CorsLayer;
@@ -52,6 +53,7 @@ async fn main() -> anyhow::Result<()> {
                     e
                 })?;
             tracing::info!("Migrations applied successfully.");
+            seed_admin_user(pool).await;
         }
         DbPool::Sqlite(_) => {
             tracing::info!("SQLite migrations already applied during pool initialization.");
@@ -115,6 +117,77 @@ async fn main() -> anyhow::Result<()> {
 
     tracing::info!("HAQLY ERP Server shut down gracefully.");
     Ok(())
+}
+
+async fn seed_admin_user(pool: &sqlx::PgPool) {
+    let exists: bool = sqlx::query_scalar("SELECT EXISTS(SELECT 1 FROM users WHERE email = 'admin@haqly.com')")
+        .fetch_one(pool)
+        .await
+        .unwrap_or(false);
+
+    if exists {
+        tracing::info!("Admin user already exists, skipping seed.");
+        return;
+    }
+
+    let company_id: uuid::Uuid = match sqlx::query_scalar::<_, uuid::Uuid>(
+        "SELECT id FROM companies LIMIT 1"
+    )
+    .fetch_optional(pool)
+    .await
+    .unwrap_or(None)
+    {
+        Some(id) => id,
+        None => {
+            let id = uuid::Uuid::now_v7();
+            sqlx::query(
+                "INSERT INTO companies (id, name, registration_number, industry, is_active, created_at, updated_at) VALUES ($1, 'HAQLY ERP Demo Company', 'RC-000001', 'technology', true, NOW(), NOW())"
+            )
+            .bind(id)
+            .execute(pool)
+            .await
+            .ok();
+            id
+        }
+    };
+
+    let salt = argon2::password_hash::SaltString::generate(&mut rand::rngs::OsRng);
+    let password_hash = argon2::Argon2::default()
+        .hash_password(b"Admin@2026", &salt)
+        .expect("Failed to hash admin password")
+        .to_string();
+
+    let user_id = uuid::Uuid::now_v7();
+    sqlx::query(
+        r#"INSERT INTO users (id, company_id, email, password_hash, full_name, is_active, mfa_enabled, created_at, updated_at)
+           VALUES ($1, $2, 'admin@haqly.com', $3, 'System Administrator', true, false, NOW(), NOW())"#
+    )
+    .bind(user_id)
+    .bind(company_id)
+    .bind(&password_hash)
+    .execute(pool)
+    .await
+    .ok();
+
+    let admin_role_id: Option<uuid::Uuid> = sqlx::query_scalar(
+        "SELECT id FROM roles WHERE name = 'SuperAdmin' LIMIT 1"
+    )
+    .fetch_optional(pool)
+    .await
+    .unwrap_or(None);
+
+    if let Some(role_id) = admin_role_id {
+        sqlx::query(
+            "INSERT INTO user_roles (user_id, role_id) VALUES ($1, $2) ON CONFLICT DO NOTHING"
+        )
+        .bind(user_id)
+        .bind(role_id)
+        .execute(pool)
+        .await
+        .ok();
+    }
+
+    tracing::info!("✅ Seed admin user created: admin@haqly.com / Admin@2026");
 }
 
 async fn shutdown_signal() {
