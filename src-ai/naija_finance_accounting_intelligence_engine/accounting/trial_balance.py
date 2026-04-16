@@ -8,6 +8,14 @@ from typing import Any, Dict, List, Optional
 
 from ..core.exceptions import AccountingError
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -62,17 +70,17 @@ class TrialBalanceEngine:
                 "account_code": bal["account_code"],
                 "account_name": bal["account_name"],
                 "account_type": bal["account_type"],
-                "debit": round(debit_col, 2),
-                "credit": round(credit_col, 2),
+                "debit": _money_round(debit_col),
+                "credit": _money_round(credit_col),
             })
 
             total_debit += debit_col
             total_credit += credit_col
 
-        total_debit = round(total_debit, 2)
-        total_credit = round(total_credit, 2)
-        difference = round(total_debit - total_credit, 2)
-        is_balanced = abs(difference) < 0.01
+        total_debit = _money_round(total_debit)
+        total_credit = _money_round(total_credit)
+        difference = _money_round(total_debit - total_credit)
+        is_balanced = abs(difference) < Decimal('0.01')
 
         tb: Dict[str, Any] = {
             "company_id": company_id,
@@ -102,8 +110,8 @@ class TrialBalanceEngine:
         for entry in journal_entries:
             total_debit = round(sum(l.get("debit", 0) for l in entry.get("lines", [])), 2)
             total_credit = round(sum(l.get("credit", 0) for l in entry.get("lines", [])), 2)
-            diff = round(total_debit - total_credit, 2)
-            if abs(diff) > 0.01:
+            diff = _money_round(total_debit - total_credit)
+            if abs(diff) > Decimal('0.01'):
                 unbalanced.append({
                     "entry_id": entry.get("id"),
                     "entry_number": entry.get("entry_number", ""),
@@ -139,8 +147,8 @@ class TrialBalanceEngine:
 
                     for tb_line in unadjusted["lines"]:
                         if tb_line["account_code"] == account_code:
-                            tb_line["debit"] = round(tb_line["debit"] + debit, 2)
-                            tb_line["credit"] = round(tb_line["credit"] + credit, 2)
+                            tb_line["debit"] = _money_round(tb_line["debit"] + debit)
+                            tb_line["credit"] = _money_round(tb_line["credit"] + credit)
                             break
                     else:
                         acct_type = "EXPENSE"
@@ -151,14 +159,14 @@ class TrialBalanceEngine:
                             "account_code": account_code,
                             "account_name": f"Account {account_code}",
                             "account_type": acct_type,
-                            "debit": round(debit, 2),
-                            "credit": round(credit, 2),
+                            "debit": _money_round(debit),
+                            "credit": _money_round(credit),
                         })
 
-            unadjusted["total_debit"] = round(sum(l["debit"] for l in unadjusted["lines"]), 2)
-            unadjusted["total_credit"] = round(sum(l["credit"] for l in unadjusted["lines"]), 2)
-            unadjusted["difference"] = round(unadjusted["total_debit"] - unadjusted["total_credit"], 2)
-            unadjusted["is_balanced"] = abs(unadjusted["difference"]) < 0.01
+            unadjusted["total_debit"] = _money_round(sum(l["debit"] for l in unadjusted["lines"]))
+            unadjusted["total_credit"] = _money_round(sum(l["credit"] for l in unadjusted["lines"]))
+            unadjusted["difference"] = _money_round(unadjusted["total_debit"] - unadjusted["total_credit"])
+            unadjusted["is_balanced"] = abs(unadjusted["difference"]) < Decimal('0.01')
             unadjusted["adjusting_entries_applied"] = len(adjusting_entries)
 
         unadjusted["report_type"] = "adjusted_trial_balance"
@@ -171,8 +179,8 @@ class TrialBalanceEngine:
         permanent_types = {"ASSET", "LIABILITY", "EQUITY"}
         closing_lines = [l for l in full_tb["lines"] if l["account_type"] in permanent_types]
 
-        total_debit = round(sum(l["debit"] for l in closing_lines), 2)
-        total_credit = round(sum(l["credit"] for l in closing_lines), 2)
+        total_debit = _money_round(sum(l["debit"] for l in closing_lines))
+        total_credit = _money_round(sum(l["credit"] for l in closing_lines))
 
         return {
             "company_id": company_id,
@@ -183,8 +191,8 @@ class TrialBalanceEngine:
             "lines": closing_lines,
             "total_debit": total_debit,
             "total_credit": total_credit,
-            "difference": round(total_debit - total_credit, 2),
-            "is_balanced": abs(total_debit - total_credit) < 0.01,
+            "difference": _money_round(total_debit - total_credit),
+            "is_balanced": abs(total_debit - total_credit) < Decimal('0.01'),
             "account_count": len(closing_lines),
             "generated_at": datetime.now().isoformat(),
         }
@@ -202,7 +210,7 @@ class TrialBalanceEngine:
                 analysis["possible_causes"].append("Possible entry posted to wrong side (debit instead of credit or vice versa)")
             if abs(diff) >= 10:
                 analysis["possible_causes"].append("Omitted or duplicated entry")
-            if round(diff * 9, 2) == 0 or round(diff / 9, 2) == round(diff / 9):
+            if _money_round(diff * 9) == 0 or _money_round(diff / 9) == round(diff / 9):
                 analysis["possible_causes"].append("Possible transposition error")
 
             analysis["suggested_suspense_account"] = "9900"

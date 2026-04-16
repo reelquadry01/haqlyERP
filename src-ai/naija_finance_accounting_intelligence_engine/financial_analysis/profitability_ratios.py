@@ -7,6 +7,14 @@ from datetime import datetime
 from typing import Any, Dict
 
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -16,25 +24,25 @@ class ProfitabilityRatiosEngine:
 
     def compute_all(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Compute all profitability ratios."""
-        revenue = float(data.get("revenue", 0))
-        cogs = float(data.get("cogs", 0))
-        gross_profit = float(data.get("gross_profit", revenue - cogs))
-        operating_income = float(data.get("operating_income", 0))
-        net_income = float(data.get("net_income", 0))
-        total_assets = float(data.get("total_assets", 0))
-        total_equity = float(data.get("total_equity", 0))
-        total_liabilities = float(data.get("total_liabilities", 0))
-        interest_expense = float(data.get("interest_expense", 0))
-        tax_expense = float(data.get("tax_expense", 0))
+        revenue = Decimal(str(data.get("revenue", 0)))
+        cogs = Decimal(str(data.get("cogs", 0)))
+        gross_profit = Decimal(str(data.get("gross_profit", revenue - cogs)))
+        operating_income = Decimal(str(data.get("operating_income", 0)))
+        net_income = Decimal(str(data.get("net_income", 0)))
+        total_assets = Decimal(str(data.get("total_assets", 0)))
+        total_equity = Decimal(str(data.get("total_equity", 0)))
+        total_liabilities = Decimal(str(data.get("total_liabilities", 0)))
+        interest_expense = Decimal(str(data.get("interest_expense", 0)))
+        tax_expense = Decimal(str(data.get("tax_expense", 0)))
 
-        ebit = operating_income if operating_income else gross_profit - float(data.get("operating_expenses", 0))
+        ebit = operating_income if operating_income else gross_profit - Decimal(str(data.get("operating_expenses", 0)))
 
-        capital_employed = total_equity + (total_liabilities - float(data.get("current_liabilities", 0)))
+        capital_employed = total_equity + (total_liabilities - Decimal(str(data.get("current_liabilities", 0))))
 
         gross_margin = round(gross_profit / revenue, 4) if revenue > 0 else None
         operating_margin = round(operating_income / revenue, 4) if revenue > 0 else None
         net_margin = round(net_income / revenue, 4) if revenue > 0 else None
-        ebitda_margin = round((ebit + float(data.get("depreciation", 0))) / revenue, 4) if revenue > 0 else None
+        ebitda_margin = round((ebit + Decimal(str(data.get("depreciation", 0)))) / revenue, 4) if revenue > 0 else None
         roa = round(net_income / total_assets, 4) if total_assets > 0 else None
         roe = round(net_income / total_equity, 4) if total_equity > 0 else None
         roce = round(ebit / capital_employed, 4) if capital_employed > 0 else None
@@ -47,18 +55,18 @@ class ProfitabilityRatiosEngine:
             "roa": roa,
             "roe": roe,
             "roce": roce,
-            "gross_profit": round(gross_profit, 2),
-            "ebit": round(ebit, 2),
-            "capital_employed": round(capital_employed, 2),
+            "gross_profit": _money_round(gross_profit),
+            "ebit": _money_round(ebit),
+            "capital_employed": _money_round(capital_employed),
             "computed_at": datetime.now().isoformat(),
         }
 
     def compute_dupont_roe(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Decompose ROE using the DuPont model into margin, turnover, and leverage."""
-        net_income = float(data.get("net_income", 0))
-        revenue = float(data.get("revenue", 0))
-        total_assets = float(data.get("total_assets", 0))
-        total_equity = float(data.get("total_equity", 0))
+        net_income = Decimal(str(data.get("net_income", 0)))
+        revenue = Decimal(str(data.get("revenue", 0)))
+        total_assets = Decimal(str(data.get("total_assets", 0)))
+        total_equity = Decimal(str(data.get("total_equity", 0)))
 
         net_margin = round(net_income / revenue, 4) if revenue > 0 else 0
         asset_turnover = round(revenue / total_assets, 4) if total_assets > 0 else 0

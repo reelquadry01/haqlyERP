@@ -106,10 +106,11 @@ impl From<validator::ValidationErrors> for AppError {
                     .map(|e| {
                         e.message
                             .clone()
+                            .map(|m| m.to_string())
                             .unwrap_or_else(|| format!("{} validation failed", e.code))
                     })
                     .collect();
-                (field.to_string(), messages)
+                (field.to_string(), serde_json::Value::from(messages))
             })
             .collect::<serde_json::Map<_, _>>();
 
@@ -163,7 +164,7 @@ where
     }
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
-        let inner = self.inner.clone();
+        let mut inner = self.inner.clone();
 
         Box::pin(async move {
             let response = inner.call(req).await?;

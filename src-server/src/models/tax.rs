@@ -1,4 +1,6 @@
 // Author: Quadri Atharu
+// Tax rates updated per Nigeria Tax Reform Acts 2025 (effective 2026)
+// FIRS renamed to NRS (Nigeria Revenue Service)
 use bigdecimal::BigDecimal;
 use chrono::NaiveDateTime;
 use serde::{Deserialize, Serialize};
@@ -59,6 +61,14 @@ impl WhtRateCategory {
             WhtRateCategory::Commission => BigDecimal::from(5),
         }
     }
+    pub fn rate_for_individual(&self) -> BigDecimal {
+        match self {
+            WhtRateCategory::Dividend => BigDecimal::from(5),
+            WhtRateCategory::Interest => BigDecimal::from(5),
+            WhtRateCategory::Rent => BigDecimal::from(5),
+            _ => self.rate(),
+        }
+    }
 }
 
 impl std::fmt::Display for WhtRateCategory {
@@ -94,7 +104,9 @@ impl std::fmt::Display for CapitalAllowanceCategory {
             CapitalAllowanceCategory::PlantAndMachinery => write!(f, "plant_and_machinery"),
             CapitalAllowanceCategory::FurnitureAndFittings => write!(f, "furniture_and_fittings"),
             CapitalAllowanceCategory::MotorVehicle => write!(f, "motor_vehicle"),
-            CapitalAllowanceCategory::ComputerAndItEquipment => write!(f, "computer_and_it_equipment"),
+            CapitalAllowanceCategory::ComputerAndItEquipment => {
+                write!(f, "computer_and_it_equipment")
+            }
         }
     }
 }

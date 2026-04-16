@@ -1,5 +1,5 @@
 # Author: Quadri Atharu
-"""Nigerian Capital Gains Tax (CGT) computation engine — 10% rate."""
+"""Nigerian Capital Gains Tax (CGT) computation engine — progressive rates (10%/15%/20% per Tax Reform 2025)."""
 
 from __future__ import annotations
 
@@ -8,6 +8,14 @@ from typing import Any, Dict, List
 
 from ..core.exceptions import TaxError
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -37,7 +45,7 @@ CGT_ALLOWABLE_COSTS = [
 
 
 class CapitalGainsTaxEngine:
-    """Nigerian Capital Gains Tax computation engine (10%)."""
+    """Nigerian Capital Gains Tax computation engine (progressive: 10%/15%/20%)."""
 
     def compute_cgt(
         self,
@@ -61,25 +69,25 @@ class CapitalGainsTaxEngine:
             return self._exempt_result(disposal_proceeds, cost_basis, allowable_deductions, exemption_type)
 
         if inflation_indexation and inflation_factor > 0:
-            indexed_cost = round(cost_basis * inflation_factor, 2)
+            indexed_cost = _money_round(cost_basis * inflation_factor)
         else:
             indexed_cost = cost_basis
 
-        total_allowable = round(indexed_cost + allowable_deductions, 2)
-        chargeable_gain = round(disposal_proceeds - total_allowable, 2)
+        total_allowable = _money_round(indexed_cost + allowable_deductions)
+        chargeable_gain = _money_round(disposal_proceeds - total_allowable)
 
         if chargeable_gain <= 0:
             return self._no_gain_result(disposal_proceeds, total_allowable, chargeable_gain)
 
-        cgt_amount = round(chargeable_gain * CGT_RATE, 2)
-        net_proceeds = round(disposal_proceeds - cgt_amount, 2)
+        cgt_amount = _money_round(chargeable_gain * CGT_RATE)
+        net_proceeds = _money_round(disposal_proceeds - cgt_amount)
 
         result: Dict[str, Any] = {
             "tax_type": "CGT",
-            "disposal_proceeds": round(disposal_proceeds, 2),
-            "original_cost_basis": round(cost_basis, 2),
+            "disposal_proceeds": _money_round(disposal_proceeds),
+            "original_cost_basis": _money_round(cost_basis),
             "indexed_cost_basis": indexed_cost,
-            "allowable_deductions": round(allowable_deductions, 2),
+            "allowable_deductions": _money_round(allowable_deductions),
             "total_allowable_costs": total_allowable,
             "chargeable_gain": chargeable_gain,
             "cgt_rate": CGT_RATE,
@@ -118,13 +126,13 @@ class CapitalGainsTaxEngine:
                 total_losses += abs(gain)
 
         net_chargeable_gain = round(max(total_gains - total_losses, 0), 2)
-        net_cgt = round(net_chargeable_gain * CGT_RATE, 2)
+        net_cgt = _money_round(net_chargeable_gain * CGT_RATE)
 
         return {
             "tax_type": "CGT",
             "batch_size": len(disposals),
-            "total_gains": round(total_gains, 2),
-            "total_losses": round(total_losses, 2),
+            "total_gains": _money_round(total_gains),
+            "total_losses": _money_round(total_losses),
             "net_chargeable_gain": net_chargeable_gain,
             "total_cgt": net_cgt,
             "loss_offset_applied": round(min(total_losses, total_gains), 2),
@@ -150,9 +158,9 @@ class CapitalGainsTaxEngine:
         """Return a result for an exempt disposal."""
         return {
             "tax_type": "CGT",
-            "disposal_proceeds": round(proceeds, 2),
-            "cost_basis": round(cost, 2),
-            "allowable_deductions": round(deductions, 2),
+            "disposal_proceeds": _money_round(proceeds),
+            "cost_basis": _money_round(cost),
+            "allowable_deductions": _money_round(deductions),
             "chargeable_gain": 0.0,
             "cgt_rate": CGT_RATE,
             "cgt_amount": 0.0,
@@ -166,12 +174,12 @@ class CapitalGainsTaxEngine:
         """Return a result when there is no chargeable gain."""
         return {
             "tax_type": "CGT",
-            "disposal_proceeds": round(proceeds, 2),
-            "total_allowable_costs": round(total_allowable, 2),
-            "chargeable_gain": round(chargeable_gain, 2),
+            "disposal_proceeds": _money_round(proceeds),
+            "total_allowable_costs": _money_round(total_allowable),
+            "chargeable_gain": _money_round(chargeable_gain),
             "cgt_rate": CGT_RATE,
             "cgt_amount": 0.0,
-            "capital_loss": round(abs(chargeable_gain), 2) if chargeable_gain < 0 else 0.0,
+            "capital_loss": _money_round(abs(chargeable_gain)) if chargeable_gain < 0 else 0.0,
             "is_loss": chargeable_gain < 0,
             "note": "No CGT payable — capital loss may offset future capital gains" if chargeable_gain < 0 else "No chargeable gain",
             "computed_at": datetime.now().isoformat(),

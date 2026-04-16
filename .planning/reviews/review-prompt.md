@@ -23,7 +23,7 @@ HAQLY ERP is a desktop-first enterprise resource planning application built for 
 
 ### Commit 3 (dc77e6c): API handlers + business modules
 - 23 API handler modules (214 endpoints)
-- Payroll with Nigerian PAYE tax brackets (7%/11%/15%/19%/21%/24%), pension 8%+10%, NHF 2.5%, NSITF 1%, ITF 1%
+- Payroll with Nigerian PAYE tax brackets (0%/15%/20%/25%/30%/35%), pension 8%+10%, NHF 2.5%, NSITF 1%, ITF 1%
 - CRM (contacts, deals pipeline, activities)
 - Notifications (in-app, email, push)
 - BI dashboards, security middleware, encryption service, license management
@@ -70,7 +70,7 @@ HAQLY ERP is a desktop-first enterprise resource planning application built for 
 - Accounting (chart of accounts, fiscal periods)
 - Journal Entries (double-entry posting engine)
 - Sales / Purchases / Inventory
-- Tax (VAT 7.5%, WHT 5-10%, CIT 20-30%, Education Tax 2%)
+- Tax (VAT 7.5%, WHT 5-10%, CIT 0%/15%/25% progressive, Education Tax 1%)
 - Fixed Assets (depreciation, disposal, revaluation)
 - Loans (amortization, interest schedules)
 - Payroll (Nigerian PAYE, pension, NHF, NSITF, ITF)

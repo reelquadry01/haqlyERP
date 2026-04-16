@@ -242,7 +242,7 @@ impl AuthService {
             1,
             30,
             secret_bytes,
-            "HAQLY-ERP".to_string(),
+            Some("HAQLY-ERP".to_string()),
             user.email.clone(),
         ).map_err(|e| anyhow!("Failed to create TOTP: {}", e))?;
 
@@ -407,7 +407,7 @@ fn build_totp(secret: &str, account_name: &str) -> Result<TOTP> {
         1,
         30,
         secret_bytes,
-        "HAQLY-ERP".to_string(),
+        Some("HAQLY-ERP".to_string()),
         account_name.to_string(),
     ).map_err(|e| anyhow!("Failed to create TOTP: {}", e))?;
     Ok(totp)

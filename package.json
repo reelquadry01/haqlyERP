@@ -1,0 +1,9 @@
+{
+  "scripts": {
+    "build": "cd src-web && npx next build",
+    "dev": "cd src-web && npx next dev -p 3001"
+  },
+  "devDependencies": {
+    "@tauri-apps/cli": "^2.10.1"
+  }
+}

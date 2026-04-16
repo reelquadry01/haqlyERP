@@ -1,8 +1,10 @@
 // Author: Quadri Atharu
 use anyhow::{Context, Result};
+use rsa::pkcs8::{EncodePrivateKey, EncodePublicKey};
 use std::path::Path;
 use uuid::Uuid;
 
+#[derive(Debug, Default)]
 pub struct RsaKeypair {
     pub private_pem: Vec<u8>,
     pub public_pem: Vec<u8>,
@@ -60,7 +62,7 @@ pub fn ensure_rsa_keypair(private_key_path: &str, public_key_path: &str) -> Resu
     tracing::info!("Generated new RSA-2048 keypair (kid={}) at {} and {}", kid, private_key_path, public_key_path);
 
     Ok(RsaKeypair {
-        private_pem: private_pem_str.into_bytes(),
+        private_pem: (*private_pem_str).as_bytes().to_vec(),
         public_pem: public_pem_str.into_bytes(),
         kid,
     })

@@ -7,6 +7,14 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -50,7 +58,7 @@ class CreditRiskEngine:
                 stage = 1
 
             provision_rate = float(rec.get("provision_rate", ECL_PROVISION_RATES[f"stage_{stage}"]))
-            ecl = round(amount * provision_rate, 2)
+            ecl = _money_round(amount * provision_rate)
 
             if stage == 1:
                 stage1_total += amount
@@ -61,25 +69,25 @@ class CreditRiskEngine:
 
             details.append({
                 "counterparty": rec.get("counterparty", ""),
-                "amount": round(amount, 2),
+                "amount": _money_round(amount),
                 "days_overdue": days_overdue,
                 "stage": stage,
                 "provision_rate": provision_rate,
                 "ecl": ecl,
             })
 
-        stage1_ecl = round(stage1_total * ECL_PROVISION_RATES["stage_1"], 2)
-        stage2_ecl = round(stage2_total * ECL_PROVISION_RATES["stage_2"], 2)
-        stage3_ecl = round(stage3_total * ECL_PROVISION_RATES["stage_3"], 2)
-        total_ecl = round(stage1_ecl + stage2_ecl + stage3_ecl, 2)
+        stage1_ecl = _money_round(stage1_total * ECL_PROVISION_RATES["stage_1"])
+        stage2_ecl = _money_round(stage2_total * ECL_PROVISION_RATES["stage_2"])
+        stage3_ecl = _money_round(stage3_total * ECL_PROVISION_RATES["stage_3"])
+        total_ecl = _money_round(stage1_ecl + stage2_ecl + stage3_ecl)
 
         return {
             "standard": "IFRS 9",
-            "stage_1": {"exposure": round(stage1_total, 2), "provision_rate": ECL_PROVISION_RATES["stage_1"], "ecl": stage1_ecl, "description": "Performing — no significant increase in credit risk"},
-            "stage_2": {"exposure": round(stage2_total, 2), "provision_rate": ECL_PROVISION_RATES["stage_2"], "ecl": stage2_ecl, "description": "Significant increase in credit risk (30-180 days overdue)"},
-            "stage_3": {"exposure": round(stage3_total, 2), "provision_rate": ECL_PROVISION_RATES["stage_3"], "ecl": stage3_ecl, "description": "Credit-impaired (>180 days or defaulted)"},
+            "stage_1": {"exposure": _money_round(stage1_total), "provision_rate": ECL_PROVISION_RATES["stage_1"], "ecl": stage1_ecl, "description": "Performing — no significant increase in credit risk"},
+            "stage_2": {"exposure": _money_round(stage2_total), "provision_rate": ECL_PROVISION_RATES["stage_2"], "ecl": stage2_ecl, "description": "Significant increase in credit risk (30-180 days overdue)"},
+            "stage_3": {"exposure": _money_round(stage3_total), "provision_rate": ECL_PROVISION_RATES["stage_3"], "ecl": stage3_ecl, "description": "Credit-impaired (>180 days or defaulted)"},
             "total_ecl": total_ecl,
-            "total_exposure": round(stage1_total + stage2_total + stage3_total, 2),
+            "total_exposure": _money_round(stage1_total + stage2_total + stage3_total),
             "details": details,
             "computed_at": datetime.now().isoformat(),
         }
@@ -88,9 +96,9 @@ class CreditRiskEngine:
         """Rate a counterparty's creditworthiness."""
         scores: Dict[str, float] = {}
         for factor, config in RATING_FACTORS.items():
-            scores[factor] = float(data.get(f"score_{factor}", 5))
+            scores[factor] = Decimal(str(data.get(f"score_{factor}", 5)))
 
-        weighted_score = round(sum(scores[f] * RATING_FACTORS[f]["weight"] for f in scores), 2)
+        weighted_score = _money_round(sum(scores[f] * RATING_FACTORS[f]["weight"] for f in scores))
 
         if weighted_score >= 8:
             rating = "AAA"

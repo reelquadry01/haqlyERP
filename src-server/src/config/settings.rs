@@ -1,4 +1,3 @@
-// Author: Quadri Atharu
 use crate::config::env::*;
 use crate::config::rsa_keys::{self, RsaKeypair};
 use serde::{Deserialize, Serialize};
@@ -10,7 +9,7 @@ pub struct Settings {
     pub jwt_expiration: u64,
     pub rsa_private_key_path: String,
     pub rsa_public_key_path: String,
-    #[serde(skip)]
+    #[serde(skip, default)]
     pub rsa_keypair: Arc<RsaKeypair>,
     pub server_port: u16,
     pub cors_origins: Vec<String>,
@@ -27,6 +26,43 @@ pub struct Settings {
     pub smtp_password: String,
     pub smtp_from_email: String,
     pub email_enabled: bool,
+    pub db_max_connections: u32,
+    pub db_min_connections: u32,
+    pub db_acquire_timeout_secs: u64,
+    pub db_idle_timeout_secs: u64,
+    pub db_max_lifetime_secs: u64,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            database_url: String::new(),
+            jwt_expiration: 86400,
+            rsa_private_key_path: String::new(),
+            rsa_public_key_path: String::new(),
+            rsa_keypair: Arc::new(RsaKeypair::default()),
+            server_port: 8080,
+            cors_origins: Vec::new(),
+            firs_base_url: String::new(),
+            firs_api_key: String::new(),
+            firs_api_secret: String::new(),
+            firs_environment: String::new(),
+            ollama_base_url: String::new(),
+            python_engine_url: String::new(),
+            redis_url: String::new(),
+            smtp_host: String::new(),
+            smtp_port: 587,
+            smtp_username: String::new(),
+            smtp_password: String::new(),
+            smtp_from_email: String::new(),
+            email_enabled: false,
+            db_max_connections: 20,
+            db_min_connections: 5,
+            db_acquire_timeout_secs: 30,
+            db_idle_timeout_secs: 600,
+            db_max_lifetime_secs: 1800,
+        }
+    }
 }
 
 impl Settings {
@@ -82,7 +118,7 @@ impl Settings {
                 if is_dev {
                     String::new()
                 } else {
-                    eprintln!("FATAL: FIRS_API_KEY environment variable must be set in production");
+                    eprintln!("FATAL: NRS_API_KEY (FIRS_API_KEY) environment variable must be set in production");
                     std::process::exit(1);
                 }
             }),
@@ -90,7 +126,7 @@ impl Settings {
                 if is_dev {
                     String::new()
                 } else {
-                    eprintln!("FATAL: FIRS_API_SECRET environment variable must be set in production");
+                    eprintln!("FATAL: NRS_API_SECRET (FIRS_API_SECRET) environment variable must be set in production");
                     std::process::exit(1);
                 }
             }),
@@ -108,6 +144,11 @@ impl Settings {
             } else {
                 env_or_parse(EMAIL_ENABLED, true)
             },
+            db_max_connections: env_or_parse(DB_MAX_CONNECTIONS, 20u32),
+            db_min_connections: env_or_parse(DB_MIN_CONNECTIONS, 5u32),
+            db_acquire_timeout_secs: env_or_parse(DB_ACQUIRE_TIMEOUT_SECS, 30u64),
+            db_idle_timeout_secs: env_or_parse(DB_IDLE_TIMEOUT_SECS, 600u64),
+            db_max_lifetime_secs: env_or_parse(DB_MAX_LIFETIME_SECS, 1800u64),
         })
     }
 }

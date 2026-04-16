@@ -2,6 +2,24 @@
 
 use serde::{Deserialize, Serialize};
 
+fn validate_identifier(name: &str) -> Result<(), String> {
+    if name.is_empty() {
+        return Err("Identifier cannot be empty".into());
+    }
+    if !name.chars().all(|c| c.is_alphanumeric() || c == '_') {
+        return Err(format!("Invalid identifier: {}", name));
+    }
+    Ok(())
+}
+
+pub fn cursor_paginate(table: &str, cursor: Option<&str>, limit: i64) -> String {
+    let _ = validate_identifier(table);
+    match cursor {
+        Some(c) => format!("SELECT * FROM {table} WHERE id > '{c}' ORDER BY id LIMIT {limit}"),
+        None => format!("SELECT * FROM {table} ORDER BY id LIMIT {limit}"),
+    }
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct PaginationParams {
     pub cursor: Option<String>,
@@ -21,9 +39,11 @@ pub struct CursorPage<T> {
 pub struct QueryOptimizer;
 
 impl QueryOptimizer {
-    pub fn cursor_paginate(table: &str, params: &PaginationParams) -> String {
+    pub fn cursor_paginate(table: &str, params: &PaginationParams) -> Result<String, String> {
+        validate_identifier(table)?;
         let limit = params.limit.unwrap_or(50).min(200);
         let sort_col = params.sort_by.as_deref().unwrap_or("id");
+        validate_identifier(sort_col)?;
         let sort_dir = match params.sort_order.as_deref() {
             Some("asc") | Some("ASC") => "ASC",
             Some("desc") | Some("DESC") => "DESC",
@@ -33,19 +53,27 @@ impl QueryOptimizer {
 
         if let Some(ref cursor) = params.cursor {
             let operator = if sort_dir == "ASC" { ">" } else { "<" };
-            format!(
+            Ok(format!(
                 "SELECT * FROM {} WHERE {} {} $1 ORDER BY {} {} LIMIT {}",
                 table, sort_col, operator, sort_col, sort_dir, fetch_limit
-            )
+            ))
         } else {
-            format!(
+            Ok(format!(
                 "SELECT * FROM {} ORDER BY {} {} LIMIT {}",
                 table, sort_col, sort_dir, fetch_limit
-            )
+            ))
         }
     }
 
-    pub fn batch_insert_sql(table: &str, columns: &[&str], row_count: usize) -> String {
+    pub fn batch_insert_sql(
+        table: &str,
+        columns: &[&str],
+        row_count: usize,
+    ) -> Result<String, String> {
+        validate_identifier(table)?;
+        for col in columns {
+            validate_identifier(col)?;
+        }
         let cols = columns.join(", ");
         let mut placeholders = Vec::new();
         let mut param_idx = 1;
@@ -57,7 +85,12 @@ impl QueryOptimizer {
             }
             placeholders.push(format!("({})", row_placeholders.join(", ")));
         }
-        format!("INSERT INTO {} ({}) VALUES {}", table, cols, placeholders.join(", "))
+        Ok(format!(
+            "INSERT INTO {} ({}) VALUES {}",
+            table,
+            cols,
+            placeholders.join(", ")
+        ))
     }
 
     pub fn materialized_trial_balance_query() -> String {
@@ -128,7 +161,9 @@ LEFT JOIN journal_lines jl ON jl.journal_entry_id = je.id
     LEFT JOIN chart_of_accounts a ON a.id = jl.account_id
 WHERE je.org_id = $1
 ORDER BY je.entry_date DESC, je.created_at DESC, jl.line_order ASC
-        "#.trim().to_string()
+        "#
+        .trim()
+        .to_string()
     }
 
     pub fn index_recommendations() -> Vec<String> {

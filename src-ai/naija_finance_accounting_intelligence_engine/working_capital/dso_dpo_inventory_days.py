@@ -7,6 +7,14 @@ from datetime import datetime
 from typing import Any, Dict
 
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -16,11 +24,11 @@ class CashConversionCycleEngine:
 
     def compute_ccc(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Compute the Cash Conversion Cycle from DSO, DPO, and DIO."""
-        dso = float(data.get("dso", 0))
-        dpo = float(data.get("dpo", 0))
-        dio = float(data.get("dio", 0))
+        dso = Decimal(str(data.get("dso", 0)))
+        dpo = Decimal(str(data.get("dpo", 0)))
+        dio = Decimal(str(data.get("dio", 0)))
 
-        ccc = round(dso + dio - dpo, 2)
+        ccc = _money_round(dso + dio - dpo)
 
         if ccc <= 30:
             health = "excellent"
@@ -46,41 +54,41 @@ class CashConversionCycleEngine:
 
     def compute_ccc_from_financials(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Compute CCC from raw financial data."""
-        accounts_receivable = float(data.get("accounts_receivable", 0))
-        accounts_payable = float(data.get("accounts_payable", 0))
-        inventory = float(data.get("inventory", 0))
-        revenue = float(data.get("revenue", 0))
-        cogs = float(data.get("cogs", 0))
+        accounts_receivable = Decimal(str(data.get("accounts_receivable", 0)))
+        accounts_payable = Decimal(str(data.get("accounts_payable", 0)))
+        inventory = Decimal(str(data.get("inventory", 0)))
+        revenue = Decimal(str(data.get("revenue", 0)))
+        cogs = Decimal(str(data.get("cogs", 0)))
         period_days = int(data.get("period_days", 365))
 
-        dso = round(accounts_receivable / (revenue / period_days), 2) if revenue > 0 else 0
-        dpo = round(accounts_payable / (cogs / period_days), 2) if cogs > 0 else 0
-        dio = round(inventory / (cogs / period_days), 2) if cogs > 0 else 0
+        dso = _money_round(accounts_receivable / (revenue / period_days)) if revenue > 0 else 0
+        dpo = _money_round(accounts_payable / (cogs / period_days)) if cogs > 0 else 0
+        dio = _money_round(inventory / (cogs / period_days)) if cogs > 0 else 0
 
         ccc_data = self.compute_ccc({"dso": dso, "dpo": dpo, "dio": dio})
         ccc_data["source_data"] = {
-            "accounts_receivable": round(accounts_receivable, 2),
-            "accounts_payable": round(accounts_payable, 2),
-            "inventory": round(inventory, 2),
-            "revenue": round(revenue, 2),
-            "cogs": round(cogs, 2),
+            "accounts_receivable": _money_round(accounts_receivable),
+            "accounts_payable": _money_round(accounts_payable),
+            "inventory": _money_round(inventory),
+            "revenue": _money_round(revenue),
+            "cogs": _money_round(cogs),
             "period_days": period_days,
         }
         return ccc_data
 
     def compute_working_capital_requirement(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Compute working capital requirement based on CCC."""
-        ccc = float(data.get("ccc", 0))
-        daily_operating_cost = float(data.get("daily_operating_cost", 0))
-        revenue_growth_rate = float(data.get("revenue_growth_rate", 0))
+        ccc = Decimal(str(data.get("ccc", 0)))
+        daily_operating_cost = Decimal(str(data.get("daily_operating_cost", 0)))
+        revenue_growth_rate = Decimal(str(data.get("revenue_growth_rate", 0)))
 
-        base_requirement = round(ccc * daily_operating_cost, 2)
-        growth_requirement = round(base_requirement * revenue_growth_rate, 2)
-        total_requirement = round(base_requirement + growth_requirement, 2)
+        base_requirement = _money_round(ccc * daily_operating_cost)
+        growth_requirement = _money_round(base_requirement * revenue_growth_rate)
+        total_requirement = _money_round(base_requirement + growth_requirement)
 
         return {
             "cash_conversion_cycle": ccc,
-            "daily_operating_cost": round(daily_operating_cost, 2),
+            "daily_operating_cost": _money_round(daily_operating_cost),
             "base_working_capital": base_requirement,
             "growth_working_capital": growth_requirement,
             "total_working_capital_requirement": total_requirement,

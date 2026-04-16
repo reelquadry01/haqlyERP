@@ -8,6 +8,14 @@ from typing import Any, Dict, List, Optional
 
 from ..core.exceptions import AccountingError
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -19,8 +27,8 @@ class BankReconciliationEngine:
 
     def reconcile(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Perform bank reconciliation between book and bank statement."""
-        book_balance = float(data.get("book_balance", 0))
-        bank_balance = float(data.get("bank_balance", 0))
+        book_balance = Decimal(str(data.get("book_balance", 0)))
+        bank_balance = Decimal(str(data.get("bank_balance", 0)))
         company_id = data.get("company_id", "")
         bank_name = data.get("bank_name", "")
         account_number = data.get("account_number", "")
@@ -29,17 +37,17 @@ class BankReconciliationEngine:
 
         outstanding_deposits_list: List[Dict[str, Any]] = data.get("outstanding_deposits", [])
         outstanding_cheques_list: List[Dict[str, Any]] = data.get("outstanding_cheques", [])
-        bank_charges = float(data.get("bank_charges", 0))
-        bank_interest = float(data.get("bank_interest", 0))
+        bank_charges = Decimal(str(data.get("bank_charges", 0)))
+        bank_interest = Decimal(str(data.get("bank_interest", 0)))
         errors_list: List[Dict[str, Any]] = data.get("errors", [])
 
         outstanding_deposits_total = round(sum(float(d.get("amount", 0)) for d in outstanding_deposits_list), 2)
         outstanding_cheques_total = round(sum(float(c.get("amount", 0)) for c in outstanding_cheques_list), 2)
         errors_total = round(sum(float(e.get("amount", 0)) for e in errors_list), 2)
 
-        adjusted_bank = round(bank_balance + outstanding_deposits_total - outstanding_cheques_total, 2)
-        adjusted_book = round(book_balance - bank_charges + bank_interest + errors_total, 2)
-        difference = round(adjusted_book - adjusted_bank, 2)
+        adjusted_bank = _money_round(bank_balance + outstanding_deposits_total - outstanding_cheques_total)
+        adjusted_book = _money_round(book_balance - bank_charges + bank_interest + errors_total)
+        difference = _money_round(adjusted_book - adjusted_bank)
         reconciled = abs(difference) < TOLERANCE
 
         result: Dict[str, Any] = {
@@ -48,13 +56,13 @@ class BankReconciliationEngine:
             "account_number": account_number,
             "period_end": period_end,
             "currency": currency,
-            "book_balance": round(book_balance, 2),
-            "bank_balance": round(bank_balance, 2),
+            "book_balance": _money_round(book_balance),
+            "bank_balance": _money_round(bank_balance),
             "outstanding_deposits": outstanding_deposits_list,
             "outstanding_deposits_total": outstanding_deposits_total,
             "outstanding_cheques": outstanding_cheques_list,
             "outstanding_cheques_total": outstanding_cheques_total,
-            "bank_charges": round(bank_charges, 2),
+            "bank_charges": _money_round(bank_charges),
             "bank_interest": round(bank_interest, 0),
             "errors": errors_list,
             "errors_total": errors_total,

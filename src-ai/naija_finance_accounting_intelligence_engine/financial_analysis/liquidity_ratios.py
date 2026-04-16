@@ -7,6 +7,14 @@ from datetime import datetime
 from typing import Any, Dict
 
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -16,12 +24,12 @@ class LiquidityRatiosEngine:
 
     def compute_all(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Compute all liquidity ratios."""
-        current_assets = float(data.get("current_assets", 0))
-        current_liabilities = float(data.get("current_liabilities", 0))
-        inventory = float(data.get("inventory", 0))
-        cash = float(data.get("cash", 0))
-        marketable_securities = float(data.get("marketable_securities", 0))
-        operating_cash_flow = float(data.get("operating_cash_flow", 0))
+        current_assets = Decimal(str(data.get("current_assets", 0)))
+        current_liabilities = Decimal(str(data.get("current_liabilities", 0)))
+        inventory = Decimal(str(data.get("inventory", 0)))
+        cash = Decimal(str(data.get("cash", 0)))
+        marketable_securities = Decimal(str(data.get("marketable_securities", 0)))
+        operating_cash_flow = Decimal(str(data.get("operating_cash_flow", 0)))
 
         current_ratio = round(current_assets / current_liabilities, 4) if current_liabilities > 0 else None
         quick_ratio = round((current_assets - inventory) / current_liabilities, 4) if current_liabilities > 0 else None
@@ -48,7 +56,7 @@ class LiquidityRatiosEngine:
             "quick_ratio_assessment": _assess_quick(quick_ratio),
             "cash_ratio": cash_ratio,
             "operating_cash_flow_ratio": operating_cash_flow_ratio,
-            "working_capital": round(current_assets - current_liabilities, 2),
+            "working_capital": _money_round(current_assets - current_liabilities),
             "working_capital_pct_revenue": round((current_assets - current_liabilities) / data.get("revenue", 1), 4) if data.get("revenue", 0) > 0 else None,
             "computed_at": datetime.now().isoformat(),
         }

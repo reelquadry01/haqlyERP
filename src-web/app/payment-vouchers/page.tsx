@@ -119,7 +119,7 @@ const btnDanger: React.CSSProperties = {
   ...btnPrimary, background: T.error,
 };
 
-const emptyVoucherForm = {
+const emptyVoucherForm: { payee_id: string; payee_name: string; amount: string; payment_method: string; bank_account_id: string; reference: string; narration: string; supporting_docs: string } = {
   payee_id: "", payee_name: "", amount: "", payment_method: PAYMENT_METHODS[0],
   bank_account_id: "", reference: "", narration: "", supporting_docs: "",
 };

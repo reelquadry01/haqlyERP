@@ -47,7 +47,7 @@ fn preprocess_image(file_path: &Path) -> Result<ProcessedDocument> {
         .with_context(|| format!("Failed to open image: {}", file_path.display()))?;
 
     let (width, height) = (img.width(), img.height());
-    let mut resized = if width > MAX_DIMENSION || height > MAX_DIMENSION {
+    let resized = if width > MAX_DIMENSION || height > MAX_DIMENSION {
         tracing::info!(
             "Resizing image from {}x{} to fit within {}px",
             width,
@@ -92,7 +92,7 @@ fn preprocess_pdf(file_path: &Path, force_ocr: bool) -> Result<ProcessedDocument
         return preprocess_pdf_as_scanned(file_path);
     }
 
-    let text = pdf_extract::extract_text(&file_path.to_string_lossy())
+    let text = pdf_extract::extract_text(file_path)
         .with_context(|| format!("Failed to extract text from PDF: {}", file_path.display()))?;
 
     if text.trim().len() >= MIN_TEXT_LENGTH_FOR_NATIVE_PDF {

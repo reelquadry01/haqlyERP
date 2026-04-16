@@ -25,10 +25,10 @@ impl EmailService {
         let transport = if enabled {
             let creds = Credentials::new(smtp_username.to_string(), smtp_password.to_string());
             let transport = AsyncSmtpTransport::<Tokio1Executor>::starttls_relay(smtp_host)
-                .port(smtp_port)
-                .credentials(creds)
-                .build();
-            Some(Arc::new(transport))
+                .map_err(|e| tracing::warn!("SMTP starttls failed: {}", e))
+                .ok()
+                .map(|builder| builder.port(smtp_port).credentials(creds).build());
+            transport.map(Arc::new)
         } else {
             None
         };

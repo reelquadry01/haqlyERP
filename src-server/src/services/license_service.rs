@@ -1,4 +1,5 @@
 // Author: Quadri Atharu
+use crate::middleware::error::AppError;
 use crate::models::license::{LicenseKey, LicenseTier, LicenseValidation, LicenseStatus, FeatureFlag, SubscriptionRecord};
 use chrono::{NaiveDateTime, Utc};
 use uuid::Uuid;
@@ -52,12 +53,13 @@ impl LicenseService {
         max_companies: i32,
         features: Vec<String>,
         duration_days: i32,
-    ) -> LicenseKey {
-        let key = Self::generate_key_string(&tier);
+    ) -> Result<LicenseKey, AppError> {
+        let key = Self::generate_key_string(&tier)?;
+        let signature = Self::sign_key(&key);
         let now = Utc::now().naive_utc();
         let expires_at = now + chrono::Duration::days(duration_days as i64);
 
-        LicenseKey {
+        Ok(LicenseKey {
             id: Uuid::new_v4(),
             key,
             tier,
@@ -68,10 +70,10 @@ impl LicenseService {
             expires_at,
             is_active: true,
             issued_to: String::new(),
-            signature: Self::sign_key(&key),
+            signature,
             created_at: now,
             updated_at: now,
-        }
+        })
     }
 
     pub fn get_license_status() -> LicenseStatus {
@@ -171,21 +173,21 @@ impl LicenseService {
         }
     }
 
-    fn generate_key_string(tier: &LicenseTier) -> String {
+    fn generate_key_string(tier: &LicenseTier) -> Result<String, AppError> {
         let tier_str = match tier {
             LicenseTier::Starter => "STA",
             LicenseTier::Professional => "PRO",
             LicenseTier::Enterprise => "ENT",
             LicenseTier::Government => "GOV",
         };
-        let random_part: String = (0..24)
-            .map(|_| {
-                let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
-                let idx = (rand::random::<f64>() * chars.len() as f64) as usize;
-                chars.chars().nth(idx).unwrap()
-            })
-            .collect();
-        format!("HAQLY-{}-{}", tier_str, random_part)
+        let chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+        let mut random_part = String::with_capacity(24);
+        for _ in 0..24 {
+            let idx = (rand::random::<f64>() * chars.len() as f64) as usize;
+            let c = chars.chars().nth(idx).ok_or_else(|| AppError::Internal("Index out of bounds".into()))?;
+            random_part.push(c);
+        }
+        Ok(format!("HAQLY-{}-{}", tier_str, random_part))
     }
 
     fn sign_key(key: &str) -> String {

@@ -542,7 +542,7 @@ export default function TaxPage() {
                     <span style={{ fontSize: "0.82rem", color: TEXT_SEC }}>Effective Rate</span>
                     <span style={{ fontSize: "0.82rem", color: TEXT, fontFamily: '"JetBrains Mono", monospace' }}>{citCalculation.rate.toFixed(1)}%</span>
                   </div>
-                  <div style={{ display: "flex", justifyContent: "space-between", padding: "12px 0", background: `${PRIMARY}08`, margin: "0 -12px", padding: "12px", borderRadius: 6 }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", background: `${PRIMARY}08`, margin: "0 -12px", padding: "12px", borderRadius: 6 }}>
                     <span style={{ fontSize: "0.92rem", fontWeight: 600, color: TEXT }}>CIT Payable</span>
                     <span style={{ fontSize: "1.1rem", fontWeight: 700, color: PRIMARY, fontFamily: '"JetBrains Mono", monospace' }}>{formatNaira(citCalculation.tax)}</span>
                   </div>

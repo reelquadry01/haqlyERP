@@ -113,7 +113,7 @@ where
     }
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
-        let inner = self.inner.clone();
+        let mut inner = self.inner.clone();
         let rsa_keypair = self.rsa_keypair.clone();
         let _jwt_expiration = self.jwt_expiration;
 

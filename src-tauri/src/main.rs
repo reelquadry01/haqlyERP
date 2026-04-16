@@ -10,7 +10,7 @@ use haqly_erp::{
 use tauri::{
     menu::{MenuBuilder, MenuItemBuilder},
     tray::{MouseButton, MouseButtonState, TrayIconBuilder, TrayIconEvent},
-    Manager, RunEvent,
+    Emitter, Manager, RunEvent,
 };
 
 fn main() {
@@ -37,6 +37,9 @@ fn main() {
             app_commands::toggle_fullscreen,
             app_commands::get_system_info,
             app_commands::check_for_updates,
+            app_commands::store_credential,
+            app_commands::get_credential,
+            app_commands::delete_credential,
             ocr_commands::process_document,
             ocr_commands::get_ocr_status,
             ocr_commands::get_document_history,

@@ -1,5 +1,11 @@
 # Author: Quadri Atharu
-"""Nigerian VAT computation engine — 7.5% standard rate with exempt and zero-rated items."""
+"""Nigerian VAT computation engine — 7.5% standard rate with exempt and zero-rated items.
+
+Updated per Nigeria Tax Reform Acts 2025 (effective 2026):
+- VAT rate remains 7.5%
+- Registration threshold raised to NGN 50M (was NGN 25M)
+- Small business exemption threshold raised to NGN 50M
+"""
 
 from __future__ import annotations
 
@@ -28,7 +34,7 @@ VAT_ZERO_RATED_ITEMS = {
     "international_air_tickets", "goods_in_transit",
 }
 
-REGISTRATION_THRESHOLD = Decimal("25000000")
+REGISTRATION_THRESHOLD = Decimal("50000000")
 
 FILING_DAY_OF_MONTH = 21
 

@@ -7,6 +7,14 @@ from datetime import datetime, timedelta
 from typing import Any, Dict, List
 
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -62,22 +70,22 @@ class AccountsReceivableEngine:
                     buckets[name].append({
                         "invoice_id": inv.get("id", ""),
                         "customer": inv.get("customer", ""),
-                        "amount": round(amount, 2),
+                        "amount": _money_round(amount),
                         "due_date": due_date_str,
                         "days_overdue": days_overdue,
                     })
-                    bucket_totals[name] = round(bucket_totals[name] + amount, 2)
+                    bucket_totals[name] = _money_round(bucket_totals[name] + amount)
                     placed = True
                     break
             if not placed:
                 buckets["over_365_days"].append({
                     "invoice_id": inv.get("id", ""),
                     "customer": inv.get("customer", ""),
-                    "amount": round(amount, 2),
+                    "amount": _money_round(amount),
                     "due_date": due_date_str,
                     "days_overdue": days_overdue,
                 })
-                bucket_totals["over_365_days"] = round(bucket_totals["over_365_days"] + amount, 2)
+                bucket_totals["over_365_days"] = _money_round(bucket_totals["over_365_days"] + amount)
 
             if days_overdue > 0:
                 total_overdue += amount
@@ -86,8 +94,8 @@ class AccountsReceivableEngine:
 
         return {
             "as_of_date": ref_date.isoformat(),
-            "total_ar": round(total_ar, 2),
-            "total_overdue": round(total_overdue, 2),
+            "total_ar": _money_round(total_ar),
+            "total_overdue": _money_round(total_overdue),
             "overdue_pct": round(total_overdue / total_ar, 4) if total_ar > 0 else 0,
             "aging_buckets": {name: {"total": bucket_totals[name], "count": len(buckets[name]), "invoices": buckets[name]} for name, _, _ in AGING_BUCKETS},
             "bucket_totals": bucket_totals,
@@ -97,14 +105,14 @@ class AccountsReceivableEngine:
 
     def compute_dso(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Compute Days Sales Outstanding (DSO)."""
-        accounts_receivable = float(data.get("accounts_receivable", 0))
-        annual_revenue = float(data.get("annual_revenue", 0))
+        accounts_receivable = Decimal(str(data.get("accounts_receivable", 0)))
+        annual_revenue = Decimal(str(data.get("annual_revenue", 0)))
         period_days = int(data.get("period_days", 365))
 
         if annual_revenue <= 0:
             return {"dso": None, "message": "Revenue must be positive for DSO computation"}
 
-        dso = round(accounts_receivable / (annual_revenue / period_days), 2)
+        dso = _money_round(accounts_receivable / (annual_revenue / period_days))
 
         if dso <= 30:
             health = "excellent"
@@ -118,8 +126,8 @@ class AccountsReceivableEngine:
             health = "critical"
 
         return {
-            "accounts_receivable": round(accounts_receivable, 2),
-            "annual_revenue": round(annual_revenue, 2),
+            "accounts_receivable": _money_round(accounts_receivable),
+            "annual_revenue": _money_round(annual_revenue),
             "dso": dso,
             "health": health,
             "recommendation": "Improve collection processes" if dso > 60 else "DSO within acceptable range",
@@ -136,7 +144,7 @@ class AccountsReceivableEngine:
         for name, _, _ in AGING_BUCKETS:
             amount = bucket_totals.get(name, 0)
             rate = PROVISION_RATES.get(name, 0)
-            provision = round(amount * rate, 2)
+            provision = _money_round(amount * rate)
             ifrs9_provision += provision
             details.append({"bucket": name, "amount": amount, "provision_rate": rate, "provision": provision})
 
@@ -144,7 +152,7 @@ class AccountsReceivableEngine:
 
         return {
             "standard": "IFRS 9",
-            "aging_based_provision": round(ifrs9_provision, 2),
+            "aging_based_provision": _money_round(ifrs9_provision),
             "simplified_approach_provision": simplified_provision,
             "recommended_provision": max(ifrs9_provision, simplified_provision),
             "details": details,
@@ -164,11 +172,11 @@ class AccountsReceivableEngine:
         for name, _, _ in AGING_BUCKETS:
             amount = bucket_totals.get(name, 0)
             rate = PROVISION_RATES.get(name, 0)
-            provision = round(amount * rate, 2)
+            provision = _money_round(amount * rate)
             total_provision += provision
             details.append({"bucket": name, "amount": amount, "rate": rate, "provision": provision})
 
-        return {"total_provision": round(total_provision, 2), "details": details}
+        return {"total_provision": _money_round(total_provision), "details": details}
 
     def health_check(self) -> bool:
         return True

@@ -1,6 +1,5 @@
 {
-  "$schema": "https://raw.githubusercontent.com/nicegui/nicegui/refs/heads/main/tauri/tooling/cli/schema.json",
-  "productName": "HAQLY ERP",
+  "$schema": "https://raw.githubusercontent.com/nicegui/nicegui/refs/heads/main/tauri/tooling/cli/schema.json",  "productName": "HAQLY ERP",
   "version": "0.1.0",
   "identifier": "com.haqly.erp",
   "build": {
@@ -10,7 +9,6 @@
     "frontendDist": "../src-web/out"
   },
   "app": {
-    "title": "HAQLY ERP",
     "windows": [
       {
         "label": "main",
@@ -24,7 +22,8 @@
         "center": true,
         "decorations": true,
         "transparent": false,
-        "visible": true
+        "visible": true,
+        "hiddenTitle": false
       }
     ],
     "security": {
@@ -46,7 +45,6 @@
       "icons/icon.icns",
       "icons/icon.ico"
     ],
-    "identifier": "com.haqly.erp",
     "publisher": "HAQLY",
     "category": "Finance",
     "shortDescription": "Nigerian Accounting & ERP Desktop Application",
@@ -55,32 +53,7 @@
       "certificateThumbprint": null,
       "digestAlgorithm": "sha256",
       "timestampUrl": "http://timestamp.digicert.com"
-    },
-    "fileAssociations": [
-      {
-        "ext": ["pdf"],
-        "name": "PDF Document",
-        "description": "Portable Document Format",
-        "role": "Viewer"
-      },
-      {
-        "ext": ["csv"],
-        "name": "CSV File",
-        "description": "Comma-Separated Values",
-        "role": "Viewer"
-      },
-      {
-        "ext": ["xlsx"],
-        "name": "Excel Spreadsheet",
-        "description": "Microsoft Excel Open XML Spreadsheet",
-        "role": "Viewer"
-      }
-    ],
-    "externalBin": ["binaries/haqly-backend", "binaries/haqly-ai-engine"],
-    "resources": [
-      "resources/migrations/*",
-      "resources/models/*"
-    ]
+    }
   },
   "plugins": {
     "shell": {

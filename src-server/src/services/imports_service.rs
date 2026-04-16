@@ -88,7 +88,7 @@ impl ImportsService {
             }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_customers<R: std::io::Read>(
@@ -124,7 +124,7 @@ impl ImportsService {
             match res { Ok(_) => imported += 1, Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_suppliers<R: std::io::Read>(
@@ -155,7 +155,7 @@ impl ImportsService {
             match res { Ok(_) => imported += 1, Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_products<R: std::io::Read>(
@@ -184,7 +184,7 @@ impl ImportsService {
             match res { Ok(_) => imported += 1, Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_tax_configs<R: std::io::Read>(
@@ -214,7 +214,7 @@ impl ImportsService {
             match res { Ok(_) => imported += 1, Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_branches<R: std::io::Read>(
@@ -243,7 +243,7 @@ impl ImportsService {
             match res { Ok(_) => imported += 1, Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_departments<R: std::io::Read>(
@@ -272,7 +272,7 @@ impl ImportsService {
             match res { Ok(_) => imported += 1, Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_warehouses<R: std::io::Read>(
@@ -301,7 +301,7 @@ impl ImportsService {
             match res { Ok(_) => imported += 1, Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_bank_accounts<R: std::io::Read>(
@@ -331,7 +331,7 @@ impl ImportsService {
             match res { Ok(_) => imported += 1, Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_asset_categories<R: std::io::Read>(
@@ -360,7 +360,7 @@ impl ImportsService {
             match res { Ok(_) => imported += 1, Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_gl_opening_balances<R: std::io::Read>(
@@ -397,7 +397,7 @@ impl ImportsService {
             }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_ar_opening_balances<R: std::io::Read>(
@@ -425,7 +425,7 @@ impl ImportsService {
             match res { Ok(r) if r.rows_affected() > 0 => imported += 1, Ok(_) => errors.push(format!("Row {}: Customer {} not found", idx + 2, customer_code)), Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_ap_opening_balances<R: std::io::Read>(
@@ -453,7 +453,7 @@ impl ImportsService {
             match res { Ok(r) if r.rows_affected() > 0 => imported += 1, Ok(_) => errors.push(format!("Row {}: Supplier {} not found", idx + 2, supplier_code)), Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_customer_receipts<R: std::io::Read>(
@@ -485,7 +485,7 @@ impl ImportsService {
             match res { Ok(r) if r.rows_affected() > 0 => imported += 1, Ok(_) => errors.push(format!("Row {}: Customer not found", idx + 2)), Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_supplier_payments<R: std::io::Read>(
@@ -517,7 +517,7 @@ impl ImportsService {
             match res { Ok(r) if r.rows_affected() > 0 => imported += 1, Ok(_) => errors.push(format!("Row {}: Supplier not found", idx + 2)), Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_fixed_assets<R: std::io::Read>(
@@ -547,7 +547,7 @@ impl ImportsService {
             match res { Ok(_) => imported += 1, Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_stock_opening_balances<R: std::io::Read>(
@@ -578,7 +578,7 @@ impl ImportsService {
             match res { Ok(r) if r.rows_affected() > 0 => imported += 1, Ok(_) => errors.push(format!("Row {}: Product not found", idx + 2)), Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 
     async fn import_employees<R: std::io::Read>(
@@ -609,7 +609,7 @@ impl ImportsService {
             match res { Ok(_) => imported += 1, Err(e) => errors.push(format!("Row {}: {}", idx + 2, e)) }
         }
 
-        Ok(ImportResult { imported, errors, total: imported as i64 + errors.len() as i64 })
+        Ok(ImportResult { imported, errors: errors.clone(), total: imported as i64 + errors.len() as i64 })
     }
 }
 

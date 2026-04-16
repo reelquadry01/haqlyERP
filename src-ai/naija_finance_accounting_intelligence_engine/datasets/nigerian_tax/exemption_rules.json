@@ -3,8 +3,8 @@
     "author": "Quadri Atharu",
     "project": "HAQLY ERP",
     "description": "Nigerian tax exemption rules — VAT, WHT, CIT, CGT, and Stamp Duties",
-    "last_updated": "2026-04-14",
-    "disclaimer": "Based on Nigerian tax legislation as at 2024. Consult FIRS/CBN for current applicability."
+    "last_updated": "2026-04-15",
+    "disclaimer": "Based on Nigeria Tax Reform Acts 2025 (effective 2026). Consult NRS for current applicability."
   },
   "exemptions": [
     {
@@ -14,7 +14,7 @@
       "description": "Medical and dental services, including hospital and maternity clinic services, are exempt from VAT. Covers consultation fees, surgical procedures, diagnostic services, and pharmaceutical products dispensed by registered medical practitioners.",
       "threshold": null,
       "effective_date": "1993-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "VAT Act Cap V1 LFN 2004, First Schedule, Item 1"
     },
     {
@@ -24,7 +24,7 @@
       "description": "Educational services provided by recognised educational institutions at primary, secondary, and tertiary levels. Includes tuition fees, examination fees, and boarding services. Covers both public and private institutions approved by the Ministry of Education.",
       "threshold": null,
       "effective_date": "1993-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "VAT Act Cap V1 LFN 2004, First Schedule, Item 2"
     },
     {
@@ -34,7 +34,7 @@
       "description": "Supply of religious items including hymn books, religious literature, and articles used in places of worship. Services rendered by religious bodies and charitable organisations in furtherance of their objectives are also exempt.",
       "threshold": null,
       "effective_date": "1993-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "VAT Act Cap V1 LFN 2004, First Schedule, Item 3"
     },
     {
@@ -44,7 +44,7 @@
       "description": "Baby products including baby diapers, napkins, sanitary towels, and panty liners. Also covers baby food and infant formula products specifically formulated for children under 12 months.",
       "threshold": null,
       "effective_date": "2020-02-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "VAT (Amendment) Act 2020, Section 4"
     },
     {
@@ -54,7 +54,7 @@
       "description": "Agricultural equipment and inputs including tractors, ploughs, fertilisers, agricultural chemicals, and fishing equipment directly used for agricultural production. Covers imported and locally manufactured agricultural implements.",
       "threshold": null,
       "effective_date": "1993-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "VAT Act Cap V1 LFN 2004, First Schedule, Item 5"
     },
     {
@@ -64,7 +64,7 @@
       "description": "All exported goods and services are zero-rated for VAT purposes. This covers goods exported from Nigeria, services rendered within Nigeria to a non-resident person outside Nigeria, and services connected to goods exported from Nigeria.",
       "threshold": null,
       "effective_date": "1993-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "VAT Act Cap V1 LFN 2004, Section 2(2)"
     },
     {
@@ -74,7 +74,7 @@
       "description": "Selected financial services are exempt from VAT including: life insurance, mortgage transactions, money market operations, issuance and transfer of shares, stocks, and securities. Fee-based financial services such as management fees and advisory fees remain vatable.",
       "threshold": null,
       "effective_date": "1993-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "VAT Act Cap V1 LFN 2004, First Schedule, Item 4; VAT (Amendment) Act 2020"
     },
     {
@@ -84,7 +84,7 @@
       "description": "Upstream petroleum operations are outside the scope of VAT. Goods and services imported for use in upstream petroleum operations in the customs territory are exempt, provided they are covered by a valid certificate issued by the NNPC/FIRS.",
       "threshold": null,
       "effective_date": "1993-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "VAT Act Cap V1 LFN 2004, First Schedule, Item 6; Petroleum Profits Tax Act Cap P4 LFN 2004"
     },
     {
@@ -94,7 +94,7 @@
       "description": "Rents on residential premises are exempt from VAT. Only commercial property rents attract VAT. This distinction applies to leases and tenancy agreements for dwelling purposes only.",
       "threshold": null,
       "effective_date": "1993-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "VAT Act Cap V1 LFN 2004, First Schedule, Item 7"
     },
     {
@@ -104,7 +104,7 @@
       "description": "Books, newspapers, magazines, and journals are exempt from VAT. This covers printed and digital educational reading materials but excludes advertising revenue.",
       "threshold": null,
       "effective_date": "2020-02-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "VAT (Amendment) Act 2020, Section 3"
     },
     {
@@ -114,7 +114,7 @@
       "description": "Dividends, interests, rents, and royalties paid to pension funds registered under the Pension Reform Act 2014 are exempt from withholding tax. This applies to approved retirement schemes and pension fund administrators.",
       "threshold": null,
       "effective_date": "2014-07-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "Pension Reform Act 2014, Section 4; CIT Act Cap C21 LFN 2004, Section 79"
     },
     {
@@ -124,18 +124,18 @@
       "description": "Payments to diplomatic missions and international organisations recognised by the Nigerian government are exempt from WHT. This covers diplomatic privileges under the Diplomatic Immunities and Privileges Act. Must have valid certificate of exemption from FIRS.",
       "threshold": null,
       "effective_date": "1962-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "Diplomatic Immunities and Privileges Act Cap D9 LFN 2004; CIT Act Cap C21 LFN 2004, Section 79(6)"
     },
     {
       "id": "WHT-003",
       "tax_type": "WHT",
       "category": "Small Business Threshold",
-      "description": "Small businesses with annual turnover of ₦25 million or below are exempt from WHT obligations as withholding agents. Such businesses are also not required to deduct WHT from payments. They may still be subject to WHT deduction when they are payees.",
-      "threshold": "₦25,000,000 annual turnover",
-      "effective_date": "2020-02-01",
-      "authority": "FIRS",
-      "legal_reference": "Finance Act 2020, Section 28; CIT Act (Amended) 2020"
+      "description": "Small businesses with annual turnover of ₦50 million or below are exempt from WHT obligations as withholding agents. Such businesses are also not required to deduct WHT from payments. They may still be subject to WHT deduction when they are payees.",
+      "threshold": "₦50,000,000 annual turnover",
+      "effective_date": "2026-01-01",
+      "authority": "NRS",
+      "legal_reference": "Nigeria Tax Reform Acts 2025; CIT Act (Amended)"
     },
     {
       "id": "WHT-004",
@@ -144,7 +144,7 @@
       "description": "Companies already subject to Petroleum Profits Tax (PPT) are exempt from WHT on income already assessed under PPTA. This prevents double taxation of upstream petroleum operations. Applicable only to companies operating in upstream sector with valid PPT assessment.",
       "threshold": null,
       "effective_date": "1959-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "Petroleum Profits Tax Act Cap P4 LFN 2004, Section 1; CIT Act Cap C21 LFN 2004, Section 5"
     },
     {
@@ -154,18 +154,18 @@
       "description": "Payments to ECOWAS Fund, African Development Bank, and other specified international financial institutions are exempt from WHT on interest and similar income.",
       "threshold": null,
       "effective_date": "1962-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "CIT Act Cap C21 LFN 2004, Section 79(6); International Financial Institutions Act"
     },
     {
       "id": "CIT-001",
       "tax_type": "CIT",
       "category": "Small Business (0%)",
-      "description": "Companies with annual gross turnover of ₦25 million or below are exempt from Companies Income Tax (0% CIT rate). This is classified as a micro-enterprise under the Finance Act 2020 classification. Must file returns even at 0% rate.",
-      "threshold": "₦25,000,000 annual turnover",
-      "effective_date": "2020-02-01",
-      "authority": "FIRS",
-      "legal_reference": "Finance Act 2020, Section 28; CIT Act Cap C21 LFN 2004 (as amended), Section 3B"
+      "description": "Companies with annual gross turnover of ₦50 million or below are exempt from Companies Income Tax (0% CIT rate). This is classified as a small company under the Tax Reform Acts 2025. Must file returns even at 0% rate.",
+      "threshold": "₦50,000,000 annual turnover",
+      "effective_date": "2026-01-01",
+      "authority": "NRS",
+      "legal_reference": "Nigeria Tax Reform Acts 2025, CIT Act (as amended), Section 3B"
     },
     {
       "id": "CIT-002",
@@ -174,7 +174,7 @@
       "description": "Companies granted Pioneer Status enjoy a tax holiday of 3 years (extendable to 5 years) from the date of commencement of production. Covers industries designated as pioneer under the Industrial Development (Income Tax Relief) Act. Must apply to NIPC for certification.",
       "threshold": "3-5 year tax holiday",
       "effective_date": "1971-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "Industrial Development (Income Tax Relief) Act Cap I8 LFN 2004, Sections 1-10"
     },
     {
@@ -184,7 +184,7 @@
       "description": "Profits of educational institutions engaged in full-time education at primary, secondary, or tertiary level are exempt from CIT. The institution must be public or not-for-profit. Commercial activities of such institutions remain taxable.",
       "threshold": null,
       "effective_date": "1961-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "CIT Act Cap C21 LFN 2004, Section 3(c)"
     },
     {
@@ -194,7 +194,7 @@
       "description": "Profits of ecclesiastical, charitable, or religious organisations of a public character are exempt from CIT. Income must be used solely for the religious or charitable purposes of the organisation. Investment income may be subject to tax if not used for charitable purposes.",
       "threshold": null,
       "effective_date": "1961-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "CIT Act Cap C21 LFN 2004, Section 3(d)"
     },
     {
@@ -204,7 +204,7 @@
       "description": "Non-profit organisations registered under Part C of the Companies and Allied Matters Act (CAMA) 2020 are exempt from CIT, provided their income is used solely for their stated objects. Commercial ventures by NGOs are taxable. Must file annual returns with CAC and FIRS.",
       "threshold": null,
       "effective_date": "1961-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "CIT Act Cap C21 LFN 2004, Section 3(d); CAMA 2020, Part C"
     },
     {
@@ -214,7 +214,7 @@
       "description": "Registered cooperative societies are exempt from CIT on their surplus or income derived from members. Income from non-member business activities is taxable. Must be registered under the Cooperative Societies Act.",
       "threshold": null,
       "effective_date": "1961-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "CIT Act Cap C21 LFN 2004, Section 3(e)"
     },
     {
@@ -224,7 +224,7 @@
       "description": "Profits of a trade union registered under the Trade Unions Act are exempt from CIT, provided the profits are not derived from a trade or business carried on by the union.",
       "threshold": null,
       "effective_date": "1961-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "CIT Act Cap C21 LFN 2004, Section 3(f)"
     },
     {
@@ -234,7 +234,7 @@
       "description": "Companies operating in approved Export Free Trade Zones are exempt from CIT, VAT, WHT, and other federal, state, and local government taxes, provided at least 75% of their production is exported. Ineligible if domestic sales exceed 25% of output.",
       "threshold": "75% export requirement",
       "effective_date": "1992-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "Export Processing Zones Act Cap E18 LFN 2004; NEPZA Act Cap N111 LFN 2004"
     },
     {
@@ -244,7 +244,7 @@
       "description": "Gains from the disposal of an individual's principal residence are exempt from CGT. The exemption applies only where the property has been used as the individual's main home. Does not apply to investment properties or second homes.",
       "threshold": null,
       "effective_date": "1967-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "Capital Gains Tax Act Cap C1 LFN 2004, Section 4(1)"
     },
     {
@@ -254,7 +254,7 @@
       "description": "Gains from the disposal of life insurance policies are exempt from CGT. This covers proceeds from maturity, surrender, or assignment of life assurance policies issued by registered insurance companies in Nigeria.",
       "threshold": null,
       "effective_date": "1967-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "Capital Gains Tax Act Cap C1 LFN 2004, Section 4(2)"
     },
     {
@@ -264,7 +264,7 @@
       "description": "Gains arising from compensation or damages for personal injury or wrongful dismissal are exempt from CGT. This includes court-awarded compensation, insurance payouts for personal injury, and out-of-court settlements for bodily harm.",
       "threshold": null,
       "effective_date": "1967-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "Capital Gains Tax Act Cap C1 LFN 2004, Section 4(3)"
     },
     {
@@ -274,7 +274,7 @@
       "description": "Gains from the disposal of decorations awarded for valour or gallantry conduct are exempt from CGT. Also covers prizes won in Nigerian sporting competitions approved by the relevant sports authority.",
       "threshold": null,
       "effective_date": "1967-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "Capital Gains Tax Act Cap C1 LFN 2004, Section 5"
     },
     {
@@ -284,7 +284,7 @@
       "description": "Gains from compensation received under statutory provisions for loss of employment office or position are exempt from CGT. This includes severance pay, redundancy payments, and gratuities under approved schemes.",
       "threshold": null,
       "effective_date": "1967-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "Capital Gains Tax Act Cap C1 LFN 2004, Section 4(5)"
     },
     {
@@ -294,7 +294,7 @@
       "description": "Cheques with face value below ₦1,000 are exempt from stamp duties. This exemption was historically provided to reduce the burden of stamping small-value instruments.",
       "threshold": "₦1,000 face value",
       "effective_date": "1939-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "Stamp Duties Act Cap S8 LFN 2004, Schedule"
     },
     {
@@ -314,7 +314,7 @@
       "description": "Contracts of service (employment contracts) are exempt from stamp duties. Only contracts for service (consultancy, contractor agreements) attract stamp duty.",
       "threshold": null,
       "effective_date": "1939-01-01",
-      "authority": "FIRS",
+      "authority": "NRS",
       "legal_reference": "Stamp Duties Act Cap S8 LFN 2004, Section 5"
     },
     {

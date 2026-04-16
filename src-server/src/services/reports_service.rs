@@ -244,9 +244,9 @@ impl ReportsService {
 
         Ok(TrialBalance {
             rows,
+            is_balanced: total_debit == total_credit,
             total_debit,
             total_credit,
-            is_balanced: total_debit == total_credit,
         })
     }
 
@@ -519,12 +519,12 @@ impl ReportsService {
             company_id,
             as_of_date: as_of_date.to_string(),
             assets: asset_sections,
+            is_balanced: total_assets == total_liabilities.clone() + total_equity.clone(),
             total_assets,
             liabilities: liability_sections,
             total_liabilities,
             equity: equity_section,
             total_equity,
-            is_balanced: total_assets == total_liabilities + total_equity,
         })
     }
 

@@ -8,6 +8,14 @@ from typing import Any, Dict, List, Optional
 
 from ..core.exceptions import AccountingError
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -17,8 +25,8 @@ class LoanManagementEngine:
 
     def generate_amortization_schedule(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Generate a loan amortization schedule."""
-        principal = float(data.get("principal", 0))
-        annual_rate = float(data.get("annual_rate", 0.20))
+        principal = Decimal(str(data.get("principal", 0)))
+        annual_rate = Decimal(str(data.get("annual_rate", 0.20)))
         term_months = int(data.get("term_months", 12))
         repayment_type = data.get("repayment_type", "reducing_balance").lower()
         start_date_str = data.get("start_date", datetime.now().isoformat())
@@ -59,13 +67,13 @@ class LoanManagementEngine:
         result: Dict[str, Any] = {
             "loan_id": data.get("loan_id", ""),
             "loan_name": data.get("loan_name", ""),
-            "principal": round(principal, 2),
+            "principal": _money_round(principal),
             "annual_rate": annual_rate,
             "periodic_rate": periodic_rate,
             "term_months": term_months,
             "repayment_type": repayment_type,
             "payment_frequency": payment_frequency,
-            "emi": round(emi, 2),
+            "emi": _money_round(emi),
             "num_payments": num_payments,
             "total_payment": total_payment,
             "total_interest": total_interest,
@@ -90,7 +98,7 @@ class LoanManagementEngine:
         return {
             "periods_paid": periods_paid,
             "total_paid": total_paid,
-            "outstanding_balance": round(outstanding, 2),
+            "outstanding_balance": _money_round(outstanding),
             "loan_fully_repaid": periods_paid >= len(schedule),
             "next_payment_due": schedule[periods_paid].get("payment_date") if periods_paid < len(schedule) else None,
         }
@@ -103,12 +111,12 @@ class LoanManagementEngine:
         outstanding = schedule[current_period].get("closing_balance", 0)
         remaining_interest = round(sum(schedule[i].get("interest", 0) for i in range(current_period, len(schedule))), 2)
         remaining_payments = round(sum(schedule[i].get("payment", 0) for i in range(current_period, len(schedule))), 2)
-        settlement_fee = round(outstanding * early_settlement_fee_pct, 2)
-        total_early_cost = round(outstanding + settlement_fee, 2)
-        interest_saving = round(remaining_interest - settlement_fee, 2)
+        settlement_fee = _money_round(outstanding * early_settlement_fee_pct)
+        total_early_cost = _money_round(outstanding + settlement_fee)
+        interest_saving = _money_round(remaining_interest - settlement_fee)
 
         return {
-            "outstanding_principal": round(outstanding, 2),
+            "outstanding_principal": _money_round(outstanding),
             "remaining_scheduled_payments": remaining_payments,
             "remaining_interest": remaining_interest,
             "early_settlement_fee_pct": early_settlement_fee_pct,
@@ -129,16 +137,16 @@ class LoanManagementEngine:
         schedule: List[Dict[str, Any]] = []
         balance = principal
         for p in range(1, num_payments + 1):
-            interest = round(balance * periodic_rate, 2)
+            interest = _money_round(balance * periodic_rate)
             payment = round(min(emi, balance + interest), 2)
-            principal_payment = round(payment - interest, 2)
+            principal_payment = _money_round(payment - interest)
             balance = round(max(balance - principal_payment, 0), 2)
             payment_date = start_date + timedelta(days=30 * freq_months * p)
 
             schedule.append({
                 "period": p,
                 "payment_date": payment_date.isoformat(),
-                "opening_balance": round(balance + principal_payment, 2),
+                "opening_balance": _money_round(balance + principal_payment),
                 "payment": payment,
                 "interest": interest,
                 "principal_payment": principal_payment,
@@ -149,11 +157,11 @@ class LoanManagementEngine:
 
     def _flat_rate_schedule(self, principal: float, periodic_rate: float, num_payments: int, start_date: datetime, freq_months: int) -> tuple:
         """Generate flat rate amortization schedule."""
-        total_interest = round(principal * periodic_rate * num_payments, 2)
-        total_payment = round(principal + total_interest, 2)
-        emi = round(total_payment / num_payments, 2)
-        interest_per_period = round(total_interest / num_payments, 2)
-        principal_per_period = round(principal / num_payments, 2)
+        total_interest = _money_round(principal * periodic_rate * num_payments)
+        total_payment = _money_round(principal + total_interest)
+        emi = _money_round(total_payment / num_payments)
+        interest_per_period = _money_round(total_interest / num_payments)
+        principal_per_period = _money_round(principal / num_payments)
 
         schedule: List[Dict[str, Any]] = []
         balance = principal
@@ -164,7 +172,7 @@ class LoanManagementEngine:
             schedule.append({
                 "period": p,
                 "payment_date": payment_date.isoformat(),
-                "opening_balance": round(balance + principal_per_period, 2),
+                "opening_balance": _money_round(balance + principal_per_period),
                 "payment": emi,
                 "interest": interest_per_period,
                 "principal_payment": principal_per_period,
@@ -175,13 +183,13 @@ class LoanManagementEngine:
 
     def _interest_only_schedule(self, principal: float, periodic_rate: float, num_payments: int, start_date: datetime, freq_months: int) -> tuple:
         """Generate interest-only amortization schedule with balloon payment."""
-        interest_per_period = round(principal * periodic_rate, 2)
+        interest_per_period = _money_round(principal * periodic_rate)
         schedule: List[Dict[str, Any]] = []
 
         for p in range(1, num_payments + 1):
             payment_date = start_date + timedelta(days=30 * freq_months * p)
             is_last = p == num_payments
-            payment = round(interest_per_period + (principal if is_last else 0), 2)
+            payment = _money_round(interest_per_period + (principal if is_last else 0))
 
             schedule.append({
                 "period": p,

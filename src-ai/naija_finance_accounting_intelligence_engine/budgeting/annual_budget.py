@@ -8,6 +8,14 @@ from typing import Any, Dict, List
 
 from ..core.exceptions import AccountingError
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -32,7 +40,7 @@ class AnnualBudgetEngine:
         expense_lines = [l for l in lines if str(l.get("account_code", "")).startswith("5")]
         total_revenue = round(sum(float(l.get("budgeted_amount", 0)) for l in revenue_lines), 2)
         total_expenses = round(sum(float(l.get("budgeted_amount", 0)) for l in expense_lines), 2)
-        projected_surplus = round(total_revenue - total_expenses, 2)
+        projected_surplus = _money_round(total_revenue - total_expenses)
 
         return {
             "company_id": company_id,
@@ -51,7 +59,7 @@ class AnnualBudgetEngine:
 
     def allocate_budget_by_periods(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Allocate annual budget amounts across months/quarters."""
-        annual_amount = float(data.get("annual_amount", 0))
+        annual_amount = Decimal(str(data.get("annual_amount", 0)))
         method = data.get("allocation_method", "even").lower()
         periods = int(data.get("periods", 12))
         seasonal_weights: List[float] = data.get("seasonal_weights", [])
@@ -60,39 +68,39 @@ class AnnualBudgetEngine:
             raise AccountingError("Annual budget amount must be positive")
 
         if method == "even":
-            per_period = round(annual_amount / periods, 2)
-            remainder = round(annual_amount - per_period * periods, 2)
+            per_period = _money_round(annual_amount / periods)
+            remainder = _money_round(annual_amount - per_period * periods)
             allocation = [per_period + (remainder if i == 0 else 0) for i in range(periods)]
         elif method == "seasonal" and len(seasonal_weights) == periods:
             total_weight = sum(seasonal_weights)
             if total_weight <= 0:
                 raise AccountingError("Seasonal weights must sum to a positive number")
-            allocation = [round(annual_amount * w / total_weight, 2) for w in seasonal_weights]
+            allocation = [_money_round(annual_amount * w / total_weight) for w in seasonal_weights]
         elif method == "front_loaded":
             weights = [max(periods - i, 1) for i in range(periods)]
             total_weight = sum(weights)
-            allocation = [round(annual_amount * w / total_weight, 2) for w in weights]
+            allocation = [_money_round(annual_amount * w / total_weight) for w in weights]
         elif method == "back_loaded":
             weights = [i + 1 for i in range(periods)]
             total_weight = sum(weights)
-            allocation = [round(annual_amount * w / total_weight, 2) for w in weights]
+            allocation = [_money_round(annual_amount * w / total_weight) for w in weights]
         else:
-            per_period = round(annual_amount / periods, 2)
+            per_period = _money_round(annual_amount / periods)
             allocation = [per_period] * periods
 
         cumulative: List[float] = []
         running = 0.0
         for a in allocation:
             running += a
-            cumulative.append(round(running, 2))
+            cumulative.append(_money_round(running))
 
         return {
-            "annual_amount": round(annual_amount, 2),
+            "annual_amount": _money_round(annual_amount),
             "periods": periods,
             "allocation_method": method,
             "period_allocation": allocation,
             "cumulative_allocation": cumulative,
-            "total_allocated": round(sum(allocation), 2),
+            "total_allocated": _money_round(sum(allocation)),
         }
 
     def apply_growth_rate(self, base_budget: List[Dict[str, Any]], growth_rate: float, exclude_accounts: List[str] | None = None) -> List[Dict[str, Any]]:
@@ -106,7 +114,7 @@ class AnnualBudgetEngine:
             if code in exclude:
                 adjusted.append({**line, "growth_applied": 0.0})
             else:
-                new_amount = round(amount * (1 + growth_rate), 2)
+                new_amount = _money_round(amount * (1 + growth_rate))
                 adjusted.append({**line, "budgeted_amount": new_amount, "growth_applied": growth_rate})
 
         return adjusted
@@ -122,7 +130,7 @@ class AnnualBudgetEngine:
         for code in all_codes:
             v1_amt = float(v1_map.get(code, {}).get("budgeted_amount", 0))
             v2_amt = float(v2_map.get(code, {}).get("budgeted_amount", 0))
-            diff = round(v2_amt - v1_amt, 2)
+            diff = _money_round(v2_amt - v1_amt)
             pct = round(diff / v1_amt, 4) if v1_amt != 0 else None
 
             differences.append({

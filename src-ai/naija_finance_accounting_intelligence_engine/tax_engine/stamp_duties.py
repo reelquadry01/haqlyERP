@@ -8,6 +8,14 @@ from typing import Any, Dict, List
 
 from ..core.exceptions import TaxError
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -58,7 +66,7 @@ class StampDutyEngine:
             return self._flat_result(doc_type, value, duty, schedule)
 
         elif schedule["rate_type"] == "ad_valorem":
-            duty = round(value * schedule["rate"], 2)
+            duty = _money_round(value * schedule["rate"])
             return self._ad_valorem_result(doc_type, value, duty, schedule)
 
         elif schedule["rate_type"] == "progressive":
@@ -84,7 +92,7 @@ class StampDutyEngine:
         return {
             "tax_type": "STAMP_DUTY",
             "batch_size": len(documents),
-            "total_stamp_duty": round(total_duty, 2),
+            "total_stamp_duty": _money_round(total_duty),
             "individual_duties": results,
             "computed_at": datetime.now().isoformat(),
         }
@@ -120,7 +128,7 @@ class StampDutyEngine:
             if rates:
                 applicable_rate = rates[-1]["rate"]
 
-        return round(value * applicable_rate, 2)
+        return _money_round(value * applicable_rate)
 
     def _flat_result(self, doc_type: str, value: float, duty: float, schedule: Dict[str, Any]) -> Dict[str, Any]:
         """Build result for flat-rate stamp duty."""
@@ -129,8 +137,8 @@ class StampDutyEngine:
             "document_type": doc_type,
             "description": schedule["description"],
             "rate_type": "flat",
-            "document_value": round(value, 2),
-            "stamp_duty": round(duty, 2),
+            "document_value": _money_round(value),
+            "stamp_duty": _money_round(duty),
             "computed_at": datetime.now().isoformat(),
         }
 
@@ -143,8 +151,8 @@ class StampDutyEngine:
             "rate_type": "ad_valorem",
             "rate": schedule["rate"],
             "rate_pct": f"{schedule['rate'] * 100:.2f}%",
-            "document_value": round(value, 2),
-            "stamp_duty": round(duty, 2),
+            "document_value": _money_round(value),
+            "stamp_duty": _money_round(duty),
             "computed_at": datetime.now().isoformat(),
         }
 
@@ -157,8 +165,8 @@ class StampDutyEngine:
             "rate_type": "progressive",
             "lease_term_years": term,
             "rates_schedule": schedule.get("rates", []),
-            "document_value": round(value, 2),
-            "stamp_duty": round(duty, 2),
+            "document_value": _money_round(value),
+            "stamp_duty": _money_round(duty),
             "computed_at": datetime.now().isoformat(),
         }
 

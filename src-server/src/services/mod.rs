@@ -27,3 +27,4 @@ pub mod bi_service;
 pub mod encryption_service;
 pub mod license_service;
 pub mod performance_monitor;
+pub mod document_service;

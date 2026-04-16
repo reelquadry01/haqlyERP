@@ -1564,12 +1564,12 @@ CREATE INDEX IF NOT EXISTS idx_subscriptions_period ON subscription_records(curr
 INSERT OR IGNORE INTO feature_flags (key, display_name, description, tier_required) VALUES
     ('accounting', 'Accounting', 'Chart of accounts, journals, posting', 'starter'),
     ('tax_vat', 'VAT', 'Value Added Tax management', 'starter'),
-    ('tax_paye', 'PAYE', 'Pay-As-You-Earn tax', 'starter'),
+    ('tax_paye', 'PAYE', 'Pay-As-You-Earn tax (NRS)', 'starter'),
     ('tax_wht', 'WHT', 'Withholding Tax management', 'starter'),
     ('einvoicing_basic', 'E-Invoicing Basic', 'Basic e-invoice generation', 'starter'),
     ('reports_basic', 'Basic Reports', 'Trial balance, P&L, Balance Sheet', 'starter'),
-    ('tax_all', 'All Tax Types', 'VAT, WHT, PAYE, CIT, CGT, Stamp Duty, Edu Tax', 'professional'),
-    ('einvoicing_full', 'E-Invoicing Full', 'FIRS NRS integration with submission', 'professional'),
+    ('tax_all', 'All Tax Types', 'VAT, WHT, PAYE, CIT, CGT, Stamp Duty, Edu Tax (NRS)', 'professional'),
+    ('einvoicing_full', 'E-Invoicing Full', 'NRS integration with submission', 'professional'),
     ('payroll', 'Payroll', 'Full Nigerian payroll with payslips', 'professional'),
     ('bi_basic', 'Basic BI', 'KPI dashboards and basic charts', 'professional'),
     ('crm_basic', 'Basic CRM', 'Contact management and deal tracking', 'professional'),
@@ -1584,5 +1584,26 @@ INSERT OR IGNORE INTO feature_flags (key, display_name, description, tier_requir
     ('multi_company', 'Multi-Company', 'Consolidated multi-company reporting', 'enterprise'),
     ('on_premise', 'On-Premise', 'On-premise deployment option', 'government'),
     ('audit_trail_enhanced', 'Enhanced Audit', 'Immutable audit trail with integrity verification', 'government'),
-    ('compliance_reports', 'Compliance Reports', 'NDPR, CBN, FIRS compliance reports', 'government'),
+    ('compliance_reports', 'Compliance Reports', 'NDPR, CBN, NRS compliance reports', 'government'),
     ('custom_dashboards', 'Custom Dashboards', 'Agency-specific dashboard templates', 'government');
+
+-- 022_file_storage: Document Attachments
+CREATE TABLE IF NOT EXISTS document_attachments (
+    id TEXT PRIMARY KEY,
+    company_id TEXT NOT NULL REFERENCES companies(id) ON DELETE CASCADE,
+    entity_type TEXT NOT NULL CHECK (entity_type IN ('journal', 'invoice', 'bill', 'voucher', 'asset', 'employee', 'report', 'other')),
+    entity_id TEXT NOT NULL,
+    file_name TEXT NOT NULL,
+    file_path TEXT NOT NULL,
+    file_size INTEGER NOT NULL DEFAULT 0,
+    mime_type TEXT NOT NULL DEFAULT 'application/octet-stream',
+    description TEXT,
+    uploaded_by TEXT REFERENCES users(id),
+    is_deleted INTEGER NOT NULL DEFAULT 0,
+    created_at TEXT NOT NULL DEFAULT (datetime('now')),
+    updated_at TEXT NOT NULL DEFAULT (datetime('now'))
+);
+
+CREATE INDEX IF NOT EXISTS idx_doc_attachments_entity ON document_attachments(entity_type, entity_id);
+CREATE INDEX IF NOT EXISTS idx_doc_attachments_company ON document_attachments(company_id);
+CREATE INDEX IF NOT EXISTS idx_doc_attachments_deleted ON document_attachments(is_deleted);

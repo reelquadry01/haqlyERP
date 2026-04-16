@@ -4,7 +4,8 @@ use chrono::{DateTime, Utc};
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::collections::VecDeque;
-use std::sync::{Arc, RwLock};
+use std::sync::Arc;
+use tokio::sync::RwLock;
 
 const MAX_METRICS: usize = 10000;
 const SLOW_QUERY_THRESHOLD_MS: u64 = 500;
@@ -79,7 +80,7 @@ impl PerformanceMonitor {
         }
     }
 
-    pub fn record_request(&self, endpoint: String, method: String, duration_ms: u64, status_code: u16) {
+    pub async fn record_request(&self, endpoint: String, method: String, duration_ms: u64, status_code: u16) {
         let metric = RequestMetrics {
             endpoint,
             method,
@@ -87,14 +88,14 @@ impl PerformanceMonitor {
             status_code,
             timestamp: Utc::now(),
         };
-        let mut inner = self.inner.write().unwrap();
+        let mut inner = self.inner.write().await;
         if inner.request_metrics.len() >= MAX_METRICS {
             inner.request_metrics.pop_front();
         }
         inner.request_metrics.push_back(metric);
     }
 
-    pub fn record_slow_query(&self, query: String, duration_ms: u64, endpoint: String) {
+    pub async fn record_slow_query(&self, query: String, duration_ms: u64, endpoint: String) {
         if duration_ms < SLOW_QUERY_THRESHOLD_MS {
             return;
         }
@@ -104,15 +105,15 @@ impl PerformanceMonitor {
             timestamp: Utc::now(),
             endpoint,
         };
-        let mut inner = self.inner.write().unwrap();
+        let mut inner = self.inner.write().await;
         if inner.slow_queries.len() >= MAX_METRICS {
             inner.slow_queries.pop_front();
         }
         inner.slow_queries.push_back(log);
     }
 
-    pub fn get_percentiles(&self, endpoint: &str) -> (f64, f64, f64) {
-        let inner = self.inner.read().unwrap();
+    pub async fn get_percentiles(&self, endpoint: &str) -> (f64, f64, f64) {
+        let inner = self.inner.read().await;
         let cutoff = Utc::now() - chrono::Duration::hours(1);
         let mut durations: Vec<u64> = inner
             .request_metrics
@@ -132,8 +133,8 @@ impl PerformanceMonitor {
         (p50, p95, p99)
     }
 
-    pub fn get_slow_queries(&self, limit: usize) -> Vec<SlowQueryLog> {
-        let inner = self.inner.read().unwrap();
+    pub async fn get_slow_queries(&self, limit: usize) -> Vec<SlowQueryLog> {
+        let inner = self.inner.read().await;
         inner
             .slow_queries
             .iter()
@@ -143,8 +144,8 @@ impl PerformanceMonitor {
             .collect()
     }
 
-    pub fn get_endpoint_stats(&self) -> Vec<EndpointStats> {
-        let inner = self.inner.read().unwrap();
+    pub async fn get_endpoint_stats(&self) -> Vec<EndpointStats> {
+        let inner = self.inner.read().await;
         let cutoff = Utc::now() - chrono::Duration::hours(1);
         let mut grouped: HashMap<String, Vec<&RequestMetrics>> = HashMap::new();
 
@@ -193,11 +194,11 @@ impl PerformanceMonitor {
         stats
     }
 
-    pub fn get_health_status(&self) -> HealthReport {
+    pub async fn get_health_status(&self) -> HealthReport {
         let p95_warning_ms: u64 = 1000;
         let p95_critical_ms: u64 = 5000;
 
-        let endpoint_stats = self.get_endpoint_stats();
+        let endpoint_stats = self.get_endpoint_stats().await;
         let mut endpoint_healths = Vec::new();
         let mut overall = HealthStatus::Ok;
 
@@ -242,24 +243,24 @@ fn percentile(sorted: &[u64], pct: u8) -> f64 {
 mod tests {
     use super::*;
 
-    #[test]
-    fn test_record_and_retrieve() {
+    #[tokio::test]
+    async fn test_record_and_retrieve() {
         let monitor = PerformanceMonitor::new();
-        monitor.record_request("/api/journals".into(), "GET".into(), 120, 200);
-        monitor.record_request("/api/journals".into(), "GET".into(), 250, 200);
-        monitor.record_request("/api/journals".into(), "POST".into(), 800, 201);
+        monitor.record_request("/api/journals".into(), "GET".into(), 120, 200).await;
+        monitor.record_request("/api/journals".into(), "GET".into(), 250, 200).await;
+        monitor.record_request("/api/journals".into(), "POST".into(), 800, 201).await;
 
-        let stats = monitor.get_endpoint_stats();
+        let stats = monitor.get_endpoint_stats().await;
         assert!(!stats.is_empty());
     }
 
-    #[test]
-    fn test_slow_query_threshold() {
+    #[tokio::test]
+    async fn test_slow_query_threshold() {
         let monitor = PerformanceMonitor::new();
-        monitor.record_slow_query("SELECT * FROM chart_of_accounts".into(), 300, "/api/accounts".into());
-        monitor.record_slow_query("SELECT * FROM journals".into(), 600, "/api/journals".into());
+        monitor.record_slow_query("SELECT * FROM chart_of_accounts".into(), 300, "/api/accounts".into()).await;
+        monitor.record_slow_query("SELECT * FROM journals".into(), 600, "/api/journals".into()).await;
 
-        let slow = monitor.get_slow_queries(10);
+        let slow = monitor.get_slow_queries(10).await;
         assert_eq!(slow.len(), 1);
         assert_eq!(slow[0].duration_ms, 600);
     }
@@ -272,23 +273,23 @@ mod tests {
         assert_eq!(percentile(&data, 99), 100.0);
     }
 
-    #[test]
-    fn test_health_status() {
+    #[tokio::test]
+    async fn test_health_status() {
         let monitor = PerformanceMonitor::new();
         for _ in 0..5 {
-            monitor.record_request("/api/health".into(), "GET".into(), 50, 200);
+            monitor.record_request("/api/health".into(), "GET".into(), 50, 200).await;
         }
-        let report = monitor.get_health_status();
+        let report = monitor.get_health_status().await;
         assert_eq!(report.status, HealthStatus::Ok);
     }
 
-    #[test]
-    fn test_circular_buffer_eviction() {
+    #[tokio::test]
+    async fn test_circular_buffer_eviction() {
         let monitor = PerformanceMonitor::new();
         for i in 0..(MAX_METRICS + 100) {
-            monitor.record_request("/api/test".into(), "GET".into(), (i % 100) as u64, 200);
+            monitor.record_request("/api/test".into(), "GET".into(), (i % 100) as u64, 200).await;
         }
-        let inner = monitor.inner.read().unwrap();
+        let inner = monitor.inner.read().await;
         assert_eq!(inner.request_metrics.len(), MAX_METRICS);
     }
 }

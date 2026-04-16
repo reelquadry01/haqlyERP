@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, Dict
 
 from ..core.logging import get_logger
@@ -11,30 +12,36 @@ from ..core.logging import get_logger
 logger = get_logger(__name__)
 
 
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
+
 class WaccEngine:
     """Weighted Average Cost of Capital computation engine."""
 
     def compute_wacc(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Compute WACC from cost of equity, cost of debt, and capital structure."""
-        market_cap = float(data.get("market_cap", 0))
-        total_debt = float(data.get("total_debt", 0))
+        market_cap = Decimal(str(data.get("market_cap", 0)))
+        total_debt = Decimal(str(data.get("total_debt", 0)))
         cost_of_equity = float(data.get("cost_of_equity", 0))
         cost_of_debt_pretax = float(data.get("cost_of_debt_pretax", 0))
-        tax_rate = float(data.get("tax_rate", 0.30))
-        cash = float(data.get("cash", 0))
+        tax_rate = float(data.get("tax_rate", 0.25))
+        cash = Decimal(str(data.get("cash", 0)))
 
         enterprise_value = market_cap + total_debt - cash
-        equity_weight = round(market_cap / enterprise_value, 4) if enterprise_value > 0 else 0
-        debt_weight = round(total_debt / enterprise_value, 4) if enterprise_value > 0 else 0
+        equity_weight = round(float(market_cap) / float(enterprise_value), 4) if enterprise_value > 0 else 0
+        debt_weight = round(float(total_debt) / float(enterprise_value), 4) if enterprise_value > 0 else 0
 
         cost_of_debt_aftertax = round(cost_of_debt_pretax * (1 - tax_rate), 6)
         wacc = round(equity_weight * cost_of_equity + debt_weight * cost_of_debt_aftertax, 6)
 
         return {
-            "market_cap": round(market_cap, 2),
-            "total_debt": round(total_debt, 2),
-            "cash": round(cash, 2),
-            "enterprise_value": round(enterprise_value, 2),
+            "market_cap": _money_round(market_cap),
+            "total_debt": _money_round(total_debt),
+            "cash": _money_round(cash),
+            "enterprise_value": _money_round(enterprise_value),
             "equity_weight": equity_weight,
             "debt_weight": debt_weight,
             "cost_of_equity": cost_of_equity,

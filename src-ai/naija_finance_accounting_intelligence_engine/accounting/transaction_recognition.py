@@ -8,6 +8,14 @@ from typing import Any, Dict, List, Optional
 
 from ..core.exceptions import AccountingError, IFRSError
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -233,8 +241,8 @@ class TransactionRecognition:
         """Allocate transaction price across multiple performance obligations (equal split default)."""
         if not obligations:
             return {"unallocated": total_amount}
-        per_obligation = round(total_amount / len(obligations), 2)
-        remainder = round(total_amount - per_obligation * len(obligations), 2)
+        per_obligation = _money_round(total_amount / len(obligations))
+        remainder = _money_round(total_amount - per_obligation * len(obligations))
         allocation: Dict[str, float] = {}
         for i, obl in enumerate(obligations):
             allocation[obl] = per_obligation + (remainder if i == 0 else 0.0)
@@ -295,7 +303,7 @@ class TransactionRecognition:
             "recoverable_amount": recoverable_amount,
             "value_in_use": value_in_use,
             "fair_value_less_costs": fair_value_less_costs,
-            "impairment_loss": round(impairment_loss, 2),
+            "impairment_loss": _money_round(impairment_loss),
             "impaired": impaired,
             "suggested_debit_account": "5900" if impaired else None,
             "suggested_credit_account": "1610" if impaired else None,

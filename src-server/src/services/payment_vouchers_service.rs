@@ -177,8 +177,8 @@ impl PaymentVouchersService {
 
         Ok(PaymentGatewayRequest {
             voucher_id: voucher.id,
-            payee_account: voucher.payee_account.unwrap(),
-            payee_bank_code: voucher.payee_bank_code.unwrap(),
+            payee_account: voucher.payee_account.ok_or_else(|| anyhow!("Missing payee account"))?,
+            payee_bank_code: voucher.payee_bank_code.ok_or_else(|| anyhow!("Missing payee bank code"))?,
             amount: voucher.amount,
             currency: voucher.currency_code,
             narration: voucher.narration.unwrap_or_default(),

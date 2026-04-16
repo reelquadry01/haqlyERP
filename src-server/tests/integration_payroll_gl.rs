@@ -271,23 +271,21 @@ mod tests {
         let paye = payroll_svc.compute_paye(&annual_taxable);
         let paye_f64 = paye.to_string().parse::<f64>().unwrap();
 
-        let bracket1 = 300_000.0 * 0.07;
-        let bracket2 = 300_000.0 * 0.11;
-        let bracket3 = 500_000.0 * 0.15;
-        let bracket4 = 500_000.0 * 0.19;
-        let bracket5 = 1_600_000.0 * 0.21;
-        let expected_remaining = taxable_f64 - 300_000.0 - 300_000.0 - 500_000.0 - 500_000.0 - 1_600_000.0;
-        let bracket6 = expected_remaining.max(0.0) * 0.24;
+        // PAYE brackets per Tax Reform Acts 2025 (effective 2026)
+        let bracket1 = 800_000.0 * 0.00;
+        let bracket2 = taxable_f64.min(3_200_000.0).max(800_000.0) - 800_000.0;
+        let bracket2 = bracket2.max(0.0) * 0.15;
+        let bracket3 = (taxable_f64.min(7_200_000.0) - 3_200_000.0).max(0.0) * 0.20;
+        let bracket4 = (taxable_f64.min(14_000_000.0) - 7_200_000.0).max(0.0) * 0.25;
+        let bracket5 = (taxable_f64.min(25_000_000.0) - 14_000_000.0).max(0.0) * 0.30;
+        let bracket6 = (taxable_f64 - 25_000_000.0).max(0.0) * 0.35;
 
         let expected_paye = bracket1 + bracket2 + bracket3 + bracket4 + bracket5 + bracket6;
         assert!((paye_f64 - expected_paye).abs() < 50.0);
 
-        assert!((bracket1 - 21_000.0).abs() < 1.0);
-        assert!((bracket2 - 33_000.0).abs() < 1.0);
-        assert!((bracket3 - 75_000.0).abs() < 1.0);
-        assert!((bracket4 - 95_000.0).abs() < 1.0);
-        assert!((bracket5 - 336_000.0).abs() < 1.0);
-        assert!(bracket6 > 0.0);
+        assert!((bracket1 - 0.0).abs() < 1.0);
+        assert!(bracket2 >= 0.0);
+        assert!(bracket3 >= 0.0);
 
         assert!(paye_f64 > 0.0);
         assert!(paye_f64 < annual_salary.to_string().parse::<f64>().unwrap());

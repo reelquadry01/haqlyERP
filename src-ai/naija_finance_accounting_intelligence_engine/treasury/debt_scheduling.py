@@ -7,6 +7,14 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -16,17 +24,17 @@ class DebtSchedulingEngine:
 
     def compute_dscr(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Compute Debt Service Coverage Ratio (DSCR)."""
-        ebitda = float(data.get("ebitda", 0))
-        principal_payments = float(data.get("principal_payments", 0))
-        interest_payments = float(data.get("interest_payments", 0))
-        lease_payments = float(data.get("lease_payments", 0))
+        ebitda = Decimal(str(data.get("ebitda", 0)))
+        principal_payments = Decimal(str(data.get("principal_payments", 0)))
+        interest_payments = Decimal(str(data.get("interest_payments", 0)))
+        lease_payments = Decimal(str(data.get("lease_payments", 0)))
 
-        total_debt_service = round(principal_payments + interest_payments + lease_payments, 2)
+        total_debt_service = _money_round(principal_payments + interest_payments + lease_payments)
 
         if total_debt_service <= 0:
             return {"dscr": None, "message": "No debt service obligations — DSCR not applicable"}
 
-        dscr = round(ebitda / total_debt_service, 2)
+        dscr = _money_round(ebitda / total_debt_service)
 
         if dscr >= 2.0:
             health = "excellent"
@@ -45,10 +53,10 @@ class DebtSchedulingEngine:
             covenant_status = "covenant_breach"
 
         return {
-            "ebitda": round(ebitda, 2),
-            "principal_payments": round(principal_payments, 2),
-            "interest_payments": round(interest_payments, 2),
-            "lease_payments": round(lease_payments, 2),
+            "ebitda": _money_round(ebitda),
+            "principal_payments": _money_round(principal_payments),
+            "interest_payments": _money_round(interest_payments),
+            "lease_payments": _money_round(lease_payments),
             "total_debt_service": total_debt_service,
             "dscr": dscr,
             "health_assessment": health,
@@ -79,7 +87,7 @@ class DebtSchedulingEngine:
             annual_rate = float(loan.get("annual_rate", 0))
 
             total_outstanding += outstanding
-            total_interest_next_12m += round(outstanding * annual_rate, 2)
+            total_interest_next_12m += _money_round(outstanding * annual_rate)
 
             try:
                 mat = datetime.fromisoformat(maturity_date)
@@ -101,12 +109,12 @@ class DebtSchedulingEngine:
             else:
                 bucket = "5_plus_years"
 
-            maturity_buckets[bucket]["total"] = round(maturity_buckets[bucket]["total"] + outstanding, 2)
-            maturity_buckets[bucket]["loans"].append({"loan_name": loan_name, "outstanding": round(outstanding, 2), "maturity_date": maturity_date, "annual_rate": annual_rate})
+            maturity_buckets[bucket]["total"] = _money_round(maturity_buckets[bucket]["total"] + outstanding)
+            maturity_buckets[bucket]["loans"].append({"loan_name": loan_name, "outstanding": _money_round(outstanding), "maturity_date": maturity_date, "annual_rate": annual_rate})
 
         return {
-            "total_outstanding_debt": round(total_outstanding, 2),
-            "total_interest_next_12_months": round(total_interest_next_12m, 2),
+            "total_outstanding_debt": _money_round(total_outstanding),
+            "total_interest_next_12_months": _money_round(total_interest_next_12m),
             "maturity_buckets": maturity_buckets,
             "near_term_risk": maturity_buckets["0_3_months"]["total"] + maturity_buckets["3_6_months"]["total"],
             "concentration_risk": self._assess_concentration(maturity_buckets),
@@ -127,8 +135,8 @@ class DebtSchedulingEngine:
         wacd = round(weighted_cost / total_debt, 6) if total_debt > 0 else 0
 
         return {
-            "total_debt": round(total_debt, 2),
-            "weighted_annual_cost": round(weighted_cost, 2),
+            "total_debt": _money_round(total_debt),
+            "weighted_annual_cost": _money_round(weighted_cost),
             "weighted_average_cost_of_debt": wacd,
             "weighted_average_cost_pct": f"{wacd * 100:.2f}%",
             "loan_details": [{"loan_name": l.get("loan_name", ""), "outstanding": round(float(l.get("outstanding_balance", 0)), 2), "rate": float(l.get("annual_rate", 0))} for l in loans],
@@ -136,13 +144,13 @@ class DebtSchedulingEngine:
 
     def stress_test_debt_service(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Stress test debt service under different scenarios."""
-        base_ebitda = float(data.get("ebitda", 0))
-        total_debt_service = float(data.get("total_debt_service", 0))
+        base_ebitda = Decimal(str(data.get("ebitda", 0)))
+        total_debt_service = Decimal(str(data.get("total_debt_service", 0)))
 
         scenarios: List[Dict[str, Any]] = []
         for label, shock in [("mild", -0.10), ("moderate", -0.25), ("severe", -0.50), ("extreme", -0.75)]:
-            stressed_ebitda = round(base_ebitda * (1 + shock), 2)
-            dscr = round(stressed_ebitda / total_debt_service, 2) if total_debt_service > 0 else None
+            stressed_ebitda = _money_round(base_ebitda * (1 + shock))
+            dscr = _money_round(stressed_ebitda / total_debt_service) if total_debt_service > 0 else None
             scenarios.append({
                 "scenario": label,
                 "ebitda_shock": f"{shock * 100:.0f}%",
@@ -152,9 +160,9 @@ class DebtSchedulingEngine:
             })
 
         return {
-            "base_ebitda": round(base_ebitda, 2),
-            "total_debt_service": round(total_debt_service, 2),
-            "base_dscr": round(base_ebitda / total_debt_service, 2) if total_debt_service > 0 else None,
+            "base_ebitda": _money_round(base_ebitda),
+            "total_debt_service": _money_round(total_debt_service),
+            "base_dscr": _money_round(base_ebitda / total_debt_service) if total_debt_service > 0 else None,
             "stress_scenarios": scenarios,
         }
 

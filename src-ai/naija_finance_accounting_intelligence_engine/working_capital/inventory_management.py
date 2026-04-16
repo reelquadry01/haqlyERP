@@ -8,6 +8,14 @@ from typing import Any, Dict, List
 
 from ..core.exceptions import AccountingError
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -36,24 +44,24 @@ class InventoryManagementEngine:
 
     def compute_reorder_point(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Compute reorder point and safety stock for an item."""
-        daily_demand_avg = float(data.get("daily_demand_avg", 0))
+        daily_demand_avg = Decimal(str(data.get("daily_demand_avg", 0)))
         lead_time_days = int(data.get("lead_time_days", 14))
-        daily_demand_std = float(data.get("daily_demand_std", 0))
-        service_level = float(data.get("service_level", 0.95))
+        daily_demand_std = Decimal(str(data.get("daily_demand_std", 0)))
+        service_level = Decimal(str(data.get("service_level", 0.95)))
         item_name = data.get("item_name", "")
 
         from math import erf, sqrt
         z = sqrt(2) * erf(service_level - 0.5) if service_level > 0.5 else 0
         z_approx = {0.90: 1.28, 0.95: 1.65, 0.98: 2.05, 0.99: 2.33}.get(service_level, 1.65)
 
-        safety_stock = round(z_approx * daily_demand_std * (lead_time_days ** 0.5), 2)
-        reorder_point = round(daily_demand_avg * lead_time_days + safety_stock, 2)
+        safety_stock = _money_round(z_approx * daily_demand_std * (lead_time_days ** 0.5))
+        reorder_point = _money_round(daily_demand_avg * lead_time_days + safety_stock)
 
         return {
             "item_name": item_name,
-            "daily_demand_avg": round(daily_demand_avg, 2),
+            "daily_demand_avg": _money_round(daily_demand_avg),
             "lead_time_days": lead_time_days,
-            "daily_demand_std": round(daily_demand_std, 2),
+            "daily_demand_std": _money_round(daily_demand_std),
             "service_level": service_level,
             "z_score": z_approx,
             "safety_stock": safety_stock,
@@ -63,15 +71,15 @@ class InventoryManagementEngine:
 
     def compute_inventory_turnover(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Compute inventory turnover ratio and days inventory outstanding."""
-        cogs = float(data.get("cogs", 0))
-        avg_inventory = float(data.get("average_inventory", 0))
+        cogs = Decimal(str(data.get("cogs", 0)))
+        avg_inventory = Decimal(str(data.get("average_inventory", 0)))
         period_days = int(data.get("period_days", 365))
 
         if avg_inventory <= 0:
             return {"turnover": None, "message": "Average inventory must be positive"}
 
-        turnover = round(cogs / avg_inventory, 2)
-        dio = round(period_days / turnover, 2) if turnover > 0 else None
+        turnover = _money_round(cogs / avg_inventory)
+        dio = _money_round(period_days / turnover) if turnover > 0 else None
 
         if dio is not None:
             if dio <= 30:
@@ -86,8 +94,8 @@ class InventoryManagementEngine:
             health = "unknown"
 
         return {
-            "cogs": round(cogs, 2),
-            "average_inventory": round(avg_inventory, 2),
+            "cogs": _money_round(cogs),
+            "average_inventory": _money_round(avg_inventory),
             "turnover_ratio": turnover,
             "days_inventory_outstanding": dio,
             "health": health,
@@ -102,7 +110,7 @@ class InventoryManagementEngine:
             last_sold_days = int(item.get("days_since_last_sale", 0))
             quantity = float(item.get("quantity", 0))
             unit_cost = float(item.get("unit_cost", 0))
-            value = round(quantity * unit_cost, 2)
+            value = _money_round(quantity * unit_cost)
 
             if last_sold_days >= threshold_days:
                 provision_rate = 0.25 if last_sold_days < 180 else (0.50 if last_sold_days < 365 else 0.75)
@@ -113,15 +121,15 @@ class InventoryManagementEngine:
                     "total_value": value,
                     "days_since_last_sale": last_sold_days,
                     "recommended_provision_rate": provision_rate,
-                    "recommended_provision": round(value * provision_rate, 2),
+                    "recommended_provision": _money_round(value * provision_rate),
                 })
                 total_slow_value += value
 
         return {
             "slow_moving_items": slow_moving,
             "count": len(slow_moving),
-            "total_slow_moving_value": round(total_slow_value, 2),
-            "total_recommended_provision": round(sum(s["recommended_provision"] for s in slow_moving), 2),
+            "total_slow_moving_value": _money_round(total_slow_value),
+            "total_recommended_provision": _money_round(sum(s["recommended_provision"] for s in slow_moving)),
         }
 
     def _fifo_valuation(self, items: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -143,10 +151,10 @@ class InventoryManagementEngine:
                 if remaining_qty <= 0:
                     break
 
-            valued.append({"item": item.get("name", ""), "quantity": float(item.get("quantity", 0)), "value": round(value, 2)})
+            valued.append({"item": item.get("name", ""), "quantity": float(item.get("quantity", 0)), "value": _money_round(value)})
             total += value
 
-        return {"method": "FIFO", "items": valued, "total_inventory_value": round(total, 2)}
+        return {"method": "FIFO", "items": valued, "total_inventory_value": _money_round(total)}
 
     def _lifo_valuation(self, items: List[Dict[str, Any]]) -> Dict[str, Any]:
         """LIFO inventory valuation."""
@@ -167,10 +175,10 @@ class InventoryManagementEngine:
                 if remaining_qty <= 0:
                     break
 
-            valued.append({"item": item.get("name", ""), "quantity": float(item.get("quantity", 0)), "value": round(value, 2)})
+            valued.append({"item": item.get("name", ""), "quantity": float(item.get("quantity", 0)), "value": _money_round(value)})
             total += value
 
-        return {"method": "LIFO", "items": valued, "total_inventory_value": round(total, 2)}
+        return {"method": "LIFO", "items": valued, "total_inventory_value": _money_round(total)}
 
     def _weighted_average_valuation(self, items: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Weighted average inventory valuation."""
@@ -180,11 +188,11 @@ class InventoryManagementEngine:
         for item in items:
             qty = float(item.get("quantity", 0))
             unit_cost = float(item.get("unit_cost", 0))
-            value = round(qty * unit_cost, 2)
+            value = _money_round(qty * unit_cost)
             valued.append({"item": item.get("name", ""), "quantity": qty, "unit_cost": unit_cost, "value": value})
             total += value
 
-        return {"method": "weighted_average", "items": valued, "total_inventory_value": round(total, 2)}
+        return {"method": "weighted_average", "items": valued, "total_inventory_value": _money_round(total)}
 
     def _specific_identification_valuation(self, items: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Specific identification inventory valuation."""
@@ -194,10 +202,10 @@ class InventoryManagementEngine:
         for item in items:
             qty = float(item.get("quantity", 0))
             total_cost = float(item.get("total_cost", qty * float(item.get("unit_cost", 0))))
-            valued.append({"item": item.get("name", ""), "quantity": qty, "total_cost": round(total_cost, 2)})
+            valued.append({"item": item.get("name", ""), "quantity": qty, "total_cost": _money_round(total_cost)})
             total += total_cost
 
-        return {"method": "specific_identification", "items": valued, "total_inventory_value": round(total, 2)}
+        return {"method": "specific_identification", "items": valued, "total_inventory_value": _money_round(total)}
 
     def health_check(self) -> bool:
         return True

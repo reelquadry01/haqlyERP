@@ -13,6 +13,14 @@ from .cit import CitEngine
 from .education_tax import EducationTaxEngine
 from .capital_gains_tax import CapitalGainsTaxEngine
 from .stamp_duties import StampDutyEngine
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -90,7 +98,7 @@ class TaxScheduleGenerator:
             schedule["taxes"]["STAMP_DUTY"] = stamp_result
             total += stamp_result.get("total_stamp_duty", 0)
 
-        schedule["total_tax_liability"] = round(total, 2)
+        schedule["total_tax_liability"] = _money_round(total)
         schedule["tax_type_count"] = len(schedule["taxes"])
 
         logger.info("full_tax_schedule_generated", company_id=company_id, total=total, types=len(schedule["taxes"]))
@@ -124,8 +132,8 @@ class TaxScheduleGenerator:
             "period_end": period_end,
             "schedule_type": "vat_schedule",
             "line_items": line_items,
-            "output_vat_total": round(output_vat_total, 2),
-            "input_vat_total": round(input_vat_total, 2),
+            "output_vat_total": _money_round(output_vat_total),
+            "input_vat_total": _money_round(input_vat_total),
             "net_vat_result": net_result,
             "generated_at": datetime.now().isoformat(),
         }

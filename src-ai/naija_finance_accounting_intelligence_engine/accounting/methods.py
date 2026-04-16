@@ -9,6 +9,14 @@ from typing import Any, Dict, List
 from ..core.exceptions import AccountingError
 from ..core.logging import get_logger
 from ..schemas.journal import JournalLineCreate
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -38,12 +46,12 @@ class AccountingMethods:
         lines: List[Dict[str, Any]] = []
 
         if tax_inclusive and tax_amount > 0:
-            net_amount = round(amount - tax_amount, 2)
+            net_amount = _money_round(amount - tax_amount)
             lines.append({"account_code": debit_account, "description": description, "debit": net_amount, "credit": 0.0})
             lines.append({"account_code": "2310", "description": f"Output VAT - {description}", "debit": tax_amount, "credit": 0.0})
             lines.append({"account_code": credit_account, "description": description, "debit": 0.0, "credit": amount})
         else:
-            gross = round(amount + tax_amount, 2) if tax_amount > 0 else amount
+            gross = _money_round(amount + tax_amount) if tax_amount > 0 else amount
             lines.append({"account_code": debit_account, "description": description, "debit": gross, "credit": 0.0})
             if tax_amount > 0:
                 lines.append({"account_code": "2310", "description": f"Output VAT - {description}", "debit": 0.0, "credit": tax_amount})
@@ -121,12 +129,12 @@ class AccountingMethods:
         """Adjust journal lines for input VAT on purchases."""
         adjusted: List[Dict[str, Any]] = []
         if tax_inclusive and tax_amount > 0:
-            net_amount = round(amount - tax_amount, 2)
+            net_amount = _money_round(amount - tax_amount)
             adjusted.append({"account_code": debit_account, "description": description, "debit": net_amount, "credit": 0.0})
             adjusted.append({"account_code": "1400", "description": f"Input VAT - {description}", "debit": tax_amount, "credit": 0.0})
             adjusted.append({"account_code": credit_account, "description": description, "debit": 0.0, "credit": amount})
         else:
-            gross = round(amount + tax_amount, 2) if tax_amount > 0 else amount
+            gross = _money_round(amount + tax_amount) if tax_amount > 0 else amount
             adjusted.append({"account_code": debit_account, "description": description, "debit": amount, "credit": 0.0})
             if tax_amount > 0:
                 adjusted.append({"account_code": "1400", "description": f"Input VAT - {description}", "debit": tax_amount, "credit": 0.0})

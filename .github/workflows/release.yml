@@ -1,3 +1,4 @@
+# Author: Quadri Atharu
 name: Release
 
 on:
@@ -9,46 +10,20 @@ permissions:
   contents: write
 
 jobs:
-  build-tauri:
-    strategy:
-      fail-fast: false
-      matrix:
-        include:
-          - platform: windows-latest
-            target: x86_64-pc-windows-msvc
-          - platform: macos-latest
-            target: aarch64-apple-darwin
-          - platform: macos-13
-            target: x86_64-apple-darwin
-          - platform: ubuntu-22.04
-            target: x86_64-unknown-linux-gnu
-
-    name: Build Tauri (${{ matrix.target }})
-    runs-on: ${{ matrix.platform }}
+  build-windows:
+    name: Build Windows
+    runs-on: windows-latest
     steps:
       - uses: actions/checkout@v4
 
       - name: Install Rust toolchain
         uses: dtolnay/rust-toolchain@stable
         with:
-          targets: ${{ matrix.target }}
+          targets: x86_64-pc-windows-msvc
 
-      - name: Cache cargo
-        uses: actions/cache@v4
+      - uses: Swatinem/rust-cache@v2
         with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            src-tauri/target
-            src-server/target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
-      - name: Install Linux dependencies
-        if: matrix.platform == 'ubuntu-22.04'
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
+          workspaces: src-tauri -> target
 
       - name: Set up Node.js
         uses: actions/setup-node@v4
@@ -65,10 +40,82 @@ jobs:
         working-directory: src-web
         run: npm run build
 
+      - name: Download PostgreSQL binary (Windows)
+        run: |
+          curl -LO https://get.enterprisedb.com/postgresql/postgresql-16.4-1-windows-x64-binaries.zip
+          7z x postgresql-16.4-1-windows-x64-binaries.zip -osrc-tauri\pg-bin
+
+      - name: Code sign (Windows)
+        run: |
+          signtool sign /fd SHA256 /tr http://timestamp.digicert.com /td SHA256 /a src-tauri/target/release/bundle/msi/*.msi
+        env:
+          SIGNTOOL_PATH: ${{ secrets.WINDOWS_SIGNTOOL_PATH }}
+          CERTIFICATE_BASE64: ${{ secrets.WINDOWS_CERTIFICATE_BASE64 }}
+          CERTIFICATE_PASSWORD: ${{ secrets.WINDOWS_CERTIFICATE_PASSWORD }}
+        shell: pwsh
+
       - name: Build Tauri app
         uses: tauri-apps/tauri-action@v0
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.ED25519_PRIVATE_KEY }}
+        with:
+          tauriScript: cargo tauri
+          tagName: ${{ github.ref_name }}
+          releaseName: "HAQLY ERP ${{ github.ref_name }}"
+          releaseBody: "See the assets below to download and install HAQLY ERP."
+          releaseDraft: true
+          prerelease: false
+          args: --target x86_64-pc-windows-msvc
+
+  build-macos:
+    name: Build macOS
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - platform: macos-latest
+            target: aarch64-apple-darwin
+          - platform: macos-13
+            target: x86_64-apple-darwin
+    runs-on: ${{ matrix.platform }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: ${{ matrix.target }}
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: src-tauri -> target
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+          cache: npm
+          cache-dependency-path: src-web/package-lock.json
+
+      - name: Install frontend dependencies
+        working-directory: src-web
+        run: npm ci
+
+      - name: Build frontend
+        working-directory: src-web
+        run: npm run build
+
+      - name: Download PostgreSQL binary (macOS)
+        run: |
+          curl -LO https://get.enterprisedb.com/postgresql/postgresql-16.4-1-darwin-binaries.zip
+          unzip postgresql-16.4-1-darwin-binaries.zip -d src-tauri/pg-bin
+
+      - name: Build Tauri app
+        uses: tauri-apps/tauri-action@v0
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          TAURI_SIGNING_PRIVATE_KEY: ${{ secrets.ED25519_PRIVATE_KEY }}
         with:
           tauriScript: cargo tauri
           tagName: ${{ github.ref_name }}
@@ -104,7 +151,7 @@ jobs:
 
   create-release:
     name: Create GitHub Release
-    needs: [build-tauri, build-ai-wheel]
+    needs: [build-windows, build-macos, build-ai-wheel]
     runs-on: ubuntu-latest
     if: success()
     steps:

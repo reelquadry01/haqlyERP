@@ -9,6 +9,14 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from ..core.exceptions import AccountingError
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -64,8 +72,8 @@ class LedgerEngine:
                 "journal_entry_id": entry_id,
                 "entry_date": entry_date,
                 "description": line.get("description", description),
-                "debit": round(debit, 2),
-                "credit": round(credit, 2),
+                "debit": _money_round(debit),
+                "credit": _money_round(credit),
                 "cost_center": line.get("cost_center"),
                 "reference": line.get("reference"),
                 "company_id": company_id,
@@ -121,9 +129,9 @@ class LedgerEngine:
         account_type = self._infer_account_type(account_code)
 
         if account_type in DEBIT_NORMAL:
-            closing_balance = round(total_debit - total_credit, 2)
+            closing_balance = _money_round(total_debit - total_credit)
         else:
-            closing_balance = round(total_credit - total_debit, 2)
+            closing_balance = _money_round(total_credit - total_debit)
 
         opening_balance = 0.0
         if period_start:
@@ -131,9 +139,9 @@ class LedgerEngine:
             pre_debit = sum(e.get("debit", 0) for e in pre_entries)
             pre_credit = sum(e.get("credit", 0) for e in pre_entries)
             if account_type in DEBIT_NORMAL:
-                opening_balance = round(pre_debit - pre_credit, 2)
+                opening_balance = _money_round(pre_debit - pre_credit)
             else:
-                opening_balance = round(pre_credit - pre_debit, 2)
+                opening_balance = _money_round(pre_credit - pre_debit)
 
         return {
             "account_code": account_code,
@@ -187,9 +195,9 @@ class LedgerEngine:
         account_type = self._infer_account_type(control_account_code)
 
         if account_type in DEBIT_NORMAL:
-            balance = round(total_debit - total_credit, 2)
+            balance = _money_round(total_debit - total_credit)
         else:
-            balance = round(total_credit - total_debit, 2)
+            balance = _money_round(total_credit - total_debit)
 
         return {
             "control_account": control_account_code,
@@ -208,8 +216,8 @@ class LedgerEngine:
 
         gl_closing = gl_balance["closing_balance"]
         sub_closing = sub_ledger.get("total_balance", 0.0)
-        difference = round(gl_closing - sub_closing, 2)
-        reconciled = abs(difference) < 0.01
+        difference = _money_round(gl_closing - sub_closing)
+        reconciled = abs(difference) < Decimal('0.01')
 
         return {
             "control_account": control_account_code,
@@ -261,8 +269,8 @@ class LedgerEngine:
             "journal_entry_id": journal_entry_id,
             "entry_date": entry_date,
             "description": description,
-            "debit": round(debit, 2),
-            "credit": round(credit, 2),
+            "debit": _money_round(debit),
+            "credit": _money_round(credit),
             "counterparty": counterparty,
             "reference": reference,
             "due_date": due_date,

@@ -1,0 +1,13 @@
+{
+  "$schema": "https://raw.githubusercontent.com/nicegui/nicegui/refs/heads/main/tauri/tooling/cli/schema.json",
+  "identifier": "default",
+  "description": "Default capabilities for HAQLY ERP",
+  "windows": ["main"],
+  "permissions": [
+    "core:default",
+    "shell:allow-open",
+    "dialog:default",
+    "process:default",
+    "updater:default"
+  ]
+}

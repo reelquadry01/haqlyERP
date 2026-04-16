@@ -5,6 +5,10 @@ Author: Quadri Atharu
 Implements IAS 12 deferred tax liability and asset computation,
 current tax recognition, total tax expense calculation, and
 DTA recognition criteria based on probable future taxable profit.
+
+Note: Nigerian statutory CIT rate is 25% for large companies per
+Tax Reform Acts 2025 (effective 2026). Use 15% for medium companies
+(turnover NGN 50M-250M) and 0% for small companies (<= NGN 50M).
 """
 
 from __future__ import annotations

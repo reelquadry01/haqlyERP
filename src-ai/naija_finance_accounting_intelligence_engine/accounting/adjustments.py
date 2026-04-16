@@ -8,6 +8,14 @@ from typing import Any, Dict, List, Optional
 
 from ..core.exceptions import AccountingError
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -19,7 +27,7 @@ class AdjustmentEngine:
         """Create an accrual adjusting entry for expenses incurred but not yet recorded."""
         expense_account = data.get("expense_account", "5100")
         liability_account = data.get("liability_account", "2100")
-        amount = float(data.get("amount", 0))
+        amount = Decimal(str(data.get("amount", 0)))
         description = data.get("description", "Accrued expense adjustment")
         period_end = data.get("period_end", datetime.now().isoformat())
         company_id = data.get("company_id", "")
@@ -28,8 +36,8 @@ class AdjustmentEngine:
             raise AccountingError("Accrual amount must be positive")
 
         lines: List[Dict[str, Any]] = [
-            {"account_code": expense_account, "description": description, "debit": round(amount, 2), "credit": 0.0},
-            {"account_code": liability_account, "description": description, "debit": 0.0, "credit": round(amount, 2)},
+            {"account_code": expense_account, "description": description, "debit": _money_round(amount), "credit": 0.0},
+            {"account_code": liability_account, "description": description, "debit": 0.0, "credit": _money_round(amount)},
         ]
 
         entry = self._build_adjusting_entry(
@@ -47,7 +55,7 @@ class AdjustmentEngine:
         """Create a prepayment adjusting entry for expenses paid in advance."""
         prepayment_account = data.get("prepayment_account", "1300")
         expense_account = data.get("expense_account", "5100")
-        total_amount = float(data.get("total_amount", 0))
+        total_amount = Decimal(str(data.get("total_amount", 0)))
         periods_total = int(data.get("total_periods", 12))
         periods_elapsed = int(data.get("periods_elapsed", 1))
         description = data.get("description", "Prepayment adjustment")
@@ -59,14 +67,14 @@ class AdjustmentEngine:
         if periods_total <= 0:
             raise AccountingError("Total periods must be positive")
 
-        per_period = round(total_amount / periods_total, 2)
-        recognized_amount = round(per_period * periods_elapsed, 2)
-        deferred_amount = round(total_amount - recognized_amount, 2)
+        per_period = _money_round(total_amount / periods_total)
+        recognized_amount = _money_round(per_period * periods_elapsed)
+        deferred_amount = _money_round(total_amount - recognized_amount)
 
         lines: List[Dict[str, Any]] = [
-            {"account_code": prepayment_account, "description": f"Deferred: {description}", "debit": round(deferred_amount, 2), "credit": 0.0},
-            {"account_code": expense_account, "description": f"Recognized: {description}", "debit": round(recognized_amount, 2), "credit": 0.0},
-            {"account_code": expense_account, "description": f"Prepayment reversal: {description}", "debit": 0.0, "credit": round(total_amount, 2)},
+            {"account_code": prepayment_account, "description": f"Deferred: {description}", "debit": _money_round(deferred_amount), "credit": 0.0},
+            {"account_code": expense_account, "description": f"Recognized: {description}", "debit": _money_round(recognized_amount), "credit": 0.0},
+            {"account_code": expense_account, "description": f"Prepayment reversal: {description}", "debit": 0.0, "credit": _money_round(total_amount)},
         ]
 
         entry = self._build_adjusting_entry(
@@ -92,7 +100,7 @@ class AdjustmentEngine:
         """Create a provision adjusting entry (IAS 37)."""
         provision_account = data.get("provision_account", "2900")
         expense_account = data.get("expense_account", "5900")
-        amount = float(data.get("amount", 0))
+        amount = Decimal(str(data.get("amount", 0)))
         description = data.get("description", "Provision adjustment")
         period_end = data.get("period_end", datetime.now().isoformat())
         company_id = data.get("company_id", "")
@@ -102,8 +110,8 @@ class AdjustmentEngine:
             raise AccountingError("Provision amount must be positive")
 
         lines: List[Dict[str, Any]] = [
-            {"account_code": expense_account, "description": description, "debit": round(amount, 2), "credit": 0.0},
-            {"account_code": provision_account, "description": description, "debit": 0.0, "credit": round(amount, 2)},
+            {"account_code": expense_account, "description": description, "debit": _money_round(amount), "credit": 0.0},
+            {"account_code": provision_account, "description": description, "debit": 0.0, "credit": _money_round(amount)},
         ]
 
         entry = self._build_adjusting_entry(
@@ -124,10 +132,10 @@ class AdjustmentEngine:
         asset_account = data.get("asset_account", "1610")
         depreciation_account = data.get("depreciation_account", "5200")
         method = data.get("method", "straight_line").lower()
-        cost = float(data.get("cost", 0))
-        residual_value = float(data.get("residual_value", 0))
+        cost = Decimal(str(data.get("cost", 0)))
+        residual_value = Decimal(str(data.get("residual_value", 0)))
         useful_life = int(data.get("useful_life_years", 5))
-        accumulated_depreciation = float(data.get("accumulated_depreciation", 0))
+        accumulated_depreciation = Decimal(str(data.get("accumulated_depreciation", 0)))
         period_end = data.get("period_end", datetime.now().isoformat())
         company_id = data.get("company_id", "")
         description = data.get("description", "Depreciation adjustment")
@@ -144,22 +152,22 @@ class AdjustmentEngine:
             return {"message": "Asset fully depreciated", "depreciiation_amount": 0, "remaining_value": 0}
 
         if method == "straight_line":
-            dep_amount = round(depreciable_amount / useful_life, 2)
+            dep_amount = _money_round(depreciable_amount / useful_life)
         elif method == "reducing_balance":
             rate = 1 - (residual_value / cost) ** (1 / useful_life) if cost > 0 else 0
-            dep_amount = round(remaining_value * rate, 2)
+            dep_amount = _money_round(remaining_value * rate)
         elif method == "sum_of_years":
             sum_years = useful_life * (useful_life + 1) / 2
             remaining_life = max(useful_life - int(accumulated_depreciation / (depreciable_amount / useful_life)), 1) if depreciable_amount > 0 else 1
-            dep_amount = round(depreciable_amount * remaining_life / sum_years, 2)
+            dep_amount = _money_round(depreciable_amount * remaining_life / sum_years)
         else:
             raise AccountingError(f"Unsupported depreciation method: {method}")
 
         dep_amount = min(dep_amount, remaining_value)
 
         lines: List[Dict[str, Any]] = [
-            {"account_code": depreciation_account, "description": description, "debit": round(dep_amount, 2), "credit": 0.0},
-            {"account_code": asset_account, "description": description, "debit": 0.0, "credit": round(dep_amount, 2)},
+            {"account_code": depreciation_account, "description": description, "debit": _money_round(dep_amount), "credit": 0.0},
+            {"account_code": asset_account, "description": description, "debit": 0.0, "credit": _money_round(dep_amount)},
         ]
 
         entry = self._build_adjusting_entry(
@@ -177,8 +185,8 @@ class AdjustmentEngine:
             "useful_life_years": useful_life,
             "depreciable_amount": depreciable_amount,
             "depreciation_amount": dep_amount,
-            "accumulated_depreciation_after": round(accumulated_depreciation + dep_amount, 2),
-            "net_book_value_after": round(cost - accumulated_depreciation - dep_amount, 2),
+            "accumulated_depreciation_after": _money_round(accumulated_depreciation + dep_amount),
+            "net_book_value_after": _money_round(cost - accumulated_depreciation - dep_amount),
         }
         entry["standard"] = "IAS 16"
         logger.info("depreciation_created", method=method, amount=dep_amount)
@@ -188,7 +196,7 @@ class AdjustmentEngine:
         """Create a correction entry for prior period errors (IAS 8)."""
         correct_account = data.get("correct_account", "")
         wrong_account = data.get("wrong_account", "")
-        amount = float(data.get("amount", 0))
+        amount = Decimal(str(data.get("amount", 0)))
         description = data.get("description", "Error correction")
         period_end = data.get("period_end", datetime.now().isoformat())
         company_id = data.get("company_id", "")
@@ -206,8 +214,8 @@ class AdjustmentEngine:
             correction_credit = correct_account
 
         lines: List[Dict[str, Any]] = [
-            {"account_code": correction_debit, "description": f"Correction: {description}", "debit": round(amount, 2), "credit": 0.0},
-            {"account_code": correction_credit, "description": f"Correction: {description}", "debit": 0.0, "credit": round(amount, 2)},
+            {"account_code": correction_debit, "description": f"Correction: {description}", "debit": _money_round(amount), "credit": 0.0},
+            {"account_code": correction_credit, "description": f"Correction: {description}", "debit": 0.0, "credit": _money_round(amount)},
         ]
 
         entry = self._build_adjusting_entry(
@@ -228,7 +236,7 @@ class AdjustmentEngine:
         """Create an impairment adjusting entry (IAS 36)."""
         impairment_account = data.get("impairment_account", "5900")
         asset_account = data.get("asset_account", "1610")
-        impairment_loss = float(data.get("impairment_loss", 0))
+        impairment_loss = Decimal(str(data.get("impairment_loss", 0)))
         description = data.get("description", "Impairment loss")
         period_end = data.get("period_end", datetime.now().isoformat())
         company_id = data.get("company_id", "")
@@ -237,8 +245,8 @@ class AdjustmentEngine:
             raise AccountingError("Impairment loss must be positive")
 
         lines: List[Dict[str, Any]] = [
-            {"account_code": impairment_account, "description": description, "debit": round(impairment_loss, 2), "credit": 0.0},
-            {"account_code": asset_account, "description": description, "debit": 0.0, "credit": round(impairment_loss, 2)},
+            {"account_code": impairment_account, "description": description, "debit": _money_round(impairment_loss), "credit": 0.0},
+            {"account_code": asset_account, "description": description, "debit": 0.0, "credit": _money_round(impairment_loss)},
         ]
 
         entry = self._build_adjusting_entry(

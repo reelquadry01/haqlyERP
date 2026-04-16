@@ -21,6 +21,10 @@ const NHF_PERCENT: f64 = 0.025;
 const NSITF_PERCENT: f64 = 0.01;
 const ITF_PERCENT: f64 = 0.01;
 
+// PAYE brackets — Nigeria Tax Reform Acts 2025 (effective 2026)
+// First ₦800,000: 0%, Next ₦2.4M: 15%, Next ₦4M: 20%,
+// Next ₦6.8M: 25%, Next ₦11M: 30%, Above ₦25M: 35%
+
 #[derive(Clone)]
 pub struct PayrollService {
     pub pool: PgPool,
@@ -187,12 +191,12 @@ impl PayrollService {
 
     pub fn compute_paye(&self, annual_taxable_income: &BigDecimal) -> BigDecimal {
         let brackets: [(f64, f64); 6] = [
-            (300_000.0, 0.07),
-            (300_000.0, 0.11),
-            (500_000.0, 0.15),
-            (500_000.0, 0.19),
-            (1_600_000.0, 0.21),
-            (f64::MAX, 0.24),
+            (800_000.0, 0.00),
+            (2_400_000.0, 0.15),
+            (4_000_000.0, 0.20),
+            (6_800_000.0, 0.25),
+            (11_000_000.0, 0.30),
+            (f64::MAX, 0.35),
         ];
 
         let mut remaining = annual_taxable_income.to_string().parse::<f64>().unwrap_or(0.0);
@@ -245,7 +249,7 @@ impl PayrollService {
             let meal = monthly_basic * safe_bd(MEAL_ALLOWANCE_PERCENT);
             let utility = monthly_basic * safe_bd(UTILITY_ALLOWANCE_PERCENT);
 
-            let monthly_gross = &monthly_basic + &housing + &transport + &meal + &utility;
+            let monthly_gross = monthly_basic + &housing + &transport + &meal + &utility;
 
             let annual_taxable = self.compute_annual_taxable_income(&annual_salary);
             let annual_paye = self.compute_paye(&annual_taxable);
@@ -558,10 +562,10 @@ mod tests {
     #[test]
     fn test_paye_first_band() {
         let svc = PayrollService::new(mock_pool());
-        let taxable = BigDecimal::from(300_000);
+        let taxable = BigDecimal::from(800_000);
         let paye = svc.compute_paye(&taxable);
 
-        let expected = BigDecimal::from_f64(300_000.0_f64.min(300_000.0) * 0.07).unwrap();
+        let expected = BigDecimal::from_f64(800_000.0_f64.min(800_000.0) * 0.00).unwrap();
         let diff = (paye.clone() - expected).to_string().parse::<f64>().unwrap().abs();
         assert!(diff < 1.0);
     }
@@ -569,16 +573,31 @@ mod tests {
     #[test]
     fn test_paye_full_brackets() {
         let svc = PayrollService::new(mock_pool());
-        let taxable = BigDecimal::from(5_000_000);
+        let taxable = BigDecimal::from(25_000_000);
         let paye = svc.compute_paye(&taxable);
 
         let paye_f64 = paye.to_string().parse::<f64>().unwrap();
-        let expected = 300_000.0 * 0.07
-            + 300_000.0 * 0.11
-            + 500_000.0 * 0.15
-            + 500_000.0 * 0.19
-            + 1_600_000.0 * 0.21
-            + 1_800_000.0 * 0.24;
+        let expected = 800_000.0 * 0.00
+            + 2_400_000.0 * 0.15
+            + 4_000_000.0 * 0.20
+            + 6_800_000.0 * 0.25
+            + 11_000_000.0 * 0.30;
+        assert!((paye_f64 - expected).abs() < 1.0);
+    }
+
+    #[test]
+    fn test_paye_top_band_35_percent() {
+        let svc = PayrollService::new(mock_pool());
+        let taxable = BigDecimal::from(30_000_000);
+        let paye = svc.compute_paye(&taxable);
+
+        let paye_f64 = paye.to_string().parse::<f64>().unwrap();
+        let expected = 800_000.0 * 0.00
+            + 2_400_000.0 * 0.15
+            + 4_000_000.0 * 0.20
+            + 6_800_000.0 * 0.25
+            + 11_000_000.0 * 0.30
+            + 5_000_000.0 * 0.35;
         assert!((paye_f64 - expected).abs() < 1.0);
     }
 

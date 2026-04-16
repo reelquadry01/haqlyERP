@@ -2,10 +2,11 @@
 // Crate: haqly-erp-server
 
 use axum::{
-    Json, State,
+    Json,
     routing::get,
     Router,
 };
+use axum::extract::State;
 use sqlx::PgPool;
 use serde_json::{json, Value};
 
@@ -16,7 +17,7 @@ use crate::handlers::{
     inventory_routes, tax_routes, fixed_assets_routes, depreciation_routes,
     loans_routes, reports_routes, imports_routes, admin_routes,
     einvoicing_routes, ocr_routes, ai_routes, payroll_routes,
-    crm_routes, bi_routes, notification_routes,
+    crm_routes, bi_routes, notification_routes, document_routes,
 };
 
 pub fn app_routes(pool: PgPool, _settings: Settings) -> Router {
@@ -45,6 +46,7 @@ pub fn app_routes(pool: PgPool, _settings: Settings) -> Router {
         .nest("/crm", crm_routes())
         .nest("/bi", bi_routes())
         .nest("/notifications", notification_routes())
+        .nest("/file-storage", document_routes())
         .with_state(pool);
 
     Router::new().nest_service("/api/v1", api_v1)

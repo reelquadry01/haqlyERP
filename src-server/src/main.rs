@@ -1,7 +1,7 @@
 use axum::Router;
 use haqly_erp_server::{
     config::settings::Settings,
-    db::pool::{create_pool_with_fallback, DbPool},
+    db::pool::{create_pool_with_fallback, DbPool, PoolConfig},
     middleware::{auth::AuthLayer, audit::AuditLayer, error::ErrorLayer, rbac::RbacLayer, rate_limit::RateLimitLayer},
     routes::app_routes,
 };
@@ -32,7 +32,14 @@ async fn main() -> anyhow::Result<()> {
     let app_data_dir = std::env::var("APP_DATA_DIR")
         .unwrap_or_else(|_| ".".to_string());
 
-    let db_pool = create_pool_with_fallback(&settings.database_url, &app_data_dir).await?;
+    let pool_config = PoolConfig::from_settings(
+        settings.db_max_connections,
+        settings.db_min_connections,
+        settings.db_acquire_timeout_secs,
+        settings.db_idle_timeout_secs,
+        settings.db_max_lifetime_secs,
+    );
+    let db_pool = create_pool_with_fallback(&settings.database_url, &app_data_dir, &pool_config).await?;
 
     match &db_pool {
         DbPool::Postgres(pool) => {

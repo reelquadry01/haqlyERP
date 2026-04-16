@@ -170,9 +170,9 @@ impl EInvoicingPayloadBuilder {
                 trade_name: profile.trade_name,
                 business_email: profile.business_email,
                 business_phone: profile.business_phone,
-                country_code: profile.country_code,
-                state: profile.state,
-                city: profile.city,
+                country_code: profile.country_code.clone(),
+                state: profile.state.clone(),
+                city: profile.city.clone(),
                 address: Self::build_address(
                     Some(&profile.address_line1),
                     profile.address_line2.as_deref(),

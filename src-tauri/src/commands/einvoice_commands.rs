@@ -62,8 +62,9 @@ pub async fn validate_invoice_nrs(invoice_id: String) -> Result<ValidationResult
         .await
         .map_err(|e| format!("Backend unreachable: {e}"))?;
     if !resp.status().is_success() {
+        let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
-        return Err(format!("Validation request failed ({}): {body}", resp.status()));
+        return Err(format!("Validation request failed ({status}): {body}"));
     }
     resp.json()
         .await
@@ -79,8 +80,9 @@ pub async fn sign_invoice_nrs(invoice_id: String) -> Result<SigningResult, Strin
         .await
         .map_err(|e| format!("Backend unreachable: {e}"))?;
     if !resp.status().is_success() {
+        let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
-        return Err(format!("Signing request failed ({}): {body}", resp.status()));
+        return Err(format!("Signing request failed ({status}): {body}"));
     }
     resp.json()
         .await
@@ -96,10 +98,10 @@ pub async fn confirm_invoice_nrs(irn: String) -> Result<ConfirmationResult, Stri
         .await
         .map_err(|e| format!("Backend unreachable: {e}"))?;
     if !resp.status().is_success() {
+        let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
         return Err(format!(
-            "Confirmation request failed ({}): {body}",
-            resp.status()
+            "Confirmation request failed ({status}): {body}"
         ));
     }
     resp.json()
@@ -116,10 +118,10 @@ pub async fn download_invoice_nrs(irn: String) -> Result<DownloadResult, String>
         .await
         .map_err(|e| format!("Backend unreachable: {e}"))?;
     if !resp.status().is_success() {
+        let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
         return Err(format!(
-            "Download request failed ({}): {body}",
-            resp.status()
+            "Download request failed ({status}): {body}"
         ));
     }
     resp.json()
@@ -136,8 +138,9 @@ pub async fn get_einvoice_status(company_id: String) -> Result<EInvoiceStatus, S
         .await
         .map_err(|e| format!("Backend unreachable: {e}"))?;
     if !resp.status().is_success() {
+        let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
-        return Err(format!("Status request failed ({}): {body}", resp.status()));
+        return Err(format!("Status request failed ({status}): {body}"));
     }
     resp.json()
         .await

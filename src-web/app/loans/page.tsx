@@ -121,7 +121,7 @@ const btnGhost: React.CSSProperties = {
   background: T.surface, color: T.text, fontFamily: "Inter, sans-serif",
 };
 
-const emptyLoanForm = {
+const emptyLoanForm: { lender_name: string; principal_amount: string; interest_rate: string; tenure_months: string; start_date: string; loan_type: string; payment_frequency: string } = {
   lender_name: "", principal_amount: "", interest_rate: "", tenure_months: "",
   start_date: "", loan_type: LOAN_TYPES[0], payment_frequency: PAYMENT_FREQUENCIES[0],
 };

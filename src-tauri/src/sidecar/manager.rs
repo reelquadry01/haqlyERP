@@ -25,13 +25,18 @@ impl SidecarManager {
     }
 
     pub async fn start_all(&self) -> Result<()> {
-        tracing::info!("Starting all sidecar services");
+        tracing::info!("Starting all sidecar services in parallel");
 
-        if let Err(e) = self.start_backend().await {
+        let (backend_result, ai_result) = tokio::join!(
+            self.start_backend(),
+            self.start_ai_engine(),
+        );
+
+        if let Err(e) = backend_result {
             tracing::error!("Failed to start backend: {e}");
         }
 
-        if let Err(e) = self.start_ai_engine().await {
+        if let Err(e) = ai_result {
             tracing::error!("Failed to start AI engine: {e}");
         }
 

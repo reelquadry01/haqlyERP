@@ -7,6 +7,14 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -32,23 +40,23 @@ class BudgetVsActualEngine:
         for code in all_codes:
             budgeted = budget_map.get(code, 0)
             actual = actual_map.get(code, 0)
-            variance = round(actual - budgeted, 2)
+            variance = _money_round(actual - budgeted)
             variance_pct = round(variance / budgeted, 4) if budgeted != 0 else None
             attainment_pct = round(actual / budgeted, 4) if budgeted != 0 else None
 
             report_lines.append({
                 "account_code": code,
                 "account_name": f"Account {code}",
-                "budgeted": round(budgeted, 2),
-                "actual": round(actual, 2),
+                "budgeted": _money_round(budgeted),
+                "actual": _money_round(actual),
                 "variance": variance,
                 "variance_pct": variance_pct,
                 "attainment_pct": attainment_pct,
             })
 
-        total_budgeted = round(sum(budget_map.values()), 2)
-        total_actual = round(sum(actual_map.values()), 2)
-        total_variance = round(total_actual - total_budgeted, 2)
+        total_budgeted = _money_round(sum(budget_map.values()))
+        total_actual = _money_round(sum(actual_map.values()))
+        total_variance = _money_round(total_actual - total_budgeted)
         overall_attainment = round(total_actual / total_budgeted, 4) if total_budgeted > 0 else None
 
         return {
@@ -94,9 +102,9 @@ class BudgetVsActualEngine:
             act = cum_actual.get(code, 0)
             lines.append({
                 "account_code": code,
-                "cumulative_budgeted": round(bud, 2),
-                "cumulative_actual": round(act, 2),
-                "cumulative_variance": round(act - bud, 2),
+                "cumulative_budgeted": _money_round(bud),
+                "cumulative_actual": _money_round(act),
+                "cumulative_variance": _money_round(act - bud),
                 "attainment_pct": round(act / bud, 4) if bud > 0 else None,
             })
 
@@ -109,8 +117,8 @@ class BudgetVsActualEngine:
 
     def forecast_year_end(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Forecast year-end position based on current BvA trends."""
-        annual_budget = float(data.get("annual_budget", 0))
-        ytd_actual = float(data.get("ytd_actual", 0))
+        annual_budget = Decimal(str(data.get("annual_budget", 0)))
+        ytd_actual = Decimal(str(data.get("ytd_actual", 0)))
         periods_elapsed = int(data.get("periods_elapsed", 0))
         total_periods = int(data.get("total_periods", 12))
 
@@ -118,13 +126,13 @@ class BudgetVsActualEngine:
             return {"message": "Invalid period data"}
 
         periods_remaining = total_periods - periods_elapsed
-        run_rate = round(ytd_actual / periods_elapsed, 2)
-        projected_year_end = round(ytd_actual + run_rate * periods_remaining, 2)
-        projected_variance = round(projected_year_end - annual_budget, 2)
+        run_rate = _money_round(ytd_actual / periods_elapsed)
+        projected_year_end = _money_round(ytd_actual + run_rate * periods_remaining)
+        projected_variance = _money_round(projected_year_end - annual_budget)
 
         return {
-            "annual_budget": round(annual_budget, 2),
-            "ytd_actual": round(ytd_actual, 2),
+            "annual_budget": _money_round(annual_budget),
+            "ytd_actual": _money_round(ytd_actual),
             "periods_elapsed": periods_elapsed,
             "periods_remaining": periods_remaining,
             "monthly_run_rate": run_rate,

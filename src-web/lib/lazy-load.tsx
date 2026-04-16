@@ -229,6 +229,26 @@ export const LazyAdminPanel = dynamic(
   }
 );
 
+export const LazyReports = dynamic(() => import("@/app/reports/page"), {
+  ssr: false,
+  loading: () => <HaqlyLoadingSkeleton />,
+});
+
+export const LazyBI = dynamic(() => import("@/app/business-intelligence/page"), {
+  ssr: false,
+  loading: () => <HaqlyWideSkeleton />,
+});
+
+export const LazyAdmin = dynamic(() => import("@/app/administration/page"), {
+  ssr: false,
+  loading: () => <HaqlyWideSkeleton />,
+});
+
+export const LazyEInvoicing = dynamic(() => import("@/app/einvoicing/page"), {
+  ssr: false,
+  loading: () => <HaqlyFormSkeleton />,
+});
+
 interface UseLazyImportState<T> {
   module: T | null;
   loading: boolean;
@@ -361,9 +381,9 @@ export function createLazyComponent<P = object>(
     ? () => <>{loading()}</>
     : () => <HaqlyLoadingSkeleton />;
 
-  return dynamic(importFn, {
+  return dynamic(importFn as any, {
     ssr,
     loading: loadingComponent,
     ...rest,
-  });
+  } as any) as ComponentType<P>;
 }

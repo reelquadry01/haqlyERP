@@ -234,6 +234,11 @@ textarea:focus {
   border-radius: 3px;
 }
 
+@keyframes pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 @media (max-width: 768px) {
   :root {
     --sidebar-width: 0px;

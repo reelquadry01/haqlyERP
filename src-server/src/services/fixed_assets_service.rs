@@ -1,6 +1,7 @@
 // Author: Quadri Atharu
 use anyhow::{anyhow, Result};
 use bigdecimal::BigDecimal;
+use chrono::Datelike;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -242,7 +243,7 @@ impl FixedAssetsService {
             let closing_nbv = if new_nbv < asset.residual_value {
                 asset.residual_value.clone()
             } else {
-                new_nbv
+                new_nbv.clone()
             };
 
             let actual_dep = if closing_nbv != new_nbv {

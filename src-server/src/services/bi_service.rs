@@ -4,7 +4,7 @@ use bigdecimal::BigDecimal;
 use sqlx::PgPool;
 use uuid::Uuid;
 
-use crate::models::bi::{BiDashboard, BiDataset, BiDatasetSourceType, BiQuery, BiWidget, WidgetType};
+use crate::models::bi::{BiDashboard, BiDataset, DatasetSourceType as BiDatasetSourceType, BiWidget, WidgetType};
 use crate::dtos::bi_dto::{FinancialSummary, KpiData};
 
 #[derive(Clone)]

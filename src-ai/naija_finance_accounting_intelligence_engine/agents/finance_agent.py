@@ -113,7 +113,7 @@ class FinanceAgent(BaseAgent):
                 debt_value=float(data.get("debt_value", 0)),
                 cost_of_equity=float(data.get("cost_of_equity", 0.15)),
                 cost_of_debt=float(data.get("cost_of_debt", 0.10)),
-                tax_rate=float(data.get("tax_rate", 0.30)),
+                tax_rate=float(data.get("tax_rate", 0.25)),
             )
         elif valuation_method == "feasibility":
             result = self._feasibility.assess(data)

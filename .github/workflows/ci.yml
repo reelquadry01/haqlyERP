@@ -1,5 +1,5 @@
+# Author: Quadri Atharu
 name: CI
-
 on:
   push:
     branches: [main]
@@ -7,113 +7,65 @@ on:
     branches: [main]
 
 jobs:
-  rust-check:
-    name: Rust Check
+  rust-backend:
     runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Install Rust toolchain
-        uses: dtolnay/rust-toolchain@stable
-        with:
-          components: clippy, rustfmt
-
-      - name: Cache cargo
-        uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cargo/registry
-            ~/.cargo/git
-            target
-          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
-          restore-keys: ${{ runner.os }}-cargo-
-
-      - name: Install system dependencies
-        run: |
-          sudo apt-get update
-          sudo apt-get install -y libwebkit2gtk-4.1-dev build-essential curl wget file libxdo-dev libssl-dev libayatana-appindicator3-dev librsvg2-dev
-
-      - name: Check src-server
-        working-directory: src-server
-        run: cargo check --locked
-
-      - name: Check src-tauri
-        working-directory: src-tauri
-        run: cargo check --locked
-
-      - name: Clippy src-server
-        working-directory: src-server
-        run: cargo clippy -- -D warnings
-
-      - name: Clippy src-tauri
-        working-directory: src-tauri
-        run: cargo clippy -- -D warnings
-
-      - name: Rustfmt check src-server
-        working-directory: src-server
-        run: cargo fmt -- --check
-
-      - name: Rustfmt check src-tauri
-        working-directory: src-tauri
-        run: cargo fmt -- --check
-
-      - name: Run src-server tests
-        working-directory: src-server
-        run: cargo test --locked
+    services:
+      postgres:
+        image: postgres:16
         env:
-          DATABASE_URL: postgresql://test:test@localhost:5432/haqly_test
+          POSTGRES_USER: haqly
+          POSTGRES_PASSWORD: haqly
+          POSTGRES_DB: haqly_test
+        ports: ['5432:5432']
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dtolnay/rust-toolchain@stable
+        with: { components: clippy, rustfmt }
+      - uses: Swatinem/rust-cache@v2
+        with: { workspaces: src-server -> target }
+      - name: Install sqlx-cli
+        run: cargo install sqlx-cli --no-default-features --features postgres
+      - name: Run migrations
+        env: { DATABASE_URL: postgresql://haqly:haqly@localhost:5432/haqly_test }
+        run: cd src-server && sqlx migrate run
+      - name: cargo fmt
+        run: cargo fmt --all -- --check
+      - name: cargo clippy
+        run: cargo clippy --all-targets -- -D warnings
+      - name: cargo test
+        env: { DATABASE_URL: postgresql://haqly:haqly@localhost:5432/haqly_test, TEST_DATABASE_URL: postgresql://haqly:haqly@localhost:5432/haqly_test, HAQLY_ENV: development, NAIJA_ENGINE_ENV: development }
+        run: cd src-server && cargo test
+      - name: cargo test integration
+        env: { DATABASE_URL: postgresql://haqly:haqly@localhost:5432/haqly_test, TEST_DATABASE_URL: postgresql://haqly:haqly@localhost:5432/haqly_test, HAQLY_ENV: development }
+        run: cd src-server && cargo test --ignored
 
-  python-lint:
-    name: Python Lint
+  python-ai:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
-        with:
-          python-version: "3.12"
-
+      - uses: actions/setup-python@v5
+        with: { python-version: '3.12' }
       - name: Install dependencies
-        working-directory: src-ai
-        run: |
-          python -m pip install --upgrade pip
-          pip install ruff mypy
-          pip install -r requirements.txt
+        run: cd src-ai && pip install -e ".[dev]"
+      - name: ruff check
+        run: cd src-ai && ruff check .
+      - name: pytest
+        run: cd src-ai && pytest -v
 
-      - name: Ruff check
-        working-directory: src-ai
-        run: ruff check .
-
-      - name: Ruff format check
-        working-directory: src-ai
-        run: ruff format --check .
-
-      - name: MyPy
-        working-directory: src-ai
-        run: mypy . --ignore-missing-imports
-
-  frontend-build:
-    name: Frontend Build
+  frontend:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: npm
-          cache-dependency-path: src-web/package-lock.json
-
+      - uses: actions/setup-node@v4
+        with: { node-version: '20' }
       - name: Install dependencies
-        working-directory: src-web
-        run: npm ci
-
-      - name: TypeScript check
-        working-directory: src-web
-        run: npx tsc --noEmit
-
-      - name: Build Next.js
-        working-directory: src-web
-        run: npm run build
+        run: cd src-web && npm ci
+      - name: Build
+        run: cd src-web && npm run build
+      - name: Type check
+        run: cd src-web && npx tsc --noEmit

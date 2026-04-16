@@ -2,10 +2,17 @@
 // Author: Quadri Atharu
 
 use lru::LruCache;
+use std::num::NonZeroUsize;
 use std::sync::Arc;
 use std::time::{Duration, Instant};
 use tokio::sync::RwLock;
 use uuid::Uuid;
+
+fn non_zero_cap(capacity: usize, fallback: usize) -> NonZeroUsize {
+    NonZeroUsize::new(capacity)
+        .or_else(|| NonZeroUsize::new(fallback))
+        .unwrap_or(NonZeroUsize::MIN)
+}
 
 #[derive(Clone)]
 struct CachedEntry<T: Clone> {
@@ -28,14 +35,14 @@ pub struct AccountCache {
 impl AccountCache {
     pub fn new(capacity: usize, ttl_seconds: u64) -> Self {
         Self {
-            cache: Arc::new(RwLock::new(LruCache::new(std::num::NonZeroUsize::new(capacity).unwrap_or(std::num::NonZeroUsize::new(1000).unwrap())))),
+            cache: Arc::new(RwLock::new(LruCache::new(non_zero_cap(capacity, 1000)))),
             ttl: Duration::from_secs(ttl_seconds),
         }
     }
 
     pub async fn get(&self, key: Uuid) -> Option<serde_json::Value> {
         let cache = self.cache.read().await;
-        if let Some(entry) = cache.get(&key) {
+        if let Some(entry) = cache.peek(&key) {
             if !entry.is_expired() {
                 return Some(entry.data.clone());
             }
@@ -71,14 +78,14 @@ pub struct PostingRuleCache {
 impl PostingRuleCache {
     pub fn new(capacity: usize, ttl_seconds: u64) -> Self {
         Self {
-            cache: Arc::new(RwLock::new(LruCache::new(std::num::NonZeroUsize::new(capacity).unwrap_or(std::num::NonZeroUsize::new(500).unwrap())))),
+            cache: Arc::new(RwLock::new(LruCache::new(non_zero_cap(capacity, 500)))),
             ttl: Duration::from_secs(ttl_seconds),
         }
     }
 
     pub async fn get(&self, key: &str) -> Option<serde_json::Value> {
         let cache = self.cache.read().await;
-        if let Some(entry) = cache.get(&key.to_string()) {
+        if let Some(entry) = cache.peek(&key.to_string()) {
             if !entry.is_expired() {
                 return Some(entry.data.clone());
             }
@@ -109,7 +116,7 @@ pub struct TaxConfigCache {
 impl TaxConfigCache {
     pub fn new(capacity: usize, ttl_seconds: u64) -> Self {
         Self {
-            cache: Arc::new(RwLock::new(LruCache::new(std::num::NonZeroUsize::new(capacity).unwrap_or(std::num::NonZeroUsize::new(200).unwrap())))),
+            cache: Arc::new(RwLock::new(LruCache::new(non_zero_cap(capacity, 200)))),
             ttl: Duration::from_secs(ttl_seconds),
         }
     }
@@ -117,7 +124,7 @@ impl TaxConfigCache {
     pub async fn get(&self, company_id: &str, tax_type: &str) -> Option<serde_json::Value> {
         let key = format!("{}:{}", company_id, tax_type);
         let cache = self.cache.read().await;
-        if let Some(entry) = cache.get(&key) {
+        if let Some(entry) = cache.peek(&key) {
             if !entry.is_expired() {
                 return Some(entry.data.clone());
             }

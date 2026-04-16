@@ -10,6 +10,14 @@ from typing import Any, Dict, List, Optional
 from ..core.exceptions import AccountingError
 from ..core.logging import get_logger
 from ..schemas.journal import JournalEntryCreate, JournalLineCreate, JournalStatus
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -53,7 +61,7 @@ class JournalEngine:
         entry_id = str(uuid.uuid4())
 
         transaction_type = data.get("transaction_type", "JOURNAL").upper()
-        amount = float(data.get("amount", 0))
+        amount = Decimal(str(data.get("amount", 0)))
         description = data.get("description", "")
         entry_date = data.get("entry_date", datetime.now().isoformat())
         company_id = data.get("company_id", "")
@@ -213,17 +221,17 @@ class JournalEngine:
 
         if tax_type.lower() == "vat":
             if tax_inclusive:
-                taxable = round(amount / (1 + tax_rate), 2)
-                vat_amount = round(amount - taxable, 2)
+                taxable = _money_round(amount / (1 + tax_rate))
+                vat_amount = _money_round(amount - taxable)
             else:
                 taxable = amount
-                vat_amount = round(amount * tax_rate, 2)
+                vat_amount = _money_round(amount * tax_rate)
             lines.append({"account_code": TAX_ACCOUNTS["vat_output"]["code"], "description": f"Output VAT @ {tax_rate * 100}%", "debit": 0.0, "credit": vat_amount, "tax_code": "VAT_OUT"})
             lines.append({"account_code": TAX_ACCOUNTS["vat_input"]["code"], "description": f"Input VAT @ {tax_rate * 100}%", "debit": vat_amount, "credit": 0.0, "tax_code": "VAT_IN"})
 
         elif tax_type.lower() == "wht":
             wht_rate = float(self._get_wht_rate(amount))
-            wht_amount = round(amount * wht_rate, 2)
+            wht_amount = _money_round(amount * wht_rate)
             lines.append({"account_code": TAX_ACCOUNTS["wht"]["code"], "description": f"WHT @ {wht_rate * 100}%", "debit": 0.0, "credit": wht_amount, "tax_code": "WHT"})
 
         return lines
@@ -233,13 +241,13 @@ class JournalEngine:
         suggestion = ACCOUNT_SUGGESTIONS.get(transaction_type, {})
         debit_account = data.get("debit_account_code") or suggestion.get("debit", "9999")
         credit_account = data.get("credit_account_code") or suggestion.get("credit", "9999")
-        tax_amount = float(data.get("tax_amount", 0))
+        tax_amount = Decimal(str(data.get("tax_amount", 0)))
         tax_inclusive = data.get("tax_inclusive", False)
 
         lines: List[Dict[str, Any]] = []
 
         if tax_inclusive and tax_amount > 0:
-            net_amount = round(amount - tax_amount, 2)
+            net_amount = _money_round(amount - tax_amount)
             lines.append({"account_code": debit_account, "description": description, "debit": net_amount, "credit": 0.0})
             lines.append({"account_code": TAX_ACCOUNTS["vat_output"]["code"], "description": f"Output VAT — {description}", "debit": tax_amount, "credit": 0.0})
             lines.append({"account_code": credit_account, "description": description, "debit": 0.0, "credit": amount})
@@ -269,8 +277,8 @@ class JournalEngine:
             validated.append({
                 "account_code": line["account_code"],
                 "description": line.get("description", ""),
-                "debit": round(debit, 2),
-                "credit": round(credit, 2),
+                "debit": _money_round(debit),
+                "credit": _money_round(credit),
                 "reference": line.get("reference"),
                 "cost_center": line.get("cost_center"),
                 "tax_code": line.get("tax_code"),

@@ -65,19 +65,47 @@ class Settings(BaseSettings):
             "rent": 0.10,
             "royalties": 0.05,
         },
-        description="Nigerian WHT rates by payment category",
+        description="Nigerian WHT rates by payment category (company recipients)",
+    )
+    wht_rates_individual: Dict[str, float] = Field(
+        default={
+            "interest": 0.05,
+            "dividends": 0.05,
+            "rent": 0.05,
+        },
+        description="Nigerian WHT rates for individual recipients (Tax Reform 2025)",
     )
     cit_thresholds: Dict[str, object] = Field(
         default={
-            "small_company": {"max_turnover": 500_000_000, "rate": 0.15},
-            "medium_manufacturing": {"min_turnover": 500_000_001, "max_turnover": 1_000_000_000, "rate": 0.15},
-            "large_company": {"min_turnover": 1_000_000_001, "rate": 0.30},
+            "small_company": {"max_turnover": 50_000_000, "rate": 0.00},
+            "medium_company": {"min_turnover": 50_000_001, "max_turnover": 250_000_000, "rate": 0.15},
+            "large_company": {"min_turnover": 250_000_001, "rate": 0.25},
             "minimum_tax_rate": 0.005,
+            "minimum_tax_threshold": 50_000_000,
         },
-        description="CIT thresholds and rates",
+        description="CIT thresholds and rates (Tax Reform 2025)",
     )
-    edu_tax_rate: float = Field(default=0.02, description="Education tax rate (2%)")
-    cgt_rate: float = Field(default=0.10, description="Capital Gains Tax rate (10%)")
+    edu_tax_rate: float = Field(default=0.01, description="Education tax rate (1% - Tax Reform 2025)")
+    cgt_rates: Dict[str, float] = Field(
+        default={
+            "up_to_50m": 0.10,
+            "50m_to_250m": 0.15,
+            "above_250m": 0.20,
+        },
+        description="Progressive CGT rates (Tax Reform 2025)",
+    )
+    paye_brackets: Dict[str, object] = Field(
+        default={
+            "band_1": {"max": 800_000, "rate": 0.00},
+            "band_2": {"max": 3_200_000, "rate": 0.15},
+            "band_3": {"max": 7_200_000, "rate": 0.20},
+            "band_4": {"max": 14_000_000, "rate": 0.25},
+            "band_5": {"max": 25_000_000, "rate": 0.30},
+            "band_6": {"max": None, "rate": 0.35},
+        },
+        description="PAYE progressive brackets (Tax Reform 2025)",
+    )
+    vat_registration_threshold: int = Field(default=50_000_000, description="VAT registration threshold NGN 50M (Tax Reform 2025)")
     default_currency: str = Field(default="NGN", description="Default currency code")
 
     log_level: str = Field(default="INFO", description="Logging level")

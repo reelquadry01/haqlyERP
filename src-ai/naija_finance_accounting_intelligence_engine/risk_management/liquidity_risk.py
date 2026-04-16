@@ -7,6 +7,14 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -16,14 +24,14 @@ class LiquidityRiskEngine:
 
     def stress_test_liquidity(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Stress test liquidity position under various scenarios."""
-        current_cash = float(data.get("current_cash", 0))
-        monthly_burn_rate = float(data.get("monthly_burn_rate", 0))
-        committed_outflows = float(data.get("committed_outflows", 0))
-        undrawn_facilities = float(data.get("undrawn_facilities", 0))
-        liquid_assets = float(data.get("liquid_assets", 0))
+        current_cash = Decimal(str(data.get("current_cash", 0)))
+        monthly_burn_rate = Decimal(str(data.get("monthly_burn_rate", 0)))
+        committed_outflows = Decimal(str(data.get("committed_outflows", 0)))
+        undrawn_facilities = Decimal(str(data.get("undrawn_facilities", 0)))
+        liquid_assets = Decimal(str(data.get("liquid_assets", 0)))
 
-        total_liquid = round(current_cash + liquid_assets + undrawn_facilities, 2)
-        total_obligations = round(monthly_burn_rate + committed_outflows, 2)
+        total_liquid = _money_round(current_cash + liquid_assets + undrawn_facilities)
+        total_obligations = _money_round(monthly_burn_rate + committed_outflows)
 
         scenarios = {
             "normal": {"cash_shock": 0, "burn_shock": 0, "facility_shock": 0},
@@ -34,11 +42,11 @@ class LiquidityRiskEngine:
 
         results: Dict[str, Any] = {}
         for name, shock in scenarios.items():
-            stressed_cash = round(current_cash * (1 + shock["cash_shock"]), 2)
-            stressed_burn = round(monthly_burn_rate * (1 + shock["burn_shock"]), 2)
-            stressed_facilities = round(undrawn_facilities * (1 + shock["facility_shock"]), 2)
-            stressed_liquid = round(stressed_cash + liquid_assets + stressed_facilities, 2)
-            months_survival = round(stressed_liquid / stressed_burn, 2) if stressed_burn > 0 else 999
+            stressed_cash = _money_round(current_cash * (1 + shock["cash_shock"]))
+            stressed_burn = _money_round(monthly_burn_rate * (1 + shock["burn_shock"]))
+            stressed_facilities = _money_round(undrawn_facilities * (1 + shock["facility_shock"]))
+            stressed_liquid = _money_round(stressed_cash + liquid_assets + stressed_facilities)
+            months_survival = _money_round(stressed_liquid / stressed_burn) if stressed_burn > 0 else 999
             lcr = round(stressed_liquid / (stressed_burn + committed_outflows), 4) if (stressed_burn + committed_outflows) > 0 else 999
 
             results[name] = {
@@ -54,7 +62,7 @@ class LiquidityRiskEngine:
             "current_position": {
                 "total_liquid_resources": total_liquid,
                 "monthly_obligations": total_obligations,
-                "months_of_survival": round(total_liquid / total_obligations, 2) if total_obligations > 0 else 999,
+                "months_of_survival": _money_round(total_liquid / total_obligations) if total_obligations > 0 else 999,
             },
             "stress_scenarios": results,
             "overall_risk": self._assess_risk(results),

@@ -1,7 +1,7 @@
 // Author: Quadri Atharu
 
 use bytes::Bytes;
-use flate2::read::GzipEncoder;
+use flate2::read::GzEncoder;
 use flate2::Compression;
 use std::io::Read;
 
@@ -13,7 +13,7 @@ pub fn compress_response(body: Bytes, accept_encoding: &str) -> (Vec<u8>, Option
         return (body.to_vec(), None);
     }
 
-    let encodings: Vec<&str> = accept_encoding
+    let encodings: Vec<String> = accept_encoding
         .split(',')
         .map(|e| e.trim().to_lowercase())
         .collect();
@@ -39,7 +39,7 @@ pub fn compress_response(body: Bytes, accept_encoding: &str) -> (Vec<u8>, Option
 }
 
 fn gzip_compress(data: &[u8]) -> Result<Vec<u8>, std::io::Error> {
-    let mut encoder = GzipEncoder::new(data, Compression::new(GZIP_LEVEL));
+    let mut encoder = GzEncoder::new(data, Compression::new(GZIP_LEVEL));
     let mut compressed = Vec::with_capacity(data.len() / 2);
     encoder.read_to_end(&mut compressed)?;
     Ok(compressed)
@@ -56,7 +56,7 @@ impl CompressionLayer {
         if content_length < MIN_COMPRESS_SIZE {
             return false;
         }
-        let encodings: Vec<&str> = accept_encoding
+        let encodings: Vec<String> = accept_encoding
             .split(',')
             .map(|e| e.trim().to_lowercase())
             .collect();

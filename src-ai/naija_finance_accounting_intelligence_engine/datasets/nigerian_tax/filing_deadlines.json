@@ -4,7 +4,7 @@
     "project": "HAQLY ERP",
     "description": "Nigerian tax filing deadlines calendar - VAT, WHT, CIT, PAYE, Education Tax, CGT, Stamp Duties, PPT",
     "last_updated": "2026-04-14",
-    "disclaimer": "Based on Nigerian tax legislation as at 2024. Verify current deadlines with FIRS."
+    "disclaimer": "Based on Nigeria Tax Reform Acts 2025 (effective 2026). Verify current deadlines with NRS."
   },
   "filing_deadlines": [
     {
@@ -16,7 +16,7 @@
       "grace_period_days": 0,
       "penalty_rate": 5000,
       "penalty_type": "flat",
-      "authority": "FIRS",
+      "authority": "NRS",
       "description": "VAT returns must be filed by the 21st day of the month following the month of transaction. Penalty of 5000 Naira for late filing plus interest at CBN rediscount rate on unpaid tax.",
       "legal_reference": "VAT Act Cap V1 LFN 2004, Section 15"
     },
@@ -29,7 +29,7 @@
       "grace_period_days": 0,
       "penalty_rate": 10000,
       "penalty_type": "flat",
-      "authority": "FIRS",
+      "authority": "NRS",
       "description": "Withholding tax deducted must be remitted to FIRS by the 21st day of the following month. Penalty for failure to deduct: 10% of the tax not deducted plus interest. Late remittance attracts 10000 Naira penalty.",
       "legal_reference": "CIT Act Cap C21 LFN 2004, Section 79; WHT Regulations"
     },
@@ -42,7 +42,7 @@
       "grace_period_days": 0,
       "penalty_rate": 5,
       "penalty_type": "percentage",
-      "authority": "FIRS",
+      "authority": "NRS",
       "description": "CIT returns are due within 6 months after the end of the company's accounting year. For December year-end, deadline is June 30. Late filing penalty: 5% per annum of the tax due plus 25000 Naira for first month and 5000 Naira for each subsequent month.",
       "legal_reference": "CIT Act Cap C21 LFN 2004, Section 28; Finance Act 2020"
     },
@@ -55,8 +55,8 @@
       "grace_period_days": 0,
       "penalty_rate": 5,
       "penalty_type": "percentage",
-      "authority": "FIRS",
-      "description": "Small companies (25M-100M Naira turnover) pay CIT in 2 installments. First installment due within 2 months of year-end, second installment due within 6 months of year-end. December year-end: 1st by Feb 28, 2nd by Jun 30.",
+      "authority": "NRS",
+      "description": "Small companies (turnover <= NGN 50M) are exempt from CIT (0% rate) per Tax Reform 2025. No installment payments required.",
       "legal_reference": "CIT Act Cap C21 LFN 2004, Section 28(2); Finance Act 2020"
     },
     {
@@ -68,8 +68,8 @@
       "grace_period_days": 0,
       "penalty_rate": 5,
       "penalty_type": "percentage",
-      "authority": "FIRS",
-      "description": "Medium companies (100M-1B Naira turnover) pay CIT in 4 quarterly installments. Installments due in months 2, 4, 6, and 8 after year-end. December year-end: Feb, Apr, Jun, Aug.",
+      "authority": "NRS",
+      "description": "Medium companies (NGN 50M-250M turnover) pay CIT at 15% in 2 installments. First installment due within 2 months of year-end, second installment due within 6 months of year-end. December year-end: 1st by Feb 28, 2nd by Jun 30.",
       "legal_reference": "CIT Act Cap C21 LFN 2004, Section 28(3); Finance Act 2020"
     },
     {
@@ -81,8 +81,8 @@
       "grace_period_days": 0,
       "penalty_rate": 5,
       "penalty_type": "percentage",
-      "authority": "FIRS",
-      "description": "Large companies (above 1B Naira turnover) pay CIT in 6 installments. Installments due every 2 months starting from month 2 after year-end. December year-end: Feb, Apr, Jun, Aug, Oct, Dec.",
+      "authority": "NRS",
+      "description": "Large companies (above NGN 250M turnover) pay CIT at 25% in 4 quarterly installments. Installments due in months 2, 4, 6, and 8 after year-end. December year-end: Feb, Apr, Jun, Aug.",
       "legal_reference": "CIT Act Cap C21 LFN 2004, Section 28(4); Finance Act 2020"
     },
     {
@@ -94,8 +94,8 @@
       "grace_period_days": 0,
       "penalty_rate": 10,
       "penalty_type": "percentage",
-      "authority": "State Internal Revenue Service",
-      "description": "PAYE deductions must be remitted by the 10th day of the following month. Penalty for late remittance: 10% per annum of the tax unpaid plus penalty of 5000 Naira. Applies to all employers of labour in Nigeria.",
+      "authority": "NRS / State Internal Revenue Service",
+      "description": "PAYE deductions must be remitted by the 10th day of the following month. New PAYE brackets per Tax Reform 2025: 0% up to NGN 800K, 15% up to NGN 3.2M, 20% up to NGN 7.2M, 25% up to NGN 14M, 30% up to NGN 25M, 35% above NGN 25M. Penalty for late remittance: 10% per annum of the tax unpaid plus penalty of 5000 Naira.",
       "legal_reference": "Personal Income Tax Act Cap P8 LFN 2004, Section 81"
     },
     {
@@ -107,7 +107,7 @@
       "grace_period_days": 0,
       "penalty_rate": 500000,
       "penalty_type": "flat",
-      "authority": "State Internal Revenue Service",
+      "authority": "NRS / State Internal Revenue Service",
       "description": "Annual PAYE returns (Form H1) must be filed by January 31 of the following year. Employers must issue Form 16A (employee certificate of tax paid) to each employee. Penalty for non-filing: 500000 Naira for corporate employers.",
       "legal_reference": "Personal Income Tax Act Cap P8 LFN 2004, Section 82"
     },
@@ -120,8 +120,8 @@
       "grace_period_days": 0,
       "penalty_rate": 5,
       "penalty_type": "percentage",
-      "authority": "FIRS",
-      "description": "Education tax (2% of assessable profit) is due at the same time as CIT returns - within 6 months of year-end. For December year-end, deadline is June 30. Late payment attracts interest at CBN rediscount rate.",
+      "authority": "NRS",
+      "description": "Education tax (1% of assessable profit) is due at the same time as CIT returns - within 6 months of year-end. For December year-end, deadline is June 30. Late payment attracts interest at CBN rediscount rate. NDDC levy merged into Education Tax per Tax Reform 2025.",
       "legal_reference": "Education Tax Act Cap E5 LFN 2004, Section 2; Tertiary Education Trust Fund Act 2011"
     },
     {
@@ -133,8 +133,8 @@
       "grace_period_days": 0,
       "penalty_rate": 5,
       "penalty_type": "percentage",
-      "authority": "FIRS",
-      "description": "CGT returns must be filed by the 21st day of the month following the month in which the chargeable asset was disposed of. Late filing attracts interest at CBN rediscount rate plus 5% penalty.",
+      "authority": "NRS",
+      "description": "CGT returns must be filed by the 21st day of the month following the month in which the chargeable asset was disposed of. Progressive rates: 10% up to NGN 50M, 15% NGN 50M-250M, 20% above NGN 250M (Tax Reform 2025). Late filing attracts interest at CBN rediscount rate plus 5% penalty.",
       "legal_reference": "Capital Gains Tax Act Cap C1 LFN 2004, Section 7"
     },
     {
@@ -159,7 +159,7 @@
       "grace_period_days": 0,
       "penalty_rate": 5,
       "penalty_type": "percentage",
-      "authority": "FIRS",
+      "authority": "NRS",
       "description": "PPT is payable in monthly installments estimated at 2% of gross production. Final assessment is made after filing of returns. Annual returns due within 5 months after year-end. Penalty for late payment: 5% per annum plus interest.",
       "legal_reference": "Petroleum Profits Tax Act Cap P4 LFN 2004, Sections 20-26"
     },
@@ -172,7 +172,7 @@
       "grace_period_days": 0,
       "penalty_rate": 5,
       "penalty_type": "percentage",
-      "authority": "FIRS",
+      "authority": "NRS",
       "description": "Annual PPT return must be filed within 5 months after the end of the assessment year. The return must include full audited accounts. For OPEC concessionary year ending December 31, filing deadline is May 31.",
       "legal_reference": "Petroleum Profits Tax Act Cap P4 LFN 2004, Section 20"
     },
@@ -185,8 +185,8 @@
       "grace_period_days": 0,
       "penalty_rate": 2,
       "penalty_type": "percentage",
-      "authority": "FIRS",
-      "description": "NITDEVF levy (1% of profit before tax) is due with CIT returns for companies with turnover above 100M Naira. Same deadline as CIT. Applicable to GSM service providers, telecom companies, banks, insurance companies, and other specified companies.",
+      "authority": "NRS",
+      "description": "NITDEVF levy (1% of profit before tax) has been merged into the Education Tax (now 1%) per Tax Reform Acts 2025. Companies with turnover above NGN 250M should continue filing. Same deadline as CIT. Applicable to GSM service providers, telecom companies, banks, insurance companies, and other specified companies.",
       "legal_reference": "NITDA Act 2007; Finance Act 2021"
     }
   ]

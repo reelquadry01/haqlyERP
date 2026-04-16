@@ -1,5 +1,5 @@
 use serde::{Deserialize, Serialize};
-use tauri::{AppHandle, Manager, State};
+use tauri::{AppHandle, Emitter, State};
 use uuid::Uuid;
 use chrono::{DateTime, Utc};
 
@@ -62,8 +62,8 @@ pub async fn process_document(
 
 #[tauri::command]
 pub async fn get_ocr_status(
-    app: AppHandle,
-    sidecar_manager: State<'_, SidecarManager>,
+    _app: AppHandle,
+    _sidecar_manager: State<'_, SidecarManager>,
 ) -> Result<OcrStatus, String> {
     let ollama_connected = reqwest::Client::new()
         .get("http://localhost:11434/api/tags")
@@ -95,7 +95,7 @@ pub async fn get_ocr_status(
 
 #[tauri::command]
 pub async fn get_document_history(
-    app: AppHandle,
+    _app: AppHandle,
     limit: Option<u64>,
 ) -> Result<Vec<DocumentRecord>, String> {
     let limit = limit.unwrap_or(50);

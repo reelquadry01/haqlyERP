@@ -29,6 +29,7 @@ impl EInvoicingRulesService {
     pub fn is_einvoice_required(
         invoice: &SalesInvoiceRow,
         profile: &EInvoiceProfileRow,
+        customer_type: &str,
     ) -> EligibilityResult {
         if invoice.invoice_type != "STANDARD" {
             return EligibilityResult {
@@ -46,14 +47,7 @@ impl EInvoicingRulesService {
             };
         }
 
-        let category = Self::resolve_invoice_category(
-            sqlx::query_as::<_, CustomerRow>(
-                r#"SELECT id, company_id, code, name, email, phone, tax_id,
-                          customer_type, credit_limit, payment_terms, is_active,
-                          created_at, updated_at
-                   FROM customers WHERE id = $1"#,
-            ),
-        );
+        let category = Self::resolve_invoice_category(customer_type);
         let _ = category;
 
         EligibilityResult {
@@ -237,18 +231,18 @@ impl EInvoicingRulesService {
         let mut checks = Vec::new();
         let mut missing = Vec::new();
 
-        checks.push(("commercial_invoice", invoice.invoice_type == "STANDARD"));
-        checks.push(("seller_tin", profile.as_ref().map_or(false, |p| !p.tin.is_empty())));
-        checks.push(("seller_legal_name", profile.as_ref().map_or(false, |p| !p.legal_name.is_empty())));
-        checks.push(("seller_country", profile.as_ref().map_or(false, |p| !p.country_code.is_empty())));
-        checks.push(("invoice_number", !invoice.number.is_empty()));
-        checks.push(("invoice_date", true));
-        checks.push(("invoice_total", super::bd_to_f64(&invoice.total_amount) != 0.0));
-        checks.push(("customer_name", !customer.name.is_empty()));
-        checks.push(("api_key_present", credential.as_ref().map_or(false, |c| !c.api_key.is_empty())));
+        checks.push(("commercial_invoice".to_string(), invoice.invoice_type == "STANDARD"));
+        checks.push(("seller_tin".to_string(), profile.as_ref().map_or(false, |p| !p.tin.is_empty())));
+        checks.push(("seller_legal_name".to_string(), profile.as_ref().map_or(false, |p| !p.legal_name.is_empty())));
+        checks.push(("seller_country".to_string(), profile.as_ref().map_or(false, |p| !p.country_code.is_empty())));
+        checks.push(("invoice_number".to_string(), !invoice.number.is_empty()));
+        checks.push(("invoice_date".to_string(), true));
+        checks.push(("invoice_total".to_string(), super::bd_to_f64(&invoice.total_amount) != 0.0));
+        checks.push(("customer_name".to_string(), !customer.name.is_empty()));
+        checks.push(("api_key_present".to_string(), credential.as_ref().map_or(false, |c| !c.api_key.is_empty())));
 
         if category == InvoiceCategory::B2B {
-            checks.push(("buyer_tax_id", customer.tax_id.as_ref().map_or(false, |t| !t.is_empty())));
+            checks.push(("buyer_tax_id".to_string(), customer.tax_id.as_ref().map_or(false, |t| !t.is_empty())));
         }
 
         for (key, passed) in &checks {
@@ -278,6 +272,6 @@ pub struct EvaluateResult {
     pub customer_type: Option<String>,
     pub invoice_category: Option<InvoiceCategory>,
     pub ready: bool,
-    pub checks: Vec<(&'static str, bool)>,
+    pub checks: Vec<(String, bool)>,
     pub missing: Vec<String>,
 }

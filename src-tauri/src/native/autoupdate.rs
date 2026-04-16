@@ -48,7 +48,6 @@ pub async fn check_and_update(app: AppHandle) -> Result<UpdateStatus, String> {
     };
 
     let latest_version = update.version.clone();
-    let release_notes = update.body.clone();
     let previous_version = current_version.clone();
 
     tracing::info!(

@@ -25,6 +25,7 @@ pub mod crm_handler;
 pub mod bi_handler;
 pub mod notification_handler;
 pub mod license_handler;
+pub mod document_handler;
 
 pub use auth_handler::router as auth_routes;
 pub use users_handler::router as users_routes;
@@ -51,3 +52,4 @@ pub use bi_handler::router as bi_routes;
 pub use notification_handler::router as notification_routes;
 pub use license_handler::validate_license as license_validate;
 pub use license_handler::get_license_status as license_status;
+pub use document_handler::router as document_routes;

@@ -2,6 +2,7 @@
 use axum::body::Body;
 use axum::http::{Request, StatusCode};
 use axum::response::{IntoResponse, Response};
+use axum::Json;
 use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 use std::convert::Infallible;
@@ -150,7 +151,15 @@ where
 {
     type Rejection = Response;
 
-    fn from_request_parts(parts: &mut axum::http::request::Parts, _state: &S) -> futures::future::BoxFuture<'_, Result<Self, Self::Rejection>> {
+    fn from_request_parts<'life0, 'life1, 'async_trait>(
+        parts: &'life0 mut axum::http::request::Parts,
+        _state: &'life1 S,
+    ) -> ::core::pin::Pin<Box<dyn ::core::future::Future<Output = Result<Self, Self::Rejection>> + ::core::marker::Send + 'async_trait>>
+    where
+        'life0: 'async_trait,
+        'life1: 'async_trait,
+        Self: 'async_trait,
+    {
         let result = parts
             .extensions
             .get::<Claims>()
@@ -165,10 +174,10 @@ where
                 Some(user) => Ok(user),
                 None => Err((
                     StatusCode::UNAUTHORIZED,
-                    serde_json::json!({
+                    Json(serde_json::json!({
                         "success": false,
                         "error": { "code": 401, "message": "Authentication required" }
-                    }),
+                    })),
                 )
                     .into_response()),
             }
@@ -292,7 +301,7 @@ where
     }
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
-        let inner = self.inner.clone();
+        let mut inner = self.inner.clone();
         let route_map = self.route_map.clone();
         let path = req.uri().path().to_string();
         let method = req.method().clone();
@@ -359,20 +368,20 @@ pub async fn require_role(
             } else {
                 Err((
                     StatusCode::FORBIDDEN,
-                    serde_json::json!({
+                    Json(serde_json::json!({
                         "success": false,
                         "error": { "code": 403, "message": "Insufficient role permissions" }
-                    }),
+                    })),
                 )
                     .into_response())
             }
         }
         None => Err((
             StatusCode::UNAUTHORIZED,
-            serde_json::json!({
+            Json(serde_json::json!({
                 "success": false,
                 "error": { "code": 401, "message": "Authentication required" }
-            }),
+            })),
         )
             .into_response()),
     }
@@ -398,20 +407,20 @@ pub fn require_permission(permission: &str) -> impl Fn(Request<Body>, axum::midd
                     } else {
                         Err((
                             StatusCode::FORBIDDEN,
-                            serde_json::json!({
+                            Json(serde_json::json!({
                                 "success": false,
                                 "error": { "code": 403, "message": format!("Permission '{}' required", perm) }
-                            }),
+                            })),
                         )
                             .into_response())
                     }
                 }
                 None => Err((
                     StatusCode::UNAUTHORIZED,
-                    serde_json::json!({
+                    Json(serde_json::json!({
                         "success": false,
                         "error": { "code": 401, "message": "Authentication required" }
-                    }),
+                    })),
                 )
                     .into_response()),
             }

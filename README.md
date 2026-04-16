@@ -1,33 +1,32 @@
-# HAQLY ERP
+[![Rust](https://img.shields.io/badge/Rust-1.77%2B-dea584?logo=rust&logoColor=white)](https://www.rust-lang.org/)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5.x-3178c6?logo=typescript&logoColor=white)](https://www.typescriptlang.org/)
+[![Python](https://img.shields.io/badge/Python-3.11%2B-3776ab?logo=python&logoColor=white)](https://www.python.org/)
+[![Tauri](https://img.shields.io/badge/Tauri-v2-ffc131?logo=tauri&logoColor=black)](https://v2.tauri.app/)
+[![License](https://img.shields.io/badge/License-Proprietary-red)](./LICENSE)
 
-**Nigeria-Compliant | IFRS-Compliant | CFA-Level Intelligence | NRS E-Invoicing | Desktop-First**
+# HAQLY ERP — Full Finance Department in Software Form
 
-A production-grade Enterprise Resource Planning desktop application built with Rust (Tauri + Axum), featuring Smart AI Accounting Intelligence, NRS/FIRS E-Invoicing compliance, and Nigerian Finance Intelligence.
+**Author:** Quadri Atharu
 
-## Author
-
-**Quadri Atharu**
+Nigeria's first desktop-native ERP with AI-powered accounting intelligence, NRS e-invoicing, and full compliance with the **Nigeria Tax Reform Acts 2025**.
 
 ## Architecture
 
 ```
-┌──────────────────────────────────────────────────────────┐
-│                 TAURI DESKTOP SHELL (Rust)                │
-│  ┌──────────┐  ┌──────────────┐  ┌───────────────────┐  │
-│  │ Next.js  │  │ Rust Backend │  │ Python AI Engine  │  │
-│  │ WebView  │  │ (Axum +SQLx) │  │ (FastAPI Sidecar) │  │
-│  │  (UI)    │  │ (Biz Logic)  │  │ (OCR/Tax/IFRS/)   │  │
-│  └─────┬────┘  └──────┬───────┘  └────────┬──────────┘  │
-│        └───────────────┴──────────────────┘              │
-│                    │                                     │
-│              ┌─────▼─────┐                                │
-│              │ PostgreSQL │                                │
-│              └───────────┘                                │
-│  ┌────────────────────────────────────────────────────┐  │
-│  │  OCR Pipeline (Tesseract + Ollama LLM)            │  │
-│  │  NRS E-Invoicing (FIRS client + orchestration)    │  │
-│  └────────────────────────────────────────────────────┘  │
-└──────────────────────────────────────────────────────────┘
+  ┌──────────────────── TAURI v2 DESKTOP ────────────────────┐
+  │                                                          │
+  │  ┌──────────┐   ┌──────────────┐   ┌─────────────────┐  │
+  │  │ Next.js  │   │  Axum + SQLx │   │ Python FastAPI  │  │
+  │  │ 15 (UI)  │   │  (Biz Logic) │   │  (AI Engine)    │  │
+  │  └────┬─────┘   └──────┬───────┘   └───────┬─────────┘  │
+  │       │                │                    │            │
+  │       └────────────────┼────────────────────┘            │
+  │                        │                    │             │
+  │                  ┌─────▼─────┐        ┌─────▼─────┐      │
+  │                  │ PostgreSQL │        │  Ollama    │      │
+  │                  │ / SQLite  │        │  (LLM)     │      │
+  │                  └───────────┘        └───────────┘      │
+  └──────────────────────────────────────────────────────────┘
 ```
 
 ## Tech Stack
@@ -36,79 +35,120 @@ A production-grade Enterprise Resource Planning desktop application built with R
 |-------|-----------|
 | Desktop Shell | Tauri v2 (Rust) |
 | Backend | Axum + SQLx (Rust) |
-| Database | PostgreSQL (local/remote) |
+| Database | PostgreSQL 15+ / SQLite |
 | Frontend | Next.js 15 + TypeScript |
-| AI Engine | Python FastAPI sidecar |
-| OCR | Tesseract + Ollama LLM |
-| E-Invoicing | NRS/FIRS API integration |
+| AI Engine | Python FastAPI + Ollama |
+| E-Invoicing | NRS/FIRS API |
+
+## Nigeria Tax Reform Acts 2025 Compliance
+
+HAQLY ERP is the only desktop ERP with built-in compliance for the **Nigeria Tax Reform Acts 2025**:
+
+| Tax | Rates / Rules |
+|-----|--------------|
+| **PAYE** | 0% / 15% / 20% / 25% / 30% / 35% (progressive bands) |
+| **CIT** | Small (≤₦50M) = 0%, Medium (₦50M–₦250M) = 15%, Large (>₦250M) = 25% |
+| **VAT** | 7.5% (registration threshold ₦50M) |
+| **WHT** | 5% / 10% + 5% for individual recipients |
+| **Education Tax** | 1% |
+| **CGT** | Progressive 10% / 15% / 20% |
+| **FIRS → NRS** | Full rename & integration with Nigeria Revenue Service |
 
 ## Features
 
-- **Full Accounting Lifecycle** — Transaction recognition → Journal → Ledger → Trial Balance → Financial Statements → Closing
-- **NRS E-Invoicing** — Validate → Sign → Confirm → Download → Report via FIRS API
-- **OCR Document Intelligence** — Scan receipts/invoices → LLM extraction → auto-suggest account postings → approval workflow
-- **Nigerian Tax Engine** — VAT (7.5%), WHT (5-10%), CIT (20-30%), Education Tax (2%), CGT (10%), Stamp Duties
-- **IFRS Compliance** — IFRS 9, IFRS 15, IFRS 16, IAS 2, IAS 16, IAS 12, IAS 37
-- **15 Industry Profiles** — Oil & Gas, Manufacturing, Banking, Insurance, Retail, Telecom, Agriculture, Construction, Logistics, Healthcare, Education, Government, NGO, Technology, Automotive
-- **CFA-Level Financial Analysis** — Liquidity, Profitability, Leverage, Efficiency ratios + trend + peer comparison
-- **Valuation Engine** — NPV, IRR, WACC, DCF
-- **Risk Management** — Credit, Liquidity, Market risk dashboards
-- **Multi-Company** — Consolidation, intercompany elimination, minority interest
-- **Foreign Currency** — Multi-currency with FX gain/loss recognition
-- **Treasury Management** — Cash position, bank reconciliation, loan management
-- **Budgeting & Forecasting** — Annual budgets, rolling forecasts, variance analysis
-- **Audit Intelligence** — Trail generation, sampling, exception detection, working papers
+- **Chart of Accounts** — Multi-level IFRS-aligned hierarchy
+- **Journal Entries** — Double-entry with AI-assisted classification
+- **VAT / WHT / CIT / PAYE** — Auto-calculation, filing templates, e-invoicing
+- **E-Invoicing (NRS)** — Validate → Sign → Confirm → Download → Report
+- **OCR Document Intelligence** — Scan → LLM extract → auto-post → approval
+- **Payroll** — PAYE, pension, NHF, NSITF deductions
+- **Fixed Assets** — Depreciation (straight-line, reducing balance, units-of-production)
+- **CRM** — Customer & vendor lifecycle management
+- **Business Intelligence** — CFA-level ratios, trend analysis, peer comparison
 - **6 AI Agents** — Journal, Ledger, Tax, Reporting, Finance, Audit
+- **IFRS Compliance** — IFRS 9, 15, 16; IAS 2, 12, 16, 37
+- **Multi-Company** — Consolidation, intercompany elimination, minority interest
+- **Licensing** — Hardware-bound activation with online/offline validation
 
-## Getting Started
+## Industry Profiles
 
-### Prerequisites
+Oil & Gas · Manufacturing · Banking · Insurance · Retail · Telecom · Agriculture · Construction · Logistics · Healthcare · Education · Government · NGO · Technology · Automotive
 
-- Rust (1.75+)
-- Node.js (20+)
-- PostgreSQL (15+)
-- Python (3.11+)
-- Tauri CLI v2
-- Ollama (for local LLM)
+## AI Agents
 
-### Development
+| Agent | Function |
+|-------|----------|
+| **Journal Agent** | Auto-classifies transactions, suggests account postings |
+| **Ledger Agent** | Reconciles entries, detects imbalances |
+| **Tax Agent** | Computes PAYE/CIT/VAT/WHT/CGT per 2025 reform acts |
+| **Reporting Agent** | Generates IFRS financial statements |
+| **Finance Agent** | CFA-level analysis, DCF, NPV, IRR, WACC |
+| **Audit Agent** | Trail generation, sampling, exception detection |
+
+## Prerequisites
+
+| Requirement | Version |
+|-------------|---------|
+| Rust | 1.77+ |
+| Node.js | 18+ |
+| Python | 3.11+ |
+| PostgreSQL | 15+ (or SQLite) |
+| VS Build Tools | Required on Windows |
+| Ollama | Latest (for local LLM) |
+
+## Quick Start
 
 ```bash
-# Start PostgreSQL
+# Start infrastructure
 docker-compose up -d postgres redis
 
-# Run Rust backend
+# Start backend
 cd src-server && cargo run
 
-# Run Next.js frontend
+# Start frontend
 cd src-web && npm install && npm run dev
 
-# Run Python AI engine
+# Start AI engine
 cd src-ai && pip install -e . && uvicorn naija_finance_accounting_intelligence_engine.api.main:app --port 8200
 
-# Run Tauri desktop app
+# Launch desktop app
 cd src-tauri && cargo tauri dev
 ```
 
-### Build Desktop App
+## Build for Production
 
 ```bash
-cd src-tauri && cargo tauri build
+cargo tauri build
 ```
 
 ## Project Structure
 
 ```
 haqlyERP/
-├── src-tauri/         # Tauri desktop shell (Rust)
-├── src-server/        # Axum backend (Rust)
-├── src-web/           # Next.js frontend
-├── src-ai/            # Python AI intelligence engine
-├── docs/              # Architecture & implementation docs
-├── scripts/           # Seed, migration, setup scripts
-└── .github/           # CI/CD workflows
+├── src-tauri/      # Tauri desktop shell (Rust)
+├── src-server/     # Axum backend (Rust)
+├── src-web/        # Next.js 15 frontend
+├── src-ai/         # Python AI engine
+├── docs/           # Architecture & API docs
+├── scripts/        # Seed, migration, setup
+└── .github/        # CI/CD workflows
 ```
+
+## Security
+
+| Measure | Implementation |
+|---------|---------------|
+| Authentication | RS256 JWT with rotation |
+| Encryption | AES-256-GCM at rest |
+| Authorization | Role-Based Access Control (RBAC) |
+| Audit Trail | SHA-256 chained, tamper-evident |
+| Key Management | Zeroize on drop |
+| API Protection | Rate limiting + request signing |
 
 ## License
 
 Proprietary — All rights reserved.
+
+## Repository
+
+[https://github.com/reelquadry01/haqlyERP](https://github.com/reelquadry01/haqlyERP)

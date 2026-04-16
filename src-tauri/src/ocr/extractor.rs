@@ -1,6 +1,4 @@
 // Author: Quadri Atharu
-use std::path::Path;
-
 use anyhow::{Context, Result};
 
 use crate::ocr::preprocessor::{DocumentFileType, ProcessedDocument};

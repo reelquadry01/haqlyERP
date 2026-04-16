@@ -2,10 +2,11 @@
 // Crate: haqly-erp-server
 
 use axum::{
-    Json, Path, Query, State,
+    Json,
     routing::get,
     Router,
 };
+use axum::extract::{Path, Query, State};
 use chrono::NaiveDate;
 use sqlx::PgPool;
 use serde::Deserialize;

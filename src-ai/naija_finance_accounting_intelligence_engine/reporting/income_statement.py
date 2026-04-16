@@ -7,6 +7,14 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -22,35 +30,35 @@ class IncomeStatementEngine:
         currency = data.get("currency", "NGN")
         comparative = data.get("comparative", False)
 
-        revenue = float(data.get("revenue", 0))
-        other_income = float(data.get("other_income", 0))
-        cogs = float(data.get("cogs", 0))
-        gross_profit = round(revenue - cogs, 2)
+        revenue = Decimal(str(data.get("revenue", 0)))
+        other_income = Decimal(str(data.get("other_income", 0)))
+        cogs = Decimal(str(data.get("cogs", 0)))
+        gross_profit = _money_round(revenue - cogs)
 
-        selling_expenses = float(data.get("selling_expenses", 0))
-        admin_expenses = float(data.get("admin_expenses", 0))
-        depreciation = float(data.get("depreciation", 0))
-        amortisation = float(data.get("amortisation", 0))
-        other_operating = float(data.get("other_operating_expenses", 0))
-        total_opex = round(selling_expenses + admin_expenses + depreciation + amortisation + other_operating, 2)
+        selling_expenses = Decimal(str(data.get("selling_expenses", 0)))
+        admin_expenses = Decimal(str(data.get("admin_expenses", 0)))
+        depreciation = Decimal(str(data.get("depreciation", 0)))
+        amortisation = Decimal(str(data.get("amortisation", 0)))
+        other_operating = Decimal(str(data.get("other_operating_expenses", 0)))
+        total_opex = _money_round(selling_expenses + admin_expenses + depreciation + amortisation + other_operating)
 
-        operating_income = round(gross_profit - total_opex, 2)
+        operating_income = _money_round(gross_profit - total_opex)
 
-        finance_costs = float(data.get("finance_costs", 0))
-        finance_income = float(data.get("finance_income", 0))
-        net_finance_costs = round(finance_costs - finance_income, 2)
+        finance_costs = Decimal(str(data.get("finance_costs", 0)))
+        finance_income = Decimal(str(data.get("finance_income", 0)))
+        net_finance_costs = _money_round(finance_costs - finance_income)
 
-        share_of_associate_profit = float(data.get("share_of_associate_profit", 0))
-        profit_before_tax = round(operating_income - net_finance_costs + share_of_associate_profit + other_income, 2)
+        share_of_associate_profit = Decimal(str(data.get("share_of_associate_profit", 0)))
+        profit_before_tax = _money_round(operating_income - net_finance_costs + share_of_associate_profit + other_income)
 
-        tax_expense = float(data.get("tax_expense", 0))
-        net_income = round(profit_before_tax - tax_expense, 2)
+        tax_expense = Decimal(str(data.get("tax_expense", 0)))
+        net_income = _money_round(profit_before_tax - tax_expense)
 
-        other_comprehensive = float(data.get("other_comprehensive_income", 0))
-        total_comprehensive = round(net_income + other_comprehensive, 2)
+        other_comprehensive = Decimal(str(data.get("other_comprehensive_income", 0)))
+        total_comprehensive = _money_round(net_income + other_comprehensive)
 
-        shares_outstanding = float(data.get("shares_outstanding", 1))
-        eps = round(net_income / shares_outstanding, 2) if shares_outstanding > 0 else None
+        shares_outstanding = Decimal(str(data.get("shares_outstanding", 1)))
+        eps = _money_round(net_income / shares_outstanding) if shares_outstanding > 0 else None
 
         lines: List[Dict[str, Any]] = [
             {"label": "Revenue", "amount": revenue, "note_ref": "1"},

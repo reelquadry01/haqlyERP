@@ -567,7 +567,7 @@ impl JournalsService {
         let mut journal_lines_dto = Vec::new();
         for tl in &template_lines {
             let idx = (tl.line_number - 1) as usize;
-            let (debit, credit) = amounts.get(idx).cloned().unwrap_or((BigDecimal::from(0), BigDecimal::from(0)));
+            let (debit, credit) = amounts.get(idx).cloned().map(|(_, d, c)| (d, c)).unwrap_or((BigDecimal::from(0), BigDecimal::from(0)));
             journal_lines_dto.push(crate::dtos::journal_dto::JournalLineDto {
                 account_id: tl.account_id,
                 narration: tl.narration_template.clone(),

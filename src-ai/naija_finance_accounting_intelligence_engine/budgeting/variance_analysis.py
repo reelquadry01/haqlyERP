@@ -7,6 +7,14 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -40,7 +48,7 @@ class VarianceAnalysisEngine:
         for code in all_codes:
             bud = budget_map.get(code, 0)
             act = actual_map.get(code, 0)
-            variance = round(act - bud, 2)
+            variance = _money_round(act - bud)
             variance_pct = round(variance / bud, 4) if bud != 0 else None
 
             is_revenue = code.startswith("4")
@@ -69,7 +77,7 @@ class VarianceAnalysisEngine:
             total_budgeted += bud
             total_actual += act
 
-        total_variance = round(total_actual - total_budgeted, 2)
+        total_variance = _money_round(total_actual - total_budgeted)
         total_variance_pct = round(total_variance / total_budgeted, 4) if total_budgeted != 0 else None
 
         favourable_variances = [v for v in variances if v["direction"] == "favourable" and abs(v.get("variance", 0)) > 0]
@@ -79,15 +87,15 @@ class VarianceAnalysisEngine:
         result: Dict[str, Any] = {
             "variance_lines": variances,
             "summary": {
-                "total_budgeted": round(total_budgeted, 2),
-                "total_actual": round(total_actual, 2),
+                "total_budgeted": _money_round(total_budgeted),
+                "total_actual": _money_round(total_actual),
                 "total_variance": total_variance,
                 "total_variance_pct": total_variance_pct,
                 "favourable_count": len(favourable_variances),
                 "adverse_count": len(adverse_variances),
                 "critical_count": len(critical_variances),
-                "favourable_total": round(sum(v["variance"] for v in favourable_variances), 2),
-                "adverse_total": round(sum(abs(v["variance"]) for v in adverse_variances), 2),
+                "favourable_total": _money_round(sum(v["variance"] for v in favourable_variances)),
+                "adverse_total": _money_round(sum(abs(v["variance"]) for v in adverse_variances)),
             },
             "critical_variances": critical_variances,
             "recommendations": self._generate_recommendations(critical_variances, adverse_variances),

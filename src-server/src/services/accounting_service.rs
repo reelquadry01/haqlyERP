@@ -1,7 +1,7 @@
 // Author: Quadri Atharu
 use anyhow::{anyhow, Result};
 use bigdecimal::BigDecimal;
-use chrono::NaiveDate;
+use chrono::{Datelike, NaiveDate};
 use sqlx::PgPool;
 use uuid::Uuid;
 

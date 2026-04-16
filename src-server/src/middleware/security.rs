@@ -3,11 +3,11 @@ use axum::body::Body;
 use axum::http::{HeaderName, HeaderValue, Request, StatusCode};
 use axum::middleware::Next;
 use axum::response::{IntoResponse, Response};
-use once_cell::sync::Lazy;
+use axum::Json;
+use std::sync::LazyLock;
 use regex::Regex;
-use std::collections::HashMap;
 
-static XSS_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
+static XSS_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
     vec![
         Regex::new(r"(?i)<\s*script").unwrap(),
         Regex::new(r"(?i)javascript\s*:").unwrap(),
@@ -22,7 +22,7 @@ static XSS_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
     ]
 });
 
-static SQL_INJECTION_PATTERNS: Lazy<Vec<Regex>> = Lazy::new(|| {
+static SQL_INJECTION_PATTERNS: LazyLock<Vec<Regex>> = LazyLock::new(|| {
     vec![
         Regex::new(r"(?i)(\b(union)\b.+?\b(select)\b)").unwrap(),
         Regex::new(r"(?i)(\b(drop)\b\s+\b(table|database)\b)").unwrap(),
@@ -118,10 +118,10 @@ pub async fn request_size_limit(req: Request<Body>, next: Next) -> Result<Respon
         if length > MAX_REQUEST_SIZE {
             return Err((
                 StatusCode::PAYLOAD_TOO_LARGE,
-                serde_json::json!({
+                Json(serde_json::json!({
                     "success": false,
                     "error": { "code": 413, "message": "Request body exceeds maximum allowed size" }
-                }),
+                })),
             )
                 .into_response());
         }
@@ -139,10 +139,10 @@ pub async fn suspicious_pattern_detector(req: Request<Body>, next: Next) -> Resu
         );
         return Err((
             StatusCode::BAD_REQUEST,
-            serde_json::json!({
+            Json(serde_json::json!({
                 "success": false,
                 "error": { "code": 400, "message": "Request contains disallowed patterns" }
-            }),
+            })),
         )
             .into_response());
     }

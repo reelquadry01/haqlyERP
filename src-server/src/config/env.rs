@@ -23,9 +23,14 @@ pub const SMTP_USERNAME: &str = "SMTP_USERNAME";
 pub const SMTP_PASSWORD: &str = "SMTP_PASSWORD";
 pub const SMTP_FROM_EMAIL: &str = "SMTP_FROM_EMAIL";
 pub const EMAIL_ENABLED: &str = "EMAIL_ENABLED";
+pub const DB_MAX_CONNECTIONS: &str = "DB_MAX_CONNECTIONS";
+pub const DB_MIN_CONNECTIONS: &str = "DB_MIN_CONNECTIONS";
+pub const DB_ACQUIRE_TIMEOUT_SECS: &str = "DB_ACQUIRE_TIMEOUT_SECS";
+pub const DB_IDLE_TIMEOUT_SECS: &str = "DB_IDLE_TIMEOUT_SECS";
+pub const DB_MAX_LIFETIME_SECS: &str = "DB_MAX_LIFETIME_SECS";
 
-pub fn env_or(key: &str, default: &str) -> String {
-    env::var(key).unwrap_or_else(|_| default.to_string())
+pub fn env_or(key: &str, default: impl Into<String>) -> String {
+    env::var(key).unwrap_or_else(|_| default.into())
 }
 
 pub fn env_or_parse<T: FromStr>(key: &str, default: T) -> T {

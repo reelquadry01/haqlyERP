@@ -2,7 +2,7 @@
 use serde::{Deserialize, Serialize};
 use tauri::AppHandle;
 
-use crate::ocr::classifier::{classify, DocumentType};
+use crate::ocr::classifier::classify;
 use crate::ocr::extractor::extract;
 use crate::ocr::ollama_reasoner::{fallback_extraction, reason, ExtractionResult};
 use crate::ocr::preprocessor::preprocess;

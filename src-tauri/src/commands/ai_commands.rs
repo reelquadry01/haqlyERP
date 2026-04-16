@@ -81,8 +81,9 @@ pub async fn analyze_financials(
         .await
         .map_err(|e| format!("AI engine unreachable: {e}"))?;
     if !resp.status().is_success() {
+        let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
-        return Err(format!("Analysis request failed ({}): {body}", resp.status()));
+        return Err(format!("Analysis request failed ({status}): {body}"));
     }
     resp.json()
         .await
@@ -103,10 +104,10 @@ pub async fn compute_tax(company_id: String, tax_type: String) -> Result<TaxResu
         .await
         .map_err(|e| format!("AI engine unreachable: {e}"))?;
     if !resp.status().is_success() {
+        let status = resp.status();
         let body = resp.text().await.unwrap_or_default();
         return Err(format!(
-            "Tax computation request failed ({}): {body}",
-            resp.status()
+            "Tax computation request failed ({status}): {body}"
         ));
     }
     resp.json()
@@ -131,8 +132,9 @@ pub async fn generate_report(
         .await
         .map_err(|e| format!("AI engine unreachable: {e}"))?;
     if !resp.status().is_success() {
+        let status = resp.status();
         let b = resp.text().await.unwrap_or_default();
-        return Err(format!("Report generation failed ({}): {b}", resp.status()));
+        return Err(format!("Report generation failed ({status}): {b}"));
     }
     resp.json()
         .await

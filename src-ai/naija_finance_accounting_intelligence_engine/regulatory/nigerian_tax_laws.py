@@ -5,6 +5,9 @@ Author: Quadri Atharu
 Provides current tax rates, exemptions, and filing requirements for
 all Nigerian tax types including CIT, VAT, WHT, PPT, CGT, Education
 Tax, Stamp Duty, and minimum tax provisions.
+
+Updated per Nigeria Tax Reform Acts 2025 (effective 2026).
+FIRS renamed to NRS (Nigeria Revenue Service).
 """
 
 from __future__ import annotations
@@ -50,11 +53,11 @@ CURRENT_TAX_RATES: dict[str, TaxRateInfo] = {
         tax_type="Companies Income Tax",
         rates={
             "small_company": Decimal("0"),
-            "medium": Decimal("20"),
-            "large": Decimal("30"),
+            "medium": Decimal("15"),
+            "large": Decimal("25"),
         },
-        effective_date="2020-01-01",
-        authority="FIRS",
+        effective_date="2026-01-01",
+        authority="NRS",
     ),
     "VAT": TaxRateInfo(
         tax_type="Value Added Tax",
@@ -63,24 +66,27 @@ CURRENT_TAX_RATES: dict[str, TaxRateInfo] = {
             "zero_rated": Decimal("0"),
             "exempt": Decimal("0"),
         },
-        effective_date="2020-02-01",
-        authority="FIRS",
+        effective_date="2026-01-01",
+        authority="NRS",
     ),
     "WHT": TaxRateInfo(
         tax_type="Withholding Tax",
         rates={
-            "dividends": Decimal("10"),
-            "interest": Decimal("10"),
-            "rent": Decimal("10"),
+            "dividends_company": Decimal("10"),
+            "dividends_individual": Decimal("5"),
+            "interest_company": Decimal("10"),
+            "interest_individual": Decimal("5"),
+            "rent_company": Decimal("10"),
+            "rent_individual": Decimal("5"),
             "royalties": Decimal("5"),
-            "management_fees": Decimal("10"),
+            "management_fees": Decimal("5"),
             "consultancy": Decimal("5"),
             "contract": Decimal("5"),
             "commission": Decimal("5"),
-            "construction": Decimal("2.5"),
+            "construction": Decimal("5"),
         },
-        effective_date="2022-01-01",
-        authority="FIRS",
+        effective_date="2026-01-01",
+        authority="NRS",
     ),
     "PPT": TaxRateInfo(
         tax_type="Petroleum Profit Tax",
@@ -89,23 +95,25 @@ CURRENT_TAX_RATES: dict[str, TaxRateInfo] = {
             "production_sharing_contract": Decimal("85"),
         },
         effective_date="2020-01-01",
-        authority="FIRS",
+        authority="NRS",
     ),
     "CGT": TaxRateInfo(
         tax_type="Capital Gains Tax",
         rates={
-            "standard": Decimal("10"),
+            "up_to_50m": Decimal("10"),
+            "50m_to_250m": Decimal("15"),
+            "above_250m": Decimal("20"),
         },
-        effective_date="2020-01-01",
-        authority="FIRS",
+        effective_date="2026-01-01",
+        authority="NRS",
     ),
     "Education_Tax": TaxRateInfo(
         tax_type="Education Tax",
         rates={
-            "standard": Decimal("2"),
+            "standard": Decimal("1"),
         },
-        effective_date="2022-01-01",
-        authority="FIRS",
+        effective_date="2026-01-01",
+        authority="NRS",
     ),
     "Stamp_Duty": TaxRateInfo(
         tax_type="Stamp Duty",
@@ -115,7 +123,7 @@ CURRENT_TAX_RATES: dict[str, TaxRateInfo] = {
             "receipt_above_10k": Decimal("50"),
         },
         effective_date="2020-01-01",
-        authority="FIRS",
+        authority="NRS",
     ),
     "Minimum_Tax": TaxRateInfo(
         tax_type="Minimum Tax",
@@ -123,8 +131,129 @@ CURRENT_TAX_RATES: dict[str, TaxRateInfo] = {
             "pct_of_turnover": Decimal("0.5"),
             "pct_of_gross_profit": Decimal("0.5"),
         },
-        effective_date="2020-01-01",
-        authority="FIRS",
+        effective_date="2026-01-01",
+        authority="NRS",
+    ),
+    "PAYE": TaxRateInfo(
+        tax_type="Pay-As-You-Earn",
+        rates={
+            "band_1_up_to_800k": Decimal("0"),
+            "band_2_800k_to_3_2m": Decimal("15"),
+            "band_3_3_2m_to_7_2m": Decimal("20"),
+            "band_4_7_2m_to_14m": Decimal("25"),
+            "band_5_14m_to_25m": Decimal("30"),
+            "band_6_above_25m": Decimal("35"),
+        },
+        effective_date="2026-01-01",
+        authority="NRS / State IRS",
+    ),
+}
+
+TAX_EXEMPTIONS: dict[str, ExemptionInfo] = {
+    "CIT": ExemptionInfo(
+        tax_type="CIT",
+        exemptions=[
+            "Small companies (turnover < NGN 50M)",
+            "Pioneer status companies (3-year tax holiday, extendable to 5 years)",
+            "Agricultural companies (primary production)",
+            "Non-profit organizations (registered)",
+            "Export incentives (profit from export of manufactured goods)",
+        ],
+        conditions=[
+            "Must file returns even if exempt",
+            "Pioneer status requires NIPC certificate",
+            "Agricultural exemption limited to primary production",
+        ],
+    ),
+    "VAT": ExemptionInfo(
+        tax_type="VAT",
+        exemptions=[
+            "Medical services and pharmaceuticals",
+            "Educational services and materials",
+            "Financial services (loans, interest)",
+            "Agricultural products and inputs",
+            "Baby products",
+            "Commercial aircraft and parts",
+            "LPG, diesel, and petroleum products",
+        ],
+        conditions=[
+            "Zero-rated items (exports) differ from exempt items",
+            "Input VAT not recoverable on exempt supplies",
+            "VAT registration threshold raised to NGN 50M (Tax Reform 2025)",
+        ],
+    ),
+    "CGT": ExemptionInfo(
+        tax_type="CGT",
+        exemptions=[
+            "Gains from disposal of principal private residence",
+            "Gains from life insurance policies",
+            "Gains from Nigerian government securities",
+            "Severance pay and compensation for loss of office",
+        ],
+        conditions=[
+            "Principal private residence exemption applies once",
+            "Must elect within 1 year of disposal",
+        ],
+    ),
+}
+
+FILING_REQUIREMENTS: dict[str, FilingInfo] = {
+    "CIT": FilingInfo(
+        tax_type="CIT",
+        filing_frequency="Annual",
+        due_date_rule="Due 6 months after financial year-end; installment payments due by 6th month",
+        penalty_rate=Decimal("10"),
+        required_documents=[
+            "Self-assessment return",
+            "Audited financial statements",
+            "Tax computation schedule",
+            "Withholding tax credit notes",
+            "Capital allowance schedule",
+        ],
+    ),
+    "VAT": FilingInfo(
+        tax_type="VAT",
+        filing_frequency="Monthly",
+        due_date_rule="Due by 21st of the following month",
+        penalty_rate=Decimal("5"),
+        required_documents=[
+            "VAT return form",
+            "VAT schedule (output and input)",
+            "Supporting invoices",
+        ],
+    ),
+    "WHT": FilingInfo(
+        tax_type="WHT",
+        filing_frequency="Monthly",
+        due_date_rule="Due by 21st of the following month",
+        penalty_rate=Decimal("10"),
+        required_documents=[
+            "WHT return form",
+            "WHT schedule",
+            "Credit notes issued",
+        ],
+    ),
+    "PPT": FilingInfo(
+        tax_type="PPT",
+        filing_frequency="Monthly (installment) / Annual (assessment)",
+        due_date_rule="Monthly installments; annual return within 5 months of year-end",
+        penalty_rate=Decimal("10"),
+        required_documents=[
+            "PPT return",
+            "Oil and gas financial statements",
+            "Cost oil and profit oil computation",
+        ],
+    ),
+    "PAYE": FilingInfo(
+        tax_type="PAYE",
+        filing_frequency="Monthly",
+        due_date_rule="Due by 10th of the following month",
+        penalty_rate=Decimal("10"),
+        required_documents=[
+            "PAYE schedule",
+            "Employee tax deduction cards",
+            "Pension deduction schedule",
+        ],
     ),
 }
 

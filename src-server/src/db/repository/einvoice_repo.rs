@@ -197,14 +197,14 @@ impl EInvoiceRepo {
 
         if let Some(ref mut cred) = result {
             if let Ok(key) = get_encryption_key() {
-                if let (Some(ref nonce), Some(ref tag)) = (cred.api_key_nonce, cred.api_key_tag) {
+                if let (Some(ref nonce), Some(ref tag)) = (cred.api_key_nonce.clone(), cred.api_key_tag.clone()) {
                     let nonce_b64 = BASE64.encode(nonce);
                     let tag_b64 = BASE64.encode(tag);
                     if let Ok(plain) = encryption_service::decrypt_field(&cred.api_key, &key, &nonce_b64, &tag_b64) {
                         cred.api_key = plain;
                     }
                 }
-                if let (Some(ref nonce), Some(ref tag)) = (cred.api_secret_nonce, cred.api_secret_tag) {
+                if let (Some(ref nonce), Some(ref tag)) = (cred.api_secret_nonce.clone(), cred.api_secret_tag.clone()) {
                     let nonce_b64 = BASE64.encode(nonce);
                     let tag_b64 = BASE64.encode(tag);
                     if let Ok(plain) = encryption_service::decrypt_field(&cred.api_secret, &key, &nonce_b64, &tag_b64) {

@@ -1,7 +1,7 @@
 // Author: Quadri Atharu
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, Fragment } from "react";
 import { WorkspaceShell } from "@/components/workspace-shell";
 import { getToken } from "@/lib/session";
 import { apiGet, apiPost, apiPatch } from "@/lib/api";
@@ -325,7 +325,7 @@ export default function SalesPage() {
                     const isExpanded = expandedId === inv.id;
                     const ss = STATUS_STYLES[inv.status] || STATUS_STYLES.draft;
                     return (
-                      <React.Fragment key={inv.id}>
+                      <Fragment key={inv.id}>
                         <tr
                           onClick={() => setExpandedId(isExpanded ? null : inv.id)}
                           style={{ cursor: "pointer", transition: "background 0.1s" }}
@@ -416,7 +416,7 @@ export default function SalesPage() {
                             </td>
                           </tr>
                         )}
-                      </React.Fragment>
+                      </Fragment>
                     );
                   })}
                 </tbody>

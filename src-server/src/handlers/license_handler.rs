@@ -3,9 +3,9 @@ use axum::extract::State;
 use axum::http::StatusCode;
 use axum::response::{IntoResponse, Response};
 use axum::Json;
-use crate::dtos::license_dto::{ValidateLicenseRequest, LicenseStatusResponse, GenerateLicenseRequest, LicenseKeyResponse};
+use validator::Validate;
+use crate::dtos::license_dto::{ValidateLicenseRequest, LicenseStatusResponse};
 use crate::middleware::rbac::AuthenticatedUser;
-use crate::models::license::LicenseTier;
 use crate::services::license_service::LicenseService;
 
 pub async fn validate_license(
@@ -47,11 +47,11 @@ pub async fn get_license_status(
     let response = LicenseStatusResponse {
         is_licensed: status.is_licensed,
         tier: status.validation.as_ref().map(|v| v.tier.to_string()),
-        features: status.validation.map(|v| v.features).unwrap_or_default(),
+        features: status.validation.as_ref().map(|v| v.features.clone()).unwrap_or_default(),
         max_users: status.license.as_ref().map(|l| l.max_users),
         max_companies: status.license.as_ref().map(|l| l.max_companies),
-        days_remaining: status.validation.map(|v| v.days_remaining),
-        warnings: status.validation.map(|v| v.warnings).unwrap_or_default(),
+        days_remaining: status.validation.as_ref().map(|v| v.days_remaining),
+        warnings: status.validation.as_ref().map(|v| v.warnings.clone()).unwrap_or_default(),
         grace_period_remaining_days: status.grace_period_remaining_days,
     };
     (StatusCode::OK, Json(serde_json::json!({

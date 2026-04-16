@@ -1,10 +1,13 @@
-"""FIRS (Federal Inland Revenue Service) compliance rules.
+"""NRS (Nigeria Revenue Service) compliance rules.
 
 Author: Quadri Atharu
 
 Validates tax compliance, determines applicable taxes by industry
 and turnover, computes tax obligations, and checks filing status
-for Nigerian companies per FIRS requirements.
+for Nigerian companies per NRS requirements.
+
+Updated per Nigeria Tax Reform Acts 2025 (effective 2026).
+FIRS renamed to NRS (Nigeria Revenue Service).
 """
 
 from __future__ import annotations
@@ -42,7 +45,7 @@ class TaxObligation:
 
 
 INDUSTRY_TAX_MAP: dict[str, list[str]] = {
-    "oil_gas": ["PPT", "CIT", "VAT", "WHT", "Education Tax", "NDDC Levy"],
+    "oil_gas": ["PPT", "CIT", "VAT", "WHT", "Education Tax"],
     "banking": ["CIT", "VAT", "WHT", "Education Tax", "AMCON Levy"],
     "insurance": ["CIT", "VAT", "WHT", "Education Tax"],
     "manufacturing": ["CIT", "VAT", "WHT", "Education Tax"],
@@ -56,11 +59,11 @@ INDUSTRY_TAX_MAP: dict[str, list[str]] = {
 }
 
 TURNOVER_THRESHOLDS: dict[str, Decimal] = {
-    "vat_registration": Decimal("25000000"),
+    "vat_registration": Decimal("50000000"),
     "cit_small": Decimal("0"),
-    "cit_medium": Decimal("25000000"),
-    "cit_large": Decimal("100000000"),
-    "minimum_tax_threshold": Decimal("0"),
+    "cit_medium": Decimal("50000000"),
+    "cit_large": Decimal("250000000"),
+    "minimum_tax_threshold": Decimal("50000000"),
 }
 
 
@@ -194,10 +197,12 @@ def compute_tax_obligations(
     is_small = company_data.get("is_small_company", False)
 
     if taxable_income > Decimal("0"):
-        if is_small and turnover < Decimal("25000000"):
+        if is_small and turnover < Decimal("50000000"):
             cit_rate = Decimal("0")
+        elif turnover <= Decimal("250000000"):
+            cit_rate = Decimal("15")
         else:
-            cit_rate = Decimal("30")
+            cit_rate = Decimal("25")
         cit_amount = (taxable_income * cit_rate / Decimal("100")).quantize(TWO_PLACES)
 
         if cit_amount > Decimal("0"):
@@ -220,13 +225,13 @@ def compute_tax_obligations(
         ))
 
     if taxable_income > Decimal("0"):
-        edu_tax = (taxable_income * Decimal("2") / Decimal("100")).quantize(TWO_PLACES)
+        edu_tax = (taxable_income * Decimal("1") / Decimal("100")).quantize(TWO_PLACES)
         obligations.append(TaxObligation(
             tax_type="Education Tax",
             amount=edu_tax,
             due_date=f"{period}-06-30",
             status="PENDING",
-            description="Education tax at 2% of assessable profit",
+            description="Education tax at 1% of assessable profit (Tax Reform 2025, NDDC merged)",
         ))
 
     minimum_tax_base = (turnover * Decimal("0.5") / Decimal("100")).quantize(TWO_PLACES)

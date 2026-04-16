@@ -1,3 +1,4 @@
+// Author: Quadri Atharu
 use serde::{Deserialize, Serialize};
 use tauri::{AppHandle, Manager};
 use tauri_plugin_updater::UpdaterExt;
@@ -35,7 +36,7 @@ pub async fn get_app_version(app: AppHandle) -> Result<String, String> {
 
 #[tauri::command]
 pub async fn open_external_link(url: String) -> Result<(), String> {
-    let parsed = url::Url::parse(&url).map_err(|e| format!("Invalid URL: {e}"))?;
+    let parsed = reqwest::Url::parse(&url).map_err(|e| format!("Invalid URL: {e}"))?;
     match parsed.scheme() {
         "http" | "https" => {}
         _ => return Err("Only http and https URLs are allowed".to_string()),
@@ -60,18 +61,19 @@ pub async fn toggle_fullscreen(app: AppHandle) -> Result<bool, String> {
 #[tauri::command]
 pub async fn get_system_info(app: AppHandle) -> Result<SystemInfo, String> {
     let os = std::env::consts::OS.to_string();
-    let os_version = sys_info::os_release().unwrap_or_else(|_| "unknown".to_string());
+    let os_version = env!("CARGO_PKG_VERSION").to_string();
     let arch = std::env::consts::ARCH.to_string();
     let app_version = app
         .config()
         .version
         .clone()
         .unwrap_or_else(|| env!("CARGO_PKG_VERSION").to_string());
-    let cpu_count = num_cpus::get();
-    let total_memory_gb = sys_info::mem_info()
-        .map(|m| (m.total as f64) / (1024.0 * 1024.0))
-        .unwrap_or(0.0);
-    let hostname = sys_info::hostname().unwrap_or_else(|_| "unknown".to_string());
+
+    let mut sys = sysinfo::System::new();
+    sys.refresh_memory();
+    let cpu_count = sys.cpus().len();
+    let total_memory_gb = sys.total_memory() as f64 / (1024.0 * 1024.0 * 1024.0);
+    let hostname = sysinfo::System::host_name().unwrap_or_else(|| "unknown".to_string());
 
     Ok(SystemInfo {
         os,
@@ -114,4 +116,33 @@ pub async fn check_for_updates(app: AppHandle) -> Result<UpdateInfo, String> {
         },
         Err(e) => Err(format!("Updater not available: {e}")),
     }
+}
+
+#[tauri::command]
+pub fn store_credential(key: String, value: String) -> Result<(), String> {
+    let entry = keyring::Entry::new("haqly-erp", &key)
+        .map_err(|e| format!("Failed to create keyring entry: {e}"))?;
+    entry
+        .set_password(&value)
+        .map_err(|e| format!("Failed to store credential: {e}"))?;
+    Ok(())
+}
+
+#[tauri::command]
+pub fn get_credential(key: String) -> Result<String, String> {
+    let entry = keyring::Entry::new("haqly-erp", &key)
+        .map_err(|e| format!("Failed to create keyring entry: {e}"))?;
+    entry
+        .get_password()
+        .map_err(|e| format!("Failed to get credential: {e}"))
+}
+
+#[tauri::command]
+pub fn delete_credential(key: String) -> Result<(), String> {
+    let entry = keyring::Entry::new("haqly-erp", &key)
+        .map_err(|e| format!("Failed to create keyring entry: {e}"))?;
+    entry
+        .delete_password()
+        .map_err(|e| format!("Failed to delete credential: {e}"))?;
+    Ok(())
 }

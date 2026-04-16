@@ -4,12 +4,19 @@
 from __future__ import annotations
 
 from datetime import datetime
+from decimal import Decimal, ROUND_HALF_UP
 from typing import Any, Dict, List, Optional
 
 from ..core.exceptions import AccountingError
 from ..core.logging import get_logger
 
 logger = get_logger(__name__)
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
 
 TEMPORARY_ACCOUNT_TYPES = {"REVENUE", "EXPENSE"}
 PERMANENT_ACCOUNT_TYPES = {"ASSET", "LIABILITY", "EQUITY"}
@@ -51,19 +58,19 @@ class ClosingEngine:
                 "total": total_expense,
             })
 
-        net_income = round(total_revenue - total_expense, 2)
+        net_income = _money_round(total_revenue - total_expense)
 
-        if abs(net_income) > 0.01:
+        if abs(net_income) > Decimal('0.01'):
             close_is_lines: List[Dict[str, Any]] = []
             if net_income > 0:
                 close_is_lines = [
-                    {"account_code": income_summary_account, "description": "Close income summary — net income", "debit": round(net_income, 2), "credit": 0.0},
-                    {"account_code": retained_earnings_account, "description": "Transfer net income to retained earnings", "debit": 0.0, "credit": round(net_income, 2)},
+                    {"account_code": income_summary_account, "description": "Close income summary — net income", "debit": _money_round(net_income), "credit": Decimal('0')},
+                    {"account_code": retained_earnings_account, "description": "Transfer net income to retained earnings", "debit": Decimal('0'), "credit": _money_round(net_income)},
                 ]
             else:
                 close_is_lines = [
-                    {"account_code": retained_earnings_account, "description": "Transfer net loss to retained earnings", "debit": round(abs(net_income), 2), "credit": 0.0},
-                    {"account_code": income_summary_account, "description": "Close income summary — net loss", "debit": 0.0, "credit": round(abs(net_income), 2)},
+                    {"account_code": retained_earnings_account, "description": "Transfer net loss to retained earnings", "debit": _money_round(abs(net_income)), "credit": Decimal('0')},
+                    {"account_code": income_summary_account, "description": "Close income summary — net loss", "debit": Decimal('0'), "credit": _money_round(abs(net_income))},
                 ]
             closing_entries.append({
                 "type": "close_income_summary",
@@ -119,30 +126,30 @@ class ClosingEngine:
         for bal in all_balances:
             if bal.get("account_type") == "REVENUE":
                 closing_balance = bal.get("closing_balance", 0)
-                if abs(closing_balance) > 0.01:
+                if abs(closing_balance) > Decimal('0.01'):
                     lines = [
-                        {"account_code": bal["account_code"], "description": f"Close {bal['account_name']}", "debit": round(abs(closing_balance), 2), "credit": 0.0},
-                        {"account_code": income_summary_account, "description": f"Transfer {bal['account_name']} to income summary", "debit": 0.0, "credit": round(abs(closing_balance), 2)},
+                        {"account_code": bal["account_code"], "description": f"Close {bal['account_name']}", "debit": _money_round(abs(closing_balance)), "credit": 0.0},
+                        {"account_code": income_summary_account, "description": f"Transfer {bal['account_name']} to income summary", "debit": 0.0, "credit": _money_round(abs(closing_balance))},
                     ]
                     closing_entries.append({"type": "close_revenue", "account_code": bal["account_code"], "account_name": bal["account_name"], "amount": closing_balance, "lines": lines})
                     revenue_total += closing_balance
 
             elif bal.get("account_type") == "EXPENSE":
                 closing_balance = bal.get("closing_balance", 0)
-                if abs(closing_balance) > 0.01:
+                if abs(closing_balance) > Decimal('0.01'):
                     lines = [
-                        {"account_code": income_summary_account, "description": f"Transfer {bal['account_name']} to income summary", "debit": round(abs(closing_balance), 2), "credit": 0.0},
-                        {"account_code": bal["account_code"], "description": f"Close {bal['account_name']}", "debit": 0.0, "credit": round(abs(closing_balance), 2)},
+                        {"account_code": income_summary_account, "description": f"Transfer {bal['account_name']} to income summary", "debit": _money_round(abs(closing_balance)), "credit": 0.0},
+                        {"account_code": bal["account_code"], "description": f"Close {bal['account_name']}", "debit": 0.0, "credit": _money_round(abs(closing_balance))},
                     ]
                     closing_entries.append({"type": "close_expense", "account_code": bal["account_code"], "account_name": bal["account_name"], "amount": closing_balance, "lines": lines})
                     expense_total += closing_balance
 
-        net_income = round(revenue_total - expense_total, 2)
+        net_income = _money_round(revenue_total - expense_total)
 
-        tax_provision = round(float(data.get("tax_provision", 0)), 2)
-        bonus_provision = round(float(data.get("bonus_provision", 0)), 2)
-        dividend_declared = round(float(data.get("dividends_declared", 0)), 2)
-        transfer_to_reserve = round(float(data.get("transfer_to_reserve", 0)), 2)
+        tax_provision = round(Decimal(str(data.get("tax_provision", 0))), 2)
+        bonus_provision = round(Decimal(str(data.get("bonus_provision", 0))), 2)
+        dividend_declared = round(Decimal(str(data.get("dividends_declared", 0))), 2)
+        transfer_to_reserve = round(Decimal(str(data.get("transfer_to_reserve", 0))), 2)
 
         appropriation_lines: List[Dict[str, Any]] = []
 
@@ -156,15 +163,15 @@ class ClosingEngine:
             appropriation_lines.append({"account_code": "2900", "description": "Bonus provision", "debit": 0.0, "credit": bonus_provision})
             closing_entries.append({"type": "bonus_provision", "amount": bonus_provision, "lines": appropriation_lines[-2:]})
 
-        retained_after_appropriations = round(net_income - tax_provision - bonus_provision - dividend_declared - transfer_to_reserve, 2)
+        retained_after_appropriations = _money_round(net_income - tax_provision - bonus_provision - dividend_declared - transfer_to_reserve)
 
         is_close_lines: List[Dict[str, Any]] = []
         if net_income > 0:
-            is_close_lines.append({"account_code": income_summary_account, "description": "Close income summary", "debit": round(net_income, 2), "credit": 0.0})
-            is_close_lines.append({"account_code": retained_earnings_account, "description": "Transfer to retained earnings", "debit": 0.0, "credit": round(net_income, 2)})
+            is_close_lines.append({"account_code": income_summary_account, "description": "Close income summary", "debit": _money_round(net_income), "credit": 0.0})
+            is_close_lines.append({"account_code": retained_earnings_account, "description": "Transfer to retained earnings", "debit": 0.0, "credit": _money_round(net_income)})
         elif net_income < 0:
-            is_close_lines.append({"account_code": retained_earnings_account, "description": "Absorb net loss", "debit": round(abs(net_income), 2), "credit": 0.0})
-            is_close_lines.append({"account_code": income_summary_account, "description": "Close income summary (loss)", "debit": 0.0, "credit": round(abs(net_income), 2)})
+            is_close_lines.append({"account_code": retained_earnings_account, "description": "Absorb net loss", "debit": _money_round(abs(net_income)), "credit": 0.0})
+            is_close_lines.append({"account_code": income_summary_account, "description": "Close income summary (loss)", "debit": 0.0, "credit": _money_round(abs(net_income))})
 
         if is_close_lines:
             closing_entries.append({"type": "close_income_summary", "amount": abs(net_income), "lines": is_close_lines})
@@ -187,8 +194,8 @@ class ClosingEngine:
             "company_id": company_id,
             "closing_type": "year_end",
             "fiscal_year_end": fiscal_year_end,
-            "revenue_total": round(revenue_total, 2),
-            "expense_total": round(expense_total, 2),
+            "revenue_total": _money_round(revenue_total),
+            "expense_total": _money_round(expense_total),
             "net_income_before_appropriations": net_income,
             "appropriations": {
                 "tax_provision": tax_provision,
@@ -290,32 +297,32 @@ class ClosingEngine:
             if bal.get("account_type") != account_type:
                 continue
             closing_balance = bal.get("closing_balance", 0)
-            if abs(closing_balance) < 0.01:
+            if abs(closing_balance) < Decimal('0.01'):
                 continue
 
             if account_type == "REVENUE":
-                lines.append({"account_code": bal["account_code"], "description": f"Close {bal['account_name']}", "debit": round(abs(closing_balance), 2), "credit": 0.0})
+                lines.append({"account_code": bal["account_code"], "description": f"Close {bal['account_name']}", "debit": _money_round(abs(closing_balance)), "credit": 0.0})
                 total += closing_balance
             elif account_type == "EXPENSE":
-                lines.append({"account_code": bal["account_code"], "description": f"Close {bal['account_name']}", "debit": 0.0, "credit": round(abs(closing_balance), 2)})
+                lines.append({"account_code": bal["account_code"], "description": f"Close {bal['account_name']}", "debit": 0.0, "credit": _money_round(abs(closing_balance))})
                 total += closing_balance
 
         if lines:
             if account_type == "REVENUE":
-                lines.append({"account_code": income_summary_account, "description": "Transfer revenue to income summary", "debit": 0.0, "credit": round(total, 2)})
+                lines.append({"account_code": income_summary_account, "description": "Transfer revenue to income summary", "debit": 0.0, "credit": _money_round(total)})
             elif account_type == "EXPENSE":
-                lines.append({"account_code": income_summary_account, "description": "Transfer expenses to income summary", "debit": round(total, 2), "credit": 0.0})
+                lines.append({"account_code": income_summary_account, "description": "Transfer expenses to income summary", "debit": _money_round(total), "credit": 0.0})
 
-        return lines, round(total, 2)
+        return lines, _money_round(total)
 
     def _process_dividends(self, data: Dict[str, Any], retained_earnings_account: str) -> List[Dict[str, Any]]:
         """Process dividend declarations as part of closing."""
-        dividends = float(data.get("dividends_declared", 0))
+        dividends = Decimal(str(data.get("dividends_declared", 0)))
         if dividends <= 0:
             return []
         return [
-            {"account_code": retained_earnings_account, "description": "Dividends declared", "debit": round(dividends, 2), "credit": 0.0},
-            {"account_code": "3300", "description": "Dividends payable", "debit": 0.0, "credit": round(dividends, 2)},
+            {"account_code": retained_earnings_account, "description": "Dividends declared", "debit": _money_round(dividends), "credit": 0.0},
+            {"account_code": "3300", "description": "Dividends payable", "debit": 0.0, "credit": _money_round(dividends)},
         ]
 
     def health_check(self) -> bool:

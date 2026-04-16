@@ -1,9 +1,9 @@
-// Author: Quadri Atharu
-
 use axum::body::Body;
 use axum::http::{HeaderName, HeaderValue, Request, StatusCode};
 use axum::response::{IntoResponse, Response};
-use governor::clock::DefaultClock;
+use axum::Json;
+use governor::clock::{Clock, DefaultClock};
+use governor::clock::QuantaClock;
 use governor::state::keyed::DefaultKeyedStateStore;
 use governor::{Quota, RateLimiter};
 use std::convert::Infallible;
@@ -16,14 +16,13 @@ use std::task::{Context, Poll};
 use std::time::Duration;
 use tower::Layer;
 use tower::Service;
-use tower_governor::governor::GovernorConfigBuilder;
 
 const AUTH_LIMIT: u32 = 5;
 const API_LIMIT: u32 = 60;
 const EINVOICING_LIMIT: u32 = 20;
 const WINDOW_SECS: u64 = 60;
 
-type SharedLimiter = Arc<RateLimiter<IpAddr, DefaultKeyedStateStore, DefaultClock>>;
+type SharedLimiter = Arc<RateLimiter<IpAddr, DefaultKeyedStateStore<IpAddr>, DefaultClock>>;
 
 #[derive(Clone, Copy, PartialEq, Eq)]
 enum RateLimitTier {
@@ -43,18 +42,15 @@ impl RateLimitTier {
 
     fn quota(&self) -> Quota {
         match self {
-            Self::Auth => Quota::with_period(
-                Duration::from_secs(WINDOW_SECS) / AUTH_LIMIT,
-                NonZeroU32::new(AUTH_LIMIT).unwrap(),
-            ),
-            Self::Api => Quota::with_period(
-                Duration::from_secs(WINDOW_SECS) / API_LIMIT,
-                NonZeroU32::new(API_LIMIT).unwrap(),
-            ),
-            Self::EInvoicing => Quota::with_period(
-                Duration::from_secs(WINDOW_SECS) / EINVOICING_LIMIT,
-                NonZeroU32::new(EINVOICING_LIMIT).unwrap(),
-            ),
+            Self::Auth => Quota::with_period(Duration::from_secs(WINDOW_SECS) / AUTH_LIMIT)
+                .unwrap()
+                .allow_burst(NonZeroU32::new(AUTH_LIMIT).unwrap()),
+            Self::Api => Quota::with_period(Duration::from_secs(WINDOW_SECS) / API_LIMIT)
+                .unwrap()
+                .allow_burst(NonZeroU32::new(API_LIMIT).unwrap()),
+            Self::EInvoicing => Quota::with_period(Duration::from_secs(WINDOW_SECS) / EINVOICING_LIMIT)
+                .unwrap()
+                .allow_burst(NonZeroU32::new(EINVOICING_LIMIT).unwrap()),
         }
     }
 }
@@ -110,27 +106,19 @@ pub struct RateLimitLayer {
 
 impl RateLimitLayer {
     pub fn new() -> Self {
-        let _auth_builder = GovernorConfigBuilder::default()
-            .per_second(1)
-            .burst_size(AUTH_LIMIT);
-
-        let _einvoicing_builder = GovernorConfigBuilder::default()
-            .per_second(1)
-            .burst_size(EINVOICING_LIMIT);
-
-        let _api_builder = GovernorConfigBuilder::default()
-            .per_second(1)
-            .burst_size(API_LIMIT);
-
         Self {
             limiters: Arc::new(RateLimiters {
                 auth: Arc::new(RateLimiter::keyed(RateLimitTier::Auth.quota())),
                 api: Arc::new(RateLimiter::keyed(RateLimitTier::Api.quota())),
-                einvoicing: Arc::new(
-                    RateLimiter::keyed(RateLimitTier::EInvoicing.quota()),
-                ),
+                einvoicing: Arc::new(RateLimiter::keyed(RateLimitTier::EInvoicing.quota())),
             }),
         }
+    }
+}
+
+impl Default for RateLimitLayer {
+    fn default() -> Self {
+        Self::new()
     }
 }
 
@@ -165,7 +153,7 @@ where
     }
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
-        let inner = self.inner.clone();
+        let mut inner = self.inner.clone();
         let limiters = self.limiters.clone();
 
         Box::pin(async move {
@@ -182,7 +170,7 @@ where
             let limit = tier.limit();
             let reset = chrono::Utc::now().timestamp() + WINDOW_SECS as i64;
 
-            match limiter.check(&ip) {
+            match limiter.check_key(&ip) {
                 Ok(_) => {
                     let mut response = inner.call(req).await?;
                     let headers = response.headers_mut();
@@ -203,7 +191,7 @@ where
                     Ok(response)
                 }
                 Err(not_until) => {
-                    let wait_time = not_until.wait_time_from(std::time::Instant::now());
+                    let wait_time: std::time::Duration = not_until.wait_time_from(governor::clock::QuantaClock::default().now());
                     let retry_after = wait_time.as_secs().max(1);
 
                     let body = serde_json::json!({
@@ -234,7 +222,7 @@ where
                                 make_header_value_i64(reset),
                             ),
                         ],
-                        serde_json::to_string(&body).unwrap_or_default(),
+                        Json(body),
                     )
                         .into_response())
                 }

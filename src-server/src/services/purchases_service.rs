@@ -17,7 +17,7 @@ fn resolve_wht_rate(category: &str) -> BigDecimal {
     match category.to_lowercase().as_str() {
         "contract" | "contracts" => BigDecimal::from(5),
         "consulting" | "consultancy" | "professional" | "professional_services" => BigDecimal::from(5),
-        "rent" | "lease" => BigDecimal::from_str_radix("7.5", 10).unwrap_or(BigDecimal::from(7)),
+        "rent" | "lease" => BigDecimal::from(10),
         "commission" => BigDecimal::from(5),
         "royalty" | "royalties" => BigDecimal::from(5),
         "management_fee" | "management_fees" => BigDecimal::from(5),
@@ -28,12 +28,27 @@ fn resolve_wht_rate(category: &str) -> BigDecimal {
     }
 }
 
+fn resolve_wht_rate_for_individual(category: &str) -> BigDecimal {
+    match category.to_lowercase().as_str() {
+        "contract" | "contracts" => BigDecimal::from(5),
+        "consulting" | "consultancy" | "professional" | "professional_services" => BigDecimal::from(5),
+        "rent" | "lease" => BigDecimal::from(5),
+        "commission" => BigDecimal::from(5),
+        "royalty" | "royalties" => BigDecimal::from(5),
+        "management_fee" | "management_fees" => BigDecimal::from(5),
+        "technical_fee" | "technical_fees" => BigDecimal::from(5),
+        "interest" => BigDecimal::from(5),
+        "dividend" => BigDecimal::from(5),
+        _ => BigDecimal::from(0),
+    }
+}
+
 #[derive(Clone)]
 pub struct PurchasesService {
     pub pool: PgPool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct WhtSummaryItem {
     pub wht_category: String,
     pub wht_rate: BigDecimal,

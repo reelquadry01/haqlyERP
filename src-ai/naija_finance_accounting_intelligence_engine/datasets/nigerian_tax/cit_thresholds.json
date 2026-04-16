@@ -1,23 +1,32 @@
 {
-  "small_company": {
-    "max_turnover": 250000,
-    "rate": 0.00,
-    "conditions": "Turnover below 250k"
+  "metadata": {
+    "author": "Quadri Atharu",
+    "project": "HAQLY ERP",
+    "description": "Nigerian CIT thresholds — updated per Tax Reform Acts 2025",
+    "last_updated": "2026-04-15",
+    "disclaimer": "Based on Nigeria Tax Reform Acts 2025 (effective 2026). Verify current rates with NRS."
   },
-  "medium_company_manufacturing": {
-    "max_turnover": 1000000,
+  "small_company": {
+    "max_turnover": 50000000,
+    "rate": 0.00,
+    "conditions": "Turnover up to NGN 50M — exempt from CIT (Tax Reform 2025)"
+  },
+  "medium_company": {
+    "min_turnover": 50000001,
+    "max_turnover": 250000000,
     "rate": 0.15,
-    "conditions": "Only manufacturing and agricultural companies"
+    "conditions": "All companies with turnover NGN 50M-250M (Tax Reform 2025)"
   },
   "large_company": {
-    "rate": 0.30,
-    "conditions": "All other companies or turnover above 1M"
+    "min_turnover": 250000001,
+    "rate": 0.25,
+    "conditions": "All companies with turnover above NGN 250M (Tax Reform 2025, was 30%)"
   },
   "minimum_tax": {
     "rate": 0.005,
-    "calculation": "0.5% of gross turnover, or 0.5% of gross profit, whichever is higher",
-    "exempt_years": 4,
-    "exempt_condition": "First 4 years of operations for companies with at least 25% Nigerian equity"
+    "calculation": "0.5% of gross turnover",
+    "exempt_threshold": 50000000,
+    "exempt_condition": "Companies with turnover <= NGN 50M exempt from minimum tax (Tax Reform 2025, was NGN 25M)"
   },
   "capital_allowances": [
     {
@@ -51,6 +60,19 @@
       "annual_allowance": 0.50
     }
   ],
-  "education_tax_rate": 0.02,
-  "authority": "Federal Inland Revenue Service"
+  "education_tax_rate": 0.01,
+  "authority": "Nigeria Revenue Service (NRS)",
+  "cgt_progressive_rates": {
+    "up_to_50m": 0.10,
+    "50m_to_250m": 0.15,
+    "above_250m": 0.20
+  },
+  "paye_brackets": {
+    "band_1": {"max": 800000, "rate": 0.00, "description": "First NGN 800K — 0%"},
+    "band_2": {"max": 3200000, "rate": 0.15, "description": "NGN 800K-3.2M — 15%"},
+    "band_3": {"max": 7200000, "rate": 0.20, "description": "NGN 3.2M-7.2M — 20%"},
+    "band_4": {"max": 14000000, "rate": 0.25, "description": "NGN 7.2M-14M — 25%"},
+    "band_5": {"max": 25000000, "rate": 0.30, "description": "NGN 14M-25M — 30%"},
+    "band_6": {"max": null, "rate": 0.35, "description": "Above NGN 25M — 35%"}
+  }
 }

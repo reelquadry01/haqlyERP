@@ -132,7 +132,7 @@ pub struct ChainVerificationResult {
     pub is_intact: bool,
     pub total_entries: usize,
     pub first_broken_entry_id: Option<Uuid>,
-    pub verified_at: chrono::Utc,
+    pub verified_at: chrono::DateTime<chrono::Utc>,
 }
 
 pub async fn verify_chain(pool: &PgPool) -> Result<ChainVerificationResult, String> {

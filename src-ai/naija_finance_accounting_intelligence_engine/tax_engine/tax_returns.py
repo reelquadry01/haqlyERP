@@ -7,6 +7,14 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -26,7 +34,7 @@ class TaxReturnGenerator:
         tin: str = "",
     ) -> Dict[str, Any]:
         """Generate VAT return form data (VAT Form 001)."""
-        net_vat = round(output_vat - input_vat + adjustments, 2)
+        net_vat = _money_round(output_vat - input_vat + adjustments)
 
         return {
             "form_type": "VAT001",
@@ -38,14 +46,14 @@ class TaxReturnGenerator:
             "period_end": period_end,
             "filing_deadline": self._monthly_deadline(period_end),
             "fields": {
-                "box_a": {"label": "Total output VAT collected", "value": round(output_vat, 2)},
-                "box_b": {"label": "Total input VAT claimed", "value": round(input_vat, 2)},
-                "box_c": {"label": "Adjustments", "value": round(adjustments, 2)},
+                "box_a": {"label": "Total output VAT collected", "value": _money_round(output_vat)},
+                "box_b": {"label": "Total input VAT claimed", "value": _money_round(input_vat)},
+                "box_c": {"label": "Adjustments", "value": _money_round(adjustments)},
                 "box_d": {"label": "Net VAT payable/(refund)", "value": net_vat},
             },
             "tax_payable": abs(net_vat) if net_vat > 0 else 0,
             "tax_refund": abs(net_vat) if net_vat < 0 else 0,
-            "payment_instructions": "Pay to FIRS designated account before the 21st of the following month",
+            "payment_instructions": "Pay to NRS designated account before the 21st of the following month",
             "penalty_for_late_filing": "N50,000 first month, N25,000 each subsequent month",
             "interest_on_late_payment": "At CBN monetary policy rate + 5%",
             "status": "draft",
@@ -64,7 +72,7 @@ class TaxReturnGenerator:
         wht_credit: float = 0,
     ) -> Dict[str, Any]:
         """Generate CIT return form data (CIT Form)."""
-        net_cit = round(cit_payable - wht_credit, 2)
+        net_cit = _money_round(cit_payable - wht_credit)
         total_payable = round(net_cit + education_tax, 0)
 
         return {
@@ -76,15 +84,15 @@ class TaxReturnGenerator:
             "fiscal_year": fiscal_year,
             "filing_deadline": f"{fiscal_year + 1}-06-30",
             "fields": {
-                "assessable_profit": {"label": "Assessable Profit", "value": round(assessable_profit, 2)},
-                "cit_payable": {"label": "CIT Payable", "value": round(cit_payable, 2)},
-                "education_tax": {"label": "Education Tax (2%)", "value": round(education_tax, 2)},
-                "wht_credit": {"label": "WHT Tax Credit", "value": round(wht_credit, 2)},
+                "assessable_profit": {"label": "Assessable Profit", "value": _money_round(assessable_profit)},
+                "cit_payable": {"label": "CIT Payable", "value": _money_round(cit_payable)},
+                "education_tax": {"label": "Education Tax (1%)", "value": _money_round(education_tax)},
+                "wht_credit": {"label": "WHT Tax Credit", "value": _money_round(wht_credit)},
                 "net_cit": {"label": "Net CIT After WHT Credit", "value": net_cit},
                 "total_payable": {"label": "Total Tax Payable (CIT + Edu Tax)", "value": total_payable},
             },
             "tax_payable": total_payable,
-            "payment_instructions": "Pay to FIRS designated account; filing due 6 months after financial year-end",
+            "payment_instructions": "Pay to NRS designated account; filing due 6 months after financial year-end",
             "penalty_for_late_filing": "N25,000 first month, N12,500 each subsequent month",
             "status": "draft",
             "generated_at": datetime.now().isoformat(),
@@ -110,12 +118,12 @@ class TaxReturnGenerator:
             "period_start": period_start,
             "period_end": period_end,
             "fields": {
-                "total_wht_deducted": {"label": "Total WHT Deducted and Remitted", "value": round(wht_total, 2)},
+                "total_wht_deducted": {"label": "Total WHT Deducted and Remitted", "value": _money_round(wht_total)},
                 "number_of_beneficiaries": {"label": "Number of Beneficiaries", "value": len(wht_line_items)},
             },
             "line_items": wht_line_items,
             "tax_payable": 0,
-            "filing_note": "WHT must be remitted to FIRS by the 21st of the following month",
+            "filing_note": "WHT must be remitted to NRS by the 21st of the following month",
             "certificate_issuance": "WHT certificates must be issued to beneficiaries within the same period",
             "status": "draft",
             "generated_at": datetime.now().isoformat(),
@@ -139,11 +147,11 @@ class TaxReturnGenerator:
             "tin": tin,
             "fiscal_year": fiscal_year,
             "fields": {
-                "chargeable_gains": {"label": "Total Chargeable Gains", "value": round(chargeable_gains, 2)},
-                "cgt_rate": {"label": "CGT Rate", "value": "10%"},
-                "cgt_payable": {"label": "CGT Payable", "value": round(cgt_amount, 2)},
+                "chargeable_gains": {"label": "Total Chargeable Gains", "value": _money_round(chargeable_gains)},
+                "cgt_rate": {"label": "CGT Rate (Progressive)", "value": "10%/15%/20%"},
+                "cgt_payable": {"label": "CGT Payable", "value": _money_round(cgt_amount)},
             },
-            "tax_payable": round(cgt_amount, 2),
+            "tax_payable": _money_round(cgt_amount),
             "status": "draft",
             "generated_at": datetime.now().isoformat(),
         }
@@ -157,7 +165,7 @@ class TaxReturnGenerator:
                 return datetime(pe.year + 1, 1, 21).isoformat()
             return datetime(pe.year, pe.month + 1, 21).isoformat()
         except (ValueError, TypeError):
-            return "Check with FIRS for deadline"
+            return "Check with NRS for deadline"
 
     def health_check(self) -> bool:
         return True

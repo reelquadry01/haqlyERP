@@ -74,7 +74,7 @@ where
     }
 
     fn call(&mut self, req: Request<Body>) -> Self::Future {
-        let inner = self.inner.clone();
+        let mut inner = self.inner.clone();
         let pool = self.pool.clone();
 
         let method = req.method().clone().to_string();
@@ -85,7 +85,7 @@ where
             .or_else(|| req.headers().get("x-real-ip"))
             .and_then(|v| v.to_str().ok())
             .map(|s| {
-                let ips = s.split(',');
+                let mut ips = s.split(',');
                 ips.next().unwrap_or(s).trim().to_string()
             });
         let auth_header = req

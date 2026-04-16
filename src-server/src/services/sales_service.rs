@@ -1,6 +1,7 @@
 // Author: Quadri Atharu
 use anyhow::{anyhow, Result};
 use bigdecimal::BigDecimal;
+use num_traits::Num;
 use serde::{Deserialize, Serialize};
 use sqlx::PgPool;
 use uuid::Uuid;
@@ -23,14 +24,14 @@ pub struct SalesService {
     pub pool: PgPool,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct InvoiceAgingBucket {
     pub bucket: String,
     pub invoice_count: i64,
     pub total_outstanding: BigDecimal,
 }
 
-#[derive(Debug, Clone, Serialize, Deserialize)]
+#[derive(Debug, Clone, Serialize, Deserialize, sqlx::FromRow)]
 pub struct RevenueSummary {
     pub total_revenue: BigDecimal,
     pub net_revenue: BigDecimal,

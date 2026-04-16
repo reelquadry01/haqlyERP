@@ -91,12 +91,12 @@ impl TaxService {
     }
 
     pub fn compute_cit(&self, taxable_profit: &BigDecimal, annual_revenue: &BigDecimal) -> TaxComputationResult {
-        let (rate, note) = if *annual_revenue <= BigDecimal::from(25_000_000) {
-            (BigDecimal::from(0), "Exempt: annual revenue <= NGN 25M (Small business)".to_string())
-        } else if *annual_revenue <= BigDecimal::from(100_000_000) {
-            (BigDecimal::from(20), "20% for medium companies (revenue <= NGN 100M)".to_string())
+        let (rate, note) = if *annual_revenue <= BigDecimal::from(50_000_000) {
+            (BigDecimal::from(0), "Exempt: annual revenue <= NGN 50M (Small company - Tax Reform 2025)".to_string())
+        } else if *annual_revenue <= BigDecimal::from(250_000_000) {
+            (BigDecimal::from(15), "15% for medium companies (revenue NGN 50M-250M - Tax Reform 2025)".to_string())
         } else {
-            (BigDecimal::from(30), "30% for large companies (revenue > NGN 100M)".to_string())
+            (BigDecimal::from(25), "25% for large companies (revenue > NGN 250M - Tax Reform 2025)".to_string())
         };
 
         let tax_amount = taxable_profit * &rate / BigDecimal::from(100);
@@ -111,7 +111,7 @@ impl TaxService {
     }
 
     pub fn compute_education_tax(&self, assessable_profit: &BigDecimal) -> TaxComputationResult {
-        let rate = BigDecimal::from(2);
+        let rate = BigDecimal::from(1);
         let tax_amount = assessable_profit * &rate / BigDecimal::from(100);
         TaxComputationResult {
             tax_type: "Education Tax".to_string(),
@@ -119,12 +119,19 @@ impl TaxService {
             rate,
             tax_amount,
             currency: "NGN".to_string(),
-            notes: Some("2% Education Tax on assessable profit".to_string()),
+            notes: Some("1% Education Tax on assessable profit (Tax Reform 2025, NDDC merged)".to_string()),
         }
     }
 
     pub fn compute_cgt(&self, capital_gain: &BigDecimal) -> TaxComputationResult {
-        let rate = BigDecimal::from(10);
+        let (rate, note) = if *capital_gain <= BigDecimal::from(50_000_000) {
+            (BigDecimal::from(10), "10% CGT on gains up to NGN 50M (Tax Reform 2025)".to_string())
+        } else if *capital_gain <= BigDecimal::from(250_000_000) {
+            (BigDecimal::from(15), "15% CGT on gains NGN 50M-250M (Tax Reform 2025)".to_string())
+        } else {
+            (BigDecimal::from(20), "20% CGT on gains above NGN 250M (Tax Reform 2025)".to_string())
+        };
+
         let tax_amount = capital_gain * &rate / BigDecimal::from(100);
         TaxComputationResult {
             tax_type: "CGT".to_string(),
@@ -132,7 +139,7 @@ impl TaxService {
             rate,
             tax_amount,
             currency: "NGN".to_string(),
-            notes: Some("10% Capital Gains Tax".to_string()),
+            notes: Some(note),
         }
     }
 
@@ -254,7 +261,7 @@ mod tests {
     fn test_cit_small_business_exemption() {
         let svc = TaxService::new(mock_pool());
         let profit = BigDecimal::from(5_000_000);
-        let revenue = BigDecimal::from(20_000_000);
+        let revenue = BigDecimal::from(40_000_000);
         let result = svc.compute_cit(&profit, &revenue);
 
         assert_eq!(result.tax_type, "CIT");
@@ -266,23 +273,68 @@ mod tests {
     fn test_cit_medium_company() {
         let svc = TaxService::new(mock_pool());
         let profit = BigDecimal::from(50_000_000);
-        let revenue = BigDecimal::from(80_000_000);
+        let revenue = BigDecimal::from(150_000_000);
         let result = svc.compute_cit(&profit, &revenue);
 
         assert_eq!(result.tax_type, "CIT");
-        assert_eq!(result.rate, BigDecimal::from(20));
-        assert_eq!(result.tax_amount, BigDecimal::from(10_000_000));
+        assert_eq!(result.rate, BigDecimal::from(15));
+        assert_eq!(result.tax_amount, BigDecimal::from(7_500_000));
     }
 
     #[test]
-    fn test_education_tax_2_percent() {
+    fn test_cit_large_company() {
+        let svc = TaxService::new(mock_pool());
+        let profit = BigDecimal::from(200_000_000);
+        let revenue = BigDecimal::from(500_000_000);
+        let result = svc.compute_cit(&profit, &revenue);
+
+        assert_eq!(result.tax_type, "CIT");
+        assert_eq!(result.rate, BigDecimal::from(25));
+        assert_eq!(result.tax_amount, BigDecimal::from(50_000_000));
+    }
+
+    #[test]
+    fn test_education_tax_1_percent() {
         let svc = TaxService::new(mock_pool());
         let profit = BigDecimal::from(50_000_000);
         let result = svc.compute_education_tax(&profit);
 
         assert_eq!(result.tax_type, "Education Tax");
-        assert_eq!(result.rate, BigDecimal::from(2));
-        assert_eq!(result.tax_amount, BigDecimal::from(1_000_000));
+        assert_eq!(result.rate, BigDecimal::from(1));
+        assert_eq!(result.tax_amount, BigDecimal::from(500_000));
         assert_eq!(result.currency, "NGN");
+    }
+
+    #[test]
+    fn test_cgt_progressive_10_percent() {
+        let svc = TaxService::new(mock_pool());
+        let gain = BigDecimal::from(30_000_000);
+        let result = svc.compute_cgt(&gain);
+
+        assert_eq!(result.tax_type, "CGT");
+        assert_eq!(result.rate, BigDecimal::from(10));
+        assert_eq!(result.tax_amount, BigDecimal::from(3_000_000));
+    }
+
+    #[test]
+    fn test_cgt_progressive_15_percent() {
+        let svc = TaxService::new(mock_pool());
+        let gain = BigDecimal::from(100_000_000);
+        let result = svc.compute_cgt(&gain);
+
+        assert_eq!(result.tax_type, "CGT");
+        assert_eq!(result.rate, BigDecimal::from(15));
+        assert_eq!(result.tax_amount, BigDecimal::from(15_000_000));
+    }
+
+    #[test]
+    fn test_cgt_progressive_20_percent() {
+        let svc = TaxService::new(mock_pool());
+        let gain = BigDecimal::from(300_000_000);
+        let result = svc.compute_cgt(&gain);
+
+        assert_eq!(result.tax_type, "CGT");
+        assert_eq!(result.rate, BigDecimal::from(20));
+        assert_eq!(result.tax_amount, BigDecimal::from(60_000_000));
     }
 }

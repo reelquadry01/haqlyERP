@@ -7,6 +7,14 @@ from datetime import datetime
 from typing import Any, Dict, List
 
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -38,7 +46,7 @@ class RollingForecastEngine:
             if actual_values and len(actual_values) >= 2:
                 trend = self._compute_trend(actual_values, remaining_periods, trend_method)
             elif budget_values:
-                avg = round(sum(budget_values) / len(budget_values), 2) if budget_values else 0
+                avg = _money_round(sum(budget_values) / len(budget_values)) if budget_values else 0
                 trend = [avg] * remaining_periods
             else:
                 trend = [0.0] * remaining_periods
@@ -112,7 +120,7 @@ class RollingForecastEngine:
     def _moving_average_trend(values: List[float], periods: int) -> List[float]:
         """Moving average forecast."""
         window = min(3, len(values))
-        avg = round(sum(values[-window:]) / window, 2)
+        avg = _money_round(sum(values[-window:]) / window)
         return [avg] * periods
 
     @staticmethod
@@ -122,7 +130,7 @@ class RollingForecastEngine:
         smoothed = values[0]
         for v in values[1:]:
             smoothed = alpha * v + (1 - alpha) * smoothed
-        return [round(smoothed, 2)] * periods
+        return [_money_round(smoothed)] * periods
 
     def health_check(self) -> bool:
         return True

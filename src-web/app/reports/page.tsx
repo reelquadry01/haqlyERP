@@ -2,7 +2,7 @@
 
 "use client";
 
-import { useEffect, useState, useCallback } from "react";
+import React, { useEffect, useState, useCallback, Fragment } from "react";
 import { WorkspaceShell } from "@/components/workspace-shell";
 import { getToken } from "@/lib/session";
 import { apiGet } from "@/lib/api";
@@ -136,7 +136,7 @@ export default function ReportsPage() {
   const [companies, setCompanies] = useState<Company[]>([]);
   const [selectedCompany, setSelectedCompany] = useState<string>("");
   const [periodFrom, setPeriodFrom] = useState(new Date().toISOString().split("T")[0].slice(0, 7));
-  const [periodTo, setPeriodTo] = useState(new Date().toISOString().split("T")[0].slice(0, 07));
+  const [periodTo, setPeriodTo] = useState(new Date().toISOString().split("T")[0].slice(0, 7));
   const [comparisonFrom, setComparisonFrom] = useState("");
   const [comparisonTo, setComparisonTo] = useState("");
   const [showComparison, setShowComparison] = useState(false);
@@ -335,7 +335,7 @@ export default function ReportsPage() {
           </thead>
           <tbody>
             {incomeStatement.map((section, si) => (
-              <React.Fragment key={si}>
+              <Fragment key={si}>
                 <tr style={{ background: TOKENS.primaryLight }}>
                   <td colSpan={2} style={{ padding: "10px 12px", fontWeight: 700, fontSize: "0.9rem", color: TOKENS.primary, borderBottom: `1px solid ${TOKENS.border}`, fontFamily: TOKENS.fontHeading }}>{section.label}</td>
                 </tr>
@@ -352,7 +352,7 @@ export default function ReportsPage() {
                     {formatCurrency(section.subtotal)}
                   </td>
                 </tr>
-              </React.Fragment>
+              </Fragment>
             ))}
           </tbody>
         </table>
@@ -385,7 +385,7 @@ export default function ReportsPage() {
           </thead>
           <tbody>
             {balanceSheet.map((section, si) => (
-              <React.Fragment key={si}>
+              <Fragment key={si}>
                 <tr style={{ background: TOKENS.primaryLight }}>
                   <td colSpan={2} style={{ padding: "10px 12px", fontWeight: 700, fontSize: "0.9rem", color: TOKENS.primary, borderBottom: `1px solid ${TOKENS.border}`, fontFamily: TOKENS.fontHeading }}>{section.label}</td>
                 </tr>
@@ -402,7 +402,7 @@ export default function ReportsPage() {
                     {formatCurrency(section.subtotal)}
                   </td>
                 </tr>
-              </React.Fragment>
+              </Fragment>
             ))}
             <tr style={{ background: balanced ? TOKENS.successLight : TOKENS.errorLight }}>
               <td style={{ padding: "12px", fontWeight: 700, fontSize: "0.9rem", color: balanced ? TOKENS.success : TOKENS.error, borderTop: `2px solid ${balanced ? TOKENS.success : TOKENS.error}` }}>
@@ -439,7 +439,7 @@ export default function ReportsPage() {
           </thead>
           <tbody>
             {cashFlow.map((section, si) => (
-              <React.Fragment key={si}>
+              <Fragment key={si}>
                 <tr style={{ background: TOKENS.primaryLight }}>
                   <td colSpan={2} style={{ padding: "10px 12px", fontWeight: 700, fontSize: "0.9rem", color: TOKENS.primary, borderBottom: `1px solid ${TOKENS.border}`, fontFamily: TOKENS.fontHeading }}>
                     {section.label === "operating" ? "Cash Flows from Operating Activities" : section.label === "investing" ? "Cash Flows from Investing Activities" : section.label === "financing" ? "Cash Flows from Financing Activities" : section.label}
@@ -458,7 +458,7 @@ export default function ReportsPage() {
                     {formatCurrency(section.subtotal)}
                   </td>
                 </tr>
-              </React.Fragment>
+              </Fragment>
             ))}
             <tr style={{ background: TOKENS.accentLight }}>
               <td style={{ padding: "12px", fontWeight: 700, fontSize: "0.9rem", color: TOKENS.accent, borderTop: `2px solid ${TOKENS.accent}`, fontFamily: TOKENS.fontHeading }}>

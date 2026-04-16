@@ -144,7 +144,7 @@ function computeSchedule(asset: FixedAsset): DepreciationEntry[] {
   return entries;
 }
 
-const emptyAddForm = {
+const emptyAddForm: { name: string; category: string; acquisition_date: string; acquisition_cost: string; residual_value: string; useful_life_years: string; depreciation_method: string; location: string; department: string } = {
   name: "", category: CATEGORIES[0], acquisition_date: "", acquisition_cost: "",
   residual_value: "", useful_life_years: "", depreciation_method: DEP_METHODS[0],
   location: "", department: "",

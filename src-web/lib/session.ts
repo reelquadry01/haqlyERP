@@ -6,8 +6,8 @@ const COMPANY_KEY = "haqly_company";
 async function storeTokenSecure(token: string): Promise<void> {
   if (typeof window !== "undefined" && (window as any).__TAURI__) {
     try {
-      const { Store } = await import("@tauri-apps/plugin-store");
-      const store = new Store(".credentials.json", { encryptionKey: "haqly-erp-store-key" } as any);
+      const { load } = await import("@tauri-apps/plugin-store");
+      const store = await load(".credentials.json", { encryptionKey: "haqly-erp-store-key" } as any);
       await store.set(TOKEN_KEY, token);
       await store.save();
       return;
@@ -21,9 +21,9 @@ async function storeTokenSecure(token: string): Promise<void> {
 async function retrieveTokenSecure(): Promise<string | null> {
   if (typeof window !== "undefined" && (window as any).__TAURI__) {
     try {
-      const { Store } = await import("@tauri-apps/plugin-store");
-      const store = new Store(".credentials.json", { encryptionKey: "haqly-erp-store-key" } as any);
-      return await store.get<string>(TOKEN_KEY);
+      const { load } = await import("@tauri-apps/plugin-store");
+      const store = await load(".credentials.json", { encryptionKey: "haqly-erp-store-key" } as any);
+      return (await store.get<string>(TOKEN_KEY)) ?? null;
     } catch {
       // fallback
     }
@@ -34,8 +34,8 @@ async function retrieveTokenSecure(): Promise<string | null> {
 async function clearTokenSecure(): Promise<void> {
   if (typeof window !== "undefined" && (window as any).__TAURI__) {
     try {
-      const { Store } = await import("@tauri-apps/plugin-store");
-      const store = new Store(".credentials.json", { encryptionKey: "haqly-erp-store-key" } as any);
+      const { load } = await import("@tauri-apps/plugin-store");
+      const store = await load(".credentials.json", { encryptionKey: "haqly-erp-store-key" } as any);
       await store.delete(TOKEN_KEY);
       await store.delete(COMPANY_KEY);
       await store.save();
@@ -51,8 +51,8 @@ async function clearTokenSecure(): Promise<void> {
 async function storeCompanySecure(companyId: string): Promise<void> {
   if (typeof window !== "undefined" && (window as any).__TAURI__) {
     try {
-      const { Store } = await import("@tauri-apps/plugin-store");
-      const store = new Store(".credentials.json", { encryptionKey: "haqly-erp-store-key" } as any);
+      const { load } = await import("@tauri-apps/plugin-store");
+      const store = await load(".credentials.json", { encryptionKey: "haqly-erp-store-key" } as any);
       await store.set(COMPANY_KEY, companyId);
       await store.save();
       return;
@@ -66,9 +66,9 @@ async function storeCompanySecure(companyId: string): Promise<void> {
 async function retrieveCompanySecure(): Promise<string | null> {
   if (typeof window !== "undefined" && (window as any).__TAURI__) {
     try {
-      const { Store } = await import("@tauri-apps/plugin-store");
-      const store = new Store(".credentials.json", { encryptionKey: "haqly-erp-store-key" } as any);
-      return await store.get<string>(COMPANY_KEY);
+      const { load } = await import("@tauri-apps/plugin-store");
+      const store = await load(".credentials.json", { encryptionKey: "haqly-erp-store-key" } as any);
+      return (await store.get<string>(COMPANY_KEY)) ?? null;
     } catch {
       // fallback
     }

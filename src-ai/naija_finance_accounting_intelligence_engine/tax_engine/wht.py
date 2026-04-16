@@ -1,5 +1,12 @@
 # Author: Quadri Atharu
-"""Nigerian Withholding Tax (WHT) computation engine."""
+"""Nigerian Withholding Tax (WHT) computation engine.
+
+Updated per Nigeria Tax Reform Acts 2025 (effective 2026):
+- 5% categories remain unchanged (contractors, consultancy, etc.)
+- 10% categories for company recipients unchanged (dividends, interest, rent)
+- NEW: 5% for individual recipients of dividends, interest, rent
+- Construction: 5% (was 2.5% — old rate was specific to construction contracts)
+"""
 
 from __future__ import annotations
 
@@ -8,6 +15,14 @@ from typing import Any, Dict, List, Optional
 
 from ..core.exceptions import TaxError
 from ..core.logging import get_logger
+from decimal import Decimal, ROUND_HALF_UP
+
+
+def _money_round(value) -> Decimal:
+    if isinstance(value, Decimal):
+        return value.quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+    return Decimal(str(value)).quantize(Decimal('0.01'), rounding=ROUND_HALF_UP)
+
 
 logger = get_logger(__name__)
 
@@ -21,10 +36,16 @@ WHT_RATES: Dict[str, Dict[str, Any]] = {
     "royalties": {"rate": 0.05, "threshold": 0, "description": "Royalty payments"},
     "entertainment": {"rate": 0.05, "threshold": 0, "description": "Contractual entertainment"},
     "director_fees": {"rate": 0.10, "threshold": 0, "description": "Director's fees"},
-    "interest": {"rate": 0.10, "threshold": 0, "description": "Interest income on deposits"},
-    "dividends": {"rate": 0.10, "threshold": 0, "description": "Dividend payments"},
-    "rent": {"rate": 0.10, "threshold": 0, "description": "Rent on land/building"},
+    "interest": {"rate": 0.10, "threshold": 0, "description": "Interest income on deposits (company recipient)"},
+    "dividends": {"rate": 0.10, "threshold": 0, "description": "Dividend payments (company recipient)"},
+    "rent": {"rate": 0.10, "threshold": 0, "description": "Rent on land/building (company recipient)"},
     "hire_purchase": {"rate": 0.05, "threshold": 0, "description": "Hire purchase payments"},
+}
+
+WHT_RATES_INDIVIDUAL: Dict[str, float] = {
+    "interest": 0.05,
+    "dividends": 0.05,
+    "rent": 0.05,
 }
 
 WHT_TREATMENT = {
@@ -35,8 +56,13 @@ WHT_TREATMENT = {
     },
     "10_percent_categories": {
         "tax_credit_available": False,
-        "note": "WHT at 10% is a final tax — no further credit against CIT",
+        "note": "WHT at 10% is a final tax for company recipients — no further credit against CIT",
         "categories": ["interest", "dividends", "rent", "director_fees"],
+    },
+    "individual_recipient_categories": {
+        "tax_credit_available": True,
+        "note": "WHT at 5% for individual recipients of dividends, interest, rent — Tax Reform 2025",
+        "categories": ["interest", "dividends", "rent"],
     },
 }
 
@@ -44,8 +70,18 @@ WHT_TREATMENT = {
 class WhtEngine:
     """Nigerian Withholding Tax computation engine."""
 
-    def compute_wht(self, payment_amount: float, category: str = "consultancy") -> Dict[str, Any]:
-        """Compute WHT on a payment based on category."""
+    def compute_wht(self, payment_amount: float, category: str = "consultancy", recipient_type: str = "company") -> Dict[str, Any]:
+        """Compute WHT on a payment based on category and recipient type.
+
+        Args:
+            payment_amount: The gross payment amount.
+            category: WHT category (e.g. 'dividends', 'interest', 'rent').
+            recipient_type: 'company' or 'individual'. Per Tax Reform 2025,
+                           individual recipients of dividends/interest/rent are taxed at 5%.
+
+        Returns:
+            Dict with WHT computation details.
+        """
         if payment_amount < 0:
             raise TaxError("Payment amount cannot be negative for WHT computation")
 
@@ -56,17 +92,27 @@ class WhtEngine:
             raise TaxError(f"Unknown WHT category: {category}", details={"available_categories": list(WHT_RATES.keys())})
 
         rate = rate_info["rate"]
-        wht_amount = round(payment_amount * rate, 2)
-        net_payment = round(payment_amount - wht_amount, 2)
+        if recipient_type == "individual" and cat in WHT_RATES_INDIVIDUAL:
+            rate = WHT_RATES_INDIVIDUAL[cat]
+
+        wht_amount = _money_round(payment_amount * rate)
+        net_payment = _money_round(payment_amount - wht_amount)
 
         is_final_tax = rate == 0.10
-        treatment = WHT_TREATMENT["10_percent_categories"] if is_final_tax else WHT_TREATMENT["5_percent_categories"]
+        if recipient_type == "individual" and cat in WHT_RATES_INDIVIDUAL:
+            treatment = WHT_TREATMENT["individual_recipient_categories"]
+            is_final_tax = False
+        elif is_final_tax:
+            treatment = WHT_TREATMENT["10_percent_categories"]
+        else:
+            treatment = WHT_TREATMENT["5_percent_categories"]
 
         result: Dict[str, Any] = {
             "tax_type": "WHT",
             "category": cat,
             "category_description": rate_info["description"],
-            "payment_amount": round(payment_amount, 2),
+            "recipient_type": recipient_type,
+            "payment_amount": _money_round(payment_amount),
             "wht_rate": rate,
             "wht_amount": wht_amount,
             "net_payment": net_payment,
@@ -76,7 +122,7 @@ class WhtEngine:
             "computed_at": datetime.now().isoformat(),
         }
 
-        logger.info("wht_computed", category=cat, payment=payment_amount, wht=wht_amount, rate=rate)
+        logger.info("wht_computed", category=cat, payment=payment_amount, wht=wht_amount, rate=rate, recipient=recipient_type)
         return result
 
     def compute_batch_wht(self, payments: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -96,9 +142,9 @@ class WhtEngine:
         return {
             "tax_type": "WHT",
             "batch_size": len(payments),
-            "total_gross_payments": round(total_gross, 2),
-            "total_wht_deducted": round(total_wht, 2),
-            "total_net_payments": round(total_gross - total_wht, 2),
+            "total_gross_payments": _money_round(total_gross),
+            "total_wht_deducted": _money_round(total_wht),
+            "total_net_payments": _money_round(total_gross - total_wht),
             "line_items": results,
             "computed_at": datetime.now().isoformat(),
         }
@@ -109,17 +155,17 @@ class WhtEngine:
         excess = max(wht_deducted - cit_liability, 0)
 
         return {
-            "wht_deducted": round(wht_deducted, 2),
-            "cit_liability": round(cit_liability, 2),
-            "wht_credit_used": round(credit_amount, 2),
-            "excess_wht": round(excess, 2),
-            "net_cit_after_credit": round(cit_liability - credit_amount, 2),
+            "wht_deducted": _money_round(wht_deducted),
+            "cit_liability": _money_round(cit_liability),
+            "wht_credit_used": _money_round(credit_amount),
+            "excess_wht": _money_round(excess),
+            "net_cit_after_credit": _money_round(cit_liability - credit_amount),
             "note": "Only 5% WHT categories qualify as tax credit; 10% categories are final tax",
         }
 
     def generate_wht_certificate_data(self, data: Dict[str, Any]) -> Dict[str, Any]:
         """Generate data for a WHT withholding certificate."""
-        payment_amount = float(data.get("payment_amount", 0))
+        payment_amount = Decimal(str(data.get("payment_amount", 0)))
         category = data.get("category", "consultancy")
         wht_result = self.compute_wht(payment_amount, category)
 
