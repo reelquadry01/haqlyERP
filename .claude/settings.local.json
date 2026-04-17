@@ -52,7 +52,12 @@
       "Bash(sed -i 's/chrono::Utc::now\\(\\)\\\\.naive_utc\\(\\)/chrono::Utc::now\\(\\)/g' src/handlers/auth_handler.rs)",
       "Bash(sed -i 's/company_id: res\\\\.company_id,$/company_id: Some\\(res.company_id\\),/g' src/handlers/auth_handler.rs)",
       "Bash(sed -i 's/company_name\\(&state\\\\.pool, user\\\\.company_id\\)/company_name\\(\\\\&state.pool, user.company_id.unwrap_or_default\\(\\)\\)/g' src/handlers/auth_handler.rs)",
-      "Bash(cmd //c \"taskkill /F /IM haqly-server.exe\")"
+      "Bash(cmd //c \"taskkill /F /IM haqly-server.exe\")",
+      "Bash(curl -s http://localhost:3001/dashboard/)",
+      "Bash(curl -sv http://localhost:3001/dashboard/)",
+      "Bash(curl -sv -X OPTIONS http://localhost:8100/api/v1/auth/login -H 'Origin: http://localhost:3001' -H 'Access-Control-Request-Method: POST' -H 'Access-Control-Request-Headers: content-type')",
+      "Bash(npx tauri *)",
+      "Bash(echo \"Build started in background \\(PID: $!\\). This takes 5-10 minutes.\")"
     ]
   }
 }
