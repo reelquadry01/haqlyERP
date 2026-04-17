@@ -77,13 +77,16 @@ async function retrieveCompanySecure(): Promise<string | null> {
 }
 
 export function saveToken(token: string): void {
+  if (!token || token === "undefined" || token === "null") return;
   sessionStorage.setItem(TOKEN_KEY, token);
   storeTokenSecure(token).catch(() => {});
 }
 
 export function getToken(): string | null {
   if (typeof window === "undefined") return null;
-  return sessionStorage.getItem(TOKEN_KEY);
+  const t = sessionStorage.getItem(TOKEN_KEY);
+  if (!t || t === "undefined" || t === "null") return null;
+  return t;
 }
 
 export async function getTokenAsync(): Promise<string | null> {
