@@ -72,7 +72,7 @@ pub struct AdjustStockRequest {
     pub created_by: Uuid,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/products", post(create_product).get(list_products))
         .route("/products/:id", patch(update_product))

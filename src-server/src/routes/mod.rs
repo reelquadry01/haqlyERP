@@ -6,11 +6,13 @@ use axum::{
     routing::get,
     Router,
 };
-use axum::extract::State;
+use axum::extract::{FromRef, State};
 use sqlx::PgPool;
 use serde_json::{json, Value};
+use std::sync::Arc;
 
 use crate::config::settings::Settings;
+use crate::config::rsa_keys::RsaKeypair;
 use crate::handlers::{
     auth_routes, users_routes, org_routes, accounting_routes,
     journals_routes, payment_vouchers_routes, sales_routes, purchases_routes,
@@ -20,7 +22,26 @@ use crate::handlers::{
     crm_routes, bi_routes, notification_routes, document_routes,
 };
 
-pub fn app_routes(pool: PgPool, _settings: Settings) -> Router {
+#[derive(Clone)]
+pub struct AppState {
+    pub pool: PgPool,
+    pub rsa_keypair: Arc<RsaKeypair>,
+    pub jwt_expiration: u64,
+}
+
+impl FromRef<AppState> for PgPool {
+    fn from_ref(state: &AppState) -> Self {
+        state.pool.clone()
+    }
+}
+
+pub fn app_routes(pool: PgPool, settings: Settings) -> Router {
+    let state = AppState {
+        pool: pool.clone(),
+        rsa_keypair: settings.rsa_keypair.clone(),
+        jwt_expiration: settings.jwt_expiration,
+    };
+
     let api_v1 = Router::new()
         .route("/health", get(health_check))
         .nest("/auth", auth_routes())
@@ -47,7 +68,7 @@ pub fn app_routes(pool: PgPool, _settings: Settings) -> Router {
         .nest("/bi", bi_routes())
         .nest("/notifications", notification_routes())
         .nest("/file-storage", document_routes())
-        .with_state(pool);
+        .with_state(state);
 
     Router::new().nest_service("/api/v1", api_v1)
 }

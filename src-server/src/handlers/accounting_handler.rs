@@ -35,7 +35,7 @@ pub struct ListPeriodsQuery {
     pub per_page: Option<i64>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/accounts", post(create_account).get(list_accounts))
         .route("/accounts/:id", get(get_account))

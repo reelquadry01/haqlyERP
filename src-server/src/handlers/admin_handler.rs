@@ -27,7 +27,7 @@ pub struct ApprovalRulesQuery {
     pub entity_type: Option<String>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/permissions", post(create_permission))
         .route("/roles", post(create_role))

@@ -28,7 +28,7 @@ pub struct ListSchedulesQuery {
     pub per_page: Option<i64>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/runs", post(create_run).get(list_runs))
         .route("/runs/:id", get(get_run).post(post_run))

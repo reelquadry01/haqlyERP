@@ -31,7 +31,7 @@ pub struct ListDepartmentsQuery {
     pub per_page: Option<i64>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/companies", post(create_company).get(list_companies))
         .route("/companies/:id", patch(update_company))

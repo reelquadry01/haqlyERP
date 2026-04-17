@@ -16,9 +16,14 @@ ALTER TABLE tax_configs ALTER COLUMN tax_type TYPE VARCHAR(20);
 -- Insert updated default tax configurations for new companies
 -- These are templates; actual company rates are in tax_configs per company_id
 
--- 2. Update existing license feature descriptions for NRS rename
-UPDATE license_features SET description = 'PAYE tax computation and filing (NRS)' WHERE code = 'tax_paye';
-UPDATE license_features SET description = 'All Tax Types — VAT, WHT, PAYE, CIT, CGT, Stamp Duty, Education Tax (NRS)' WHERE code = 'tax_all';
+-- 2. Update existing license feature descriptions for NRS rename (if table exists)
+DO $$
+BEGIN
+    IF EXISTS (SELECT 1 FROM information_schema.tables WHERE table_name = 'license_features') THEN
+        UPDATE license_features SET description = 'PAYE tax computation and filing (NRS)' WHERE code = 'tax_paye';
+        UPDATE license_features SET description = 'All Tax Types — VAT, WHT, PAYE, CIT, CGT, Stamp Duty, Education Tax (NRS)' WHERE code = 'tax_all';
+    END IF;
+END $$;
 
 -- 3. Add CGT progressive rate columns
 ALTER TABLE tax_configs ADD COLUMN IF NOT EXISTS cgt_tier_1_rate NUMERIC(5,2) DEFAULT 10.00;

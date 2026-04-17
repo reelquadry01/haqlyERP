@@ -24,9 +24,9 @@ struct PasswordResetToken {
     id: Uuid,
     user_id: Uuid,
     token_hash: String,
-    expires_at: chrono::NaiveDateTime,
-    used_at: Option<chrono::NaiveDateTime>,
-    created_at: chrono::NaiveDateTime,
+    expires_at: chrono::DateTime<chrono::Utc>,
+    used_at: Option<chrono::DateTime<chrono::Utc>>,
+    created_at: chrono::DateTime<chrono::Utc>,
 }
 
 #[derive(Clone)]
@@ -97,7 +97,7 @@ impl AuthService {
         let expires_in = self.jwt_expiration;
 
         let session_id = Uuid::now_v7();
-        let expires_at = Utc::now().naive_utc() + chrono::Duration::seconds(self.jwt_expiration as i64);
+        let expires_at = Utc::now() + chrono::Duration::seconds(self.jwt_expiration as i64);
         sqlx::query(
             r#"INSERT INTO sessions (id, user_id, token, refresh_token, expires_at, created_at)
                VALUES ($1, $2, $3, $4, $5, NOW())"#,
@@ -117,7 +117,7 @@ impl AuthService {
             access_token,
             refresh_token,
             expires_in,
-            company_id: user.company_id,
+            company_id: user.company_id.unwrap_or_default(),
             mfa_enabled: user.mfa_enabled,
         })
     }
@@ -143,7 +143,7 @@ impl AuthService {
                 access_token: String::new(),
                 refresh_token: String::new(),
                 expires_in: 0,
-                company_id: user.company_id,
+                company_id: user.company_id.unwrap_or_default(),
                 mfa_enabled: true,
             });
         }
@@ -159,7 +159,7 @@ impl AuthService {
         let expires_in = self.jwt_expiration;
 
         let session_id = Uuid::now_v7();
-        let expires_at = Utc::now().naive_utc() + chrono::Duration::seconds(self.jwt_expiration as i64);
+        let expires_at = Utc::now() + chrono::Duration::seconds(self.jwt_expiration as i64);
         sqlx::query(
             r#"INSERT INTO sessions (id, user_id, token, refresh_token, expires_at, created_at)
                VALUES ($1, $2, $3, $4, $5, NOW())"#,
@@ -179,7 +179,7 @@ impl AuthService {
             access_token,
             refresh_token,
             expires_in,
-            company_id: user.company_id,
+            company_id: user.company_id.unwrap_or_default(),
             mfa_enabled: false,
         })
     }
@@ -194,14 +194,14 @@ impl AuthService {
         .ok_or_else(|| anyhow!("Invalid refresh token"))?;
 
         let user = sqlx::query_as::<_, User>("SELECT * FROM users WHERE id = $1")
-            .bind(session.user_id)
+            .bind(session.user_id.unwrap_or_default())
             .fetch_one(&self.pool)
             .await?;
 
         let role = self.get_user_role(user.id).await;
         let access_token = self.generate_jwt(&user, &role, self.jwt_expiration)?;
         let new_refresh_token = Uuid::now_v7().to_string();
-        let expires_at = Utc::now().naive_utc() + chrono::Duration::seconds(self.jwt_expiration as i64);
+        let expires_at = Utc::now() + chrono::Duration::seconds(self.jwt_expiration as i64);
 
         sqlx::query(
             "UPDATE sessions SET token = $1, refresh_token = $2, expires_at = $3 WHERE id = $4",
@@ -220,7 +220,7 @@ impl AuthService {
             access_token,
             refresh_token: new_refresh_token,
             expires_in: self.jwt_expiration,
-            company_id: user.company_id,
+            company_id: user.company_id.unwrap_or_default(),
             mfa_enabled: user.mfa_enabled,
         })
     }
@@ -294,7 +294,7 @@ impl AuthService {
             sub: user.id,
             email: user.email.clone(),
             role: role.to_string(),
-            company_id: user.company_id,
+            company_id: user.company_id.unwrap_or_default(),
             iat: now.timestamp() as usize,
             exp: (now.timestamp() + expiration as i64) as usize,
         };
@@ -342,7 +342,7 @@ impl AuthService {
         let token_raw = Uuid::now_v7().to_string()
             + &Uuid::now_v7().to_string().replace("-", "");
         let token_hash = hex::encode(Sha256::digest(token_raw.as_bytes()));
-        let expires_at = Utc::now().naive_utc() + chrono::Duration::hours(1);
+        let expires_at = Utc::now() + chrono::Duration::hours(1);
 
         let id = Uuid::now_v7();
         sqlx::query(
@@ -375,7 +375,7 @@ impl AuthService {
             return Err(anyhow!("Token has already been used"));
         }
 
-        let now = Utc::now().naive_utc();
+        let now = Utc::now();
         if reset_token.expires_at < now {
             return Err(anyhow!("Token has expired"));
         }
@@ -465,8 +465,8 @@ mod tests {
             mfa_secret: None,
             mfa_recovery_codes: None,
             last_login_at: None,
-            created_at: chrono::Utc::now().naive_utc(),
-            updated_at: chrono::Utc::now().naive_utc(),
+            created_at: chrono::Utc::now(),
+            updated_at: chrono::Utc::now(),
         }
     }
 

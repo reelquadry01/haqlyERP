@@ -21,7 +21,7 @@ pub struct ListUsersQuery {
     pub status: Option<String>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/", get(list_users).post(create_user))
         .route("/:id", get(get_user).patch(update_user).delete(delete_user))

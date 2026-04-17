@@ -5,6 +5,10 @@ edition = "2021"
 authors = ["Quadri Atharu"]
 description = "HAQLY ERP - Nigerian Accounting & Business Management Backend"
 
+[[bin]]
+name = "haqly-server"
+path = "src/bin/server.rs"
+
 [dependencies]
 axum = { version = "0.7", features = ["macros", "ws", "multipart"] }
 tokio = { version = "1", features = ["full"] }
@@ -23,7 +27,7 @@ serde_json = "1"
 uuid = { version = "1", features = ["v4", "v7", "serde"] }
 chrono = { version = "0.4", features = ["serde"] }
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter", "json"] }
+tracing-subscriber = { version = "0.3", features = ["env-filter", "json", "fmt"] }
 jsonwebtoken = "9"
 argon2 = "0.5"
 rand = "0.8"

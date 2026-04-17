@@ -43,7 +43,7 @@ pub struct ComputeTaxBody {
     pub items: Option<Vec<Value>>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/configs", get(list_tax_configs).post(create_tax_config))
         .route("/configs/:id", patch(update_tax_config))

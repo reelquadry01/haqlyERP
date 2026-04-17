@@ -33,7 +33,7 @@ pub struct UpdatePreferencesBody {
     pub notification_types: Option<Vec<String>>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/", get(list_notifications))
         .route("/mark-read", post(mark_read))

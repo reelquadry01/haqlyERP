@@ -58,7 +58,7 @@ pub struct ExpenseSummaryQuery {
     pub period_end: String,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/suppliers", post(create_supplier).get(list_suppliers))
         .route("/suppliers/:id", patch(update_supplier))

@@ -1,0 +1,29 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "Axum Backend (port 8100)",
+      "runtimeExecutable": "cargo",
+      "runtimeArgs": ["run", "--bin", "haqly-server", "--manifest-path", "src-server/Cargo.toml"],
+      "port": 8100
+    },
+    {
+      "name": "Next.js Web (src-web)",
+      "runtimeExecutable": "npm",
+      "runtimeArgs": ["run", "dev"],
+      "port": 3001
+    },
+    {
+      "name": "Tauri Desktop App",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["tauri", "dev"],
+      "port": 3001
+    },
+    {
+      "name": "AI Engine (FastAPI)",
+      "runtimeExecutable": "python",
+      "runtimeArgs": ["-m", "uvicorn", "naija_finance_accounting_intelligence_engine.main:app", "--host", "127.0.0.1", "--port", "8200", "--reload"],
+      "port": 8200
+    }
+  ]
+}

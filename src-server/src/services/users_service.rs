@@ -122,7 +122,7 @@ impl UsersService {
             id,
             user_id,
             role_id,
-            assigned_at: chrono::Utc::now().naive_utc(),
+            assigned_at: chrono::Utc::now(),
         })
     }
 }

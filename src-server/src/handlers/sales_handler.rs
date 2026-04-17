@@ -71,7 +71,7 @@ pub struct PostReceiptBody {
     pub posted_by: Uuid,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/customers", post(create_customer).get(list_customers))
         .route("/customers/:id", patch(update_customer))

@@ -77,9 +77,8 @@ async function retrieveCompanySecure(): Promise<string | null> {
 }
 
 export function saveToken(token: string): void {
-  storeTokenSecure(token).catch(() => {
-    sessionStorage.setItem(TOKEN_KEY, token);
-  });
+  sessionStorage.setItem(TOKEN_KEY, token);
+  storeTokenSecure(token).catch(() => {});
 }
 
 export function getToken(): string | null {
@@ -92,16 +91,14 @@ export async function getTokenAsync(): Promise<string | null> {
 }
 
 export function clearToken(): void {
-  clearTokenSecure().catch(() => {
-    sessionStorage.removeItem(TOKEN_KEY);
-    sessionStorage.removeItem(COMPANY_KEY);
-  });
+  sessionStorage.removeItem(TOKEN_KEY);
+  sessionStorage.removeItem(COMPANY_KEY);
+  clearTokenSecure().catch(() => {});
 }
 
 export function saveCompanyContext(companyId: string): void {
-  storeCompanySecure(companyId).catch(() => {
-    sessionStorage.setItem(COMPANY_KEY, companyId);
-  });
+  sessionStorage.setItem(COMPANY_KEY, companyId);
+  storeCompanySecure(companyId).catch(() => {});
 }
 
 export function getCompanyContext(): string | null {

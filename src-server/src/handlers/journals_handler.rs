@@ -23,7 +23,7 @@ pub struct ListJournalsQuery {
     pub company_id: Option<Uuid>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/", get(list_journals).post(create_draft))
         .route("/metadata/options", get(get_metadata_options))

@@ -30,7 +30,7 @@ pub struct ListRunsQuery {
     pub period: Option<String>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/employees", post(create_employee).get(list_employees))
         .route("/employees/:id", patch(update_employee))

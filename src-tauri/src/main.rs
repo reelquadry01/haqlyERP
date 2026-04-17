@@ -1,3 +1,4 @@
+// Author: Quadri Atharu
 #![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 
 use haqly_erp::{
@@ -107,13 +108,24 @@ fn main() {
                 })
                 .build(app)?;
 
+            // Start the Axum server inside the Tauri process
+            std::thread::spawn(move || {
+                let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime for Axum");
+                rt.block_on(async {
+                    if let Err(e) = haqly_erp_server::start_server().await {
+                        tracing::error!("Axum server error: {e}");
+                    }
+                });
+            });
+
+            // Start AI sidecar (non-fatal if it fails)
             let sidecar_mgr = app.state::<SidecarManager>();
             let mgr_clone = sidecar_mgr.inner().clone();
             std::thread::spawn(move || {
-                let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime for sidecar startup");
+                let rt = tokio::runtime::Runtime::new().expect("failed to create tokio runtime for AI sidecar");
                 rt.block_on(async {
-                    if let Err(e) = mgr_clone.start_all().await {
-                        tracing::error!("Sidecar startup failed: {e}");
+                    if let Err(e) = mgr_clone.start_ai_engine().await {
+                        tracing::warn!("AI engine startup failed (non-fatal): {e}");
                     }
                 });
             });

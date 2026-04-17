@@ -17,7 +17,7 @@ pub struct StatusQuery {
     pub detail: Option<bool>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/status/:company_id", get(get_einvoicing_status))
         .route("/profile", post(create_profile))

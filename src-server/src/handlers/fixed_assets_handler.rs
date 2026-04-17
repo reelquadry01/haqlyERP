@@ -63,7 +63,7 @@ pub struct PostDepreciationRequest {
     pub posted_by: Uuid,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/categories", post(create_category).get(list_categories))
         .route("/assets", post(create_asset).get(list_assets))

@@ -10,7 +10,7 @@ use axum::extract::State;
 use sqlx::PgPool;
 use serde_json::{json, Value};
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/chart-of-accounts", post(import_chart_of_accounts))
         .route("/customers", post(import_customers))

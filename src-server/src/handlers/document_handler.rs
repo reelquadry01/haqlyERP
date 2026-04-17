@@ -26,7 +26,7 @@ pub struct ListDocumentsQuery {
     pub entity_id: Option<Uuid>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/upload", post(upload_document))
         .route("/:entity_type/:entity_id", get(list_documents))

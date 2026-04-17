@@ -39,7 +39,7 @@ pub struct ListActivitiesQuery {
     pub activity_type: Option<String>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/contacts", post(create_contact).get(list_contacts))
         .route("/contacts/:id", patch(update_contact))

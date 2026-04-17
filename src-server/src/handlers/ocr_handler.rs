@@ -22,7 +22,7 @@ pub struct ListDocumentsQuery {
     pub company_id: Option<Uuid>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/upload", post(upload_document))
         .route("/", get(list_documents))

@@ -60,7 +60,7 @@ async fn main() -> anyhow::Result<()> {
         }
     }
 
-    let cors = CorsLayer::permissive()
+    let cors = CorsLayer::new()
         .allow_origin(
             settings
                 .cors_origins

@@ -21,7 +21,7 @@ pub struct ListLoansQuery {
     pub company_id: Option<Uuid>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/", post(create_loan).get(list_loans))
         .route("/:id", get(get_loan))

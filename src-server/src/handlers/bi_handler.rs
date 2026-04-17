@@ -39,7 +39,7 @@ pub struct ListDatasetsQuery {
     pub company_id: Option<Uuid>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/dashboards", get(list_dashboards).post(create_dashboard))
         .route("/dashboards/:id", get(get_dashboard))

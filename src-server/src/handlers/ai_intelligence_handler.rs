@@ -20,7 +20,7 @@ pub struct AgentLogsQuery {
     pub status: Option<String>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/analyze", post(analyze))
         .route("/compute-tax", post(compute_tax))

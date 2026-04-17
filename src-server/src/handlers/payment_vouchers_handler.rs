@@ -27,7 +27,7 @@ pub struct QueueQuery {
     pub status: Option<String>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/", get(list_vouchers).post(create_voucher))
         .route("/queue", get(get_queue))

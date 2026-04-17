@@ -81,7 +81,7 @@ pub struct ExportQuery {
     pub date_to: Option<String>,
 }
 
-pub fn router() -> Router<PgPool> {
+pub fn router() -> Router<crate::routes::AppState> {
     Router::new()
         .route("/trial-balance", get(trial_balance))
         .route("/account-statement-summary", get(account_statement_summary))
