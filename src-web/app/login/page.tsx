@@ -175,8 +175,8 @@ export default function LoginPage() {
         </div>
       </div>
 
-      <div style={{ flex: 1, display: "flex", alignItems: "center", justifyContent: "center", background: "#FAFBFC", padding: 24, minHeight: "100vh" }}>
-        <div style={{ width: 400, maxWidth: "100%" }}>
+      <div style={{ flex: 1, display: "flex", alignItems: "flex-start", justifyContent: "center", background: "#FAFBFC", padding: 24, minHeight: "100vh", overflowY: "auto" }}>
+        <div style={{ width: 400, maxWidth: "100%", paddingTop: 40, paddingBottom: 40 }}>
           <div className="fu" style={{ marginBottom: 28 }}>
             <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 20 }}>
               <div style={{ width: 34, height: 34, borderRadius: 8, background: "linear-gradient(135deg,#1B4332,#2D6A4F)", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 800, fontSize: ".95rem", color: "#D4AF37" }}>H</div>
